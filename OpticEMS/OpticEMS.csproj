@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Common\Images\splash.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="EPPlus" Version="4.5.3.3" />
     <PackageReference Include="Extended.Wpf.Toolkit" Version="5.0.0" />
@@ -23,6 +27,10 @@
     <ProjectReference Include="..\OpticEMS.Contracts\OpticEMS.Contracts.csproj" />
     <ProjectReference Include="..\OpticEMS.Devices\OpticEMS.Devices.csproj" />
     <ProjectReference Include="..\OpticEMS.Notifications\OpticEMS.Notifications.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Common\Images\splash.png" />
   </ItemGroup>
 
   <ItemGroup>
