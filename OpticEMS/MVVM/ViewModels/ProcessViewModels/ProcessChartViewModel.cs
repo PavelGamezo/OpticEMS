@@ -1,0 +1,96 @@
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using OpticEMS.Common.Helpers;
+using OxyPlot;
+using OxyPlot.Axes;
+using OxyPlot.Series;
+using System.Windows.Media;
+
+namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
+{
+    public partial class ProcessChartViewModel : ObservableObject
+    {
+        private readonly DateTime _epoch = new DateTime(2000, 1, 1);
+
+        [ObservableProperty]
+        private ViewResolvingPlotModel _plotModel;
+
+        public void SetUpModel(List<double> targetWavelengths, List<Color> wavelengthColors)
+        {
+            PlotModel = new ViewResolvingPlotModel
+            {
+                PlotMargins = new OxyThickness(60, 40, 40, 40),
+                Background = OxyColor.FromRgb(30, 29, 29),
+                TextColor = OxyColors.White,
+                PlotAreaBorderColor = OxyColor.FromRgb(30, 29, 29),
+                PlotAreaBorderThickness = new OxyThickness(4),
+                PlotAreaBackground = OxyColor.FromRgb(30, 29, 29)
+            };
+
+            PlotModel.Axes.Add(new DateTimeAxis
+            {
+                Position = AxisPosition.Bottom,
+                StringFormat = "mm:ss",
+                Title = "Time",
+                IntervalType = DateTimeIntervalType.Seconds,
+                TitleColor = OxyColors.White,
+                TextColor = OxyColors.White,
+                AxislineColor = OxyColor.FromRgb(50, 51, 56),
+                TickStyle = TickStyle.None,
+                MajorGridlineColor = OxyColor.FromRgb(50, 51, 56),
+                MajorGridlineStyle = LineStyle.Solid,
+                MinorGridlineColor = OxyColor.FromArgb(15, 236, 240, 241),
+                Minimum = DateTimeAxis.ToDouble(_epoch)
+            });
+
+            PlotModel.Axes.Add(new LinearAxis
+            {
+                Position = AxisPosition.Left,
+                Title = "Intensity",
+                TitleColor = OxyColors.White,
+                TextColor = OxyColors.White,
+                AxislineColor = OxyColor.FromRgb(50, 51, 56),
+                TickStyle = TickStyle.None,
+                MajorGridlineColor = OxyColor.FromRgb(50, 51, 56),
+                MajorGridlineStyle = LineStyle.Solid,
+                MinorGridlineColor = OxyColor.FromArgb(15, 236, 240, 241),
+                MaximumPadding = 0.6,
+                Minimum = 0
+            });
+
+            for (int i = 0; i < targetWavelengths.Count; i++)
+            {
+                var oxyColor = OxyColor.FromArgb(
+                    wavelengthColors[i].A,
+                    wavelengthColors[i].R,
+                    wavelengthColors[i].G,
+                    wavelengthColors[i].B);
+
+                var target = new LineSeries
+                {
+                    Title = "Wavelength 1",
+                    Color = oxyColor,
+                    StrokeThickness = 2,
+                    MarkerSize = 3,
+                    MarkerFill = OxyColors.Blue
+                };
+
+                PlotModel.Series.Add(target);
+            }
+        }
+
+        public void UpdateTopPlot(TimeSpan elapsedTime, uint[] intensities)
+        {
+            double xValue = DateTimeAxis.ToDouble(_epoch.Add(elapsedTime));
+
+            for (int i = 0; i < intensities.Length; i++)
+            {
+                if (PlotModel.Series[i] is LineSeries firstLine)
+                {
+                    firstLine.Points.Add(new DataPoint(xValue, intensities[i]));
+                }
+            }
+
+            PlotModel.InvalidatePlot(true);
+        }
+    }
+}

@@ -1,0 +1,454 @@
+﻿<Page x:Class="OpticEMS.MVVM.View.Settings.CalibrationSettings"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:OpticEMS.MVVM.View.Settings"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="CalibrationSettings"
+      xmlns:oxy="http://oxyplot.org/wpf">
+
+    <Grid>
+
+        <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="4*"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0" 
+                  Background="#1e1d1d"
+                  Margin="0,0,2,0">
+
+                <Border CornerRadius="5"
+                        Padding="10">
+
+                    <Grid>
+                        <Border Background="#1f1f1f"
+                                CornerRadius="5">
+
+                            <oxy:PlotView Model="{Binding CalibrationSettingsChartViewModel.PlotModel}" 
+                                          Background="Transparent"
+                                          BorderThickness="0"/>
+                        </Border>
+                    </Grid>
+
+                </Border>
+            </Grid>
+
+            <ScrollViewer Grid.Column="1" Margin="0,0,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0"
+                            Background="#262726">
+
+                        <StackPanel Margin="15,10,15,10">
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+
+                                <Border Background="DimGray" 
+                                        CornerRadius="5" 
+                                        Width="30" 
+                                        Height="30"
+                                        Padding="5"
+                                        VerticalAlignment="Center">
+
+                                    <TextBlock Text="1" 
+                                               FontSize="14" 
+                                               FontWeight="Bold"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+
+                                <TextBlock Text="Select Channel" 
+                                           FontSize="13" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <TextBlock Text="Channel #" 
+                                       Foreground="#BDC3C7"
+                                       Margin="0,0,0,5"/>
+
+                            <ComboBox ItemsSource="{Binding AvailableChannels}" 
+                                      SelectedItem="{Binding SelectedChannel}" 
+                                      Style="{StaticResource ComboBoxStyle}"
+                                      Padding="5"
+                                      Width="Auto"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="1" 
+                            Background="#262726"
+                            Padding="15,5,15,15">
+
+                        <StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+
+                                <Border Background="DimGray" 
+                                        CornerRadius="5" 
+                                        Width="30" 
+                                        Height="30"
+                                        Padding="5"
+                                        VerticalAlignment="Center">
+
+                                    <TextBlock Text="2" 
+                                               FontSize="14" 
+                                               FontWeight="Bold"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+
+                                </Border>
+
+                                <TextBlock Text="Capture Spectr" 
+                                           FontSize="13" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <Button Content="🎯 Capture Spectr" 
+                                    Command="{Binding CaptureSpectrumCommand}"
+                                    Height="30"
+                                    Width="Auto"
+                                    Background="#1f1f1f"
+                                    Foreground="White"
+                                    Margin="0,0,0,5"
+                                    Style="{StaticResource ActionButtonStyle}"/>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,5,0">
+
+                                    <TextBlock Text="Pixel" 
+                                               Foreground="#BDC3C7"
+                                               Margin="0,0,0,5"/>
+
+                                    <TextBox Text="{Binding CalibrationPixel}"
+                                             Height="25"
+                                             Style="{StaticResource TextBoxStyle}"
+                                             Width="Auto"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1">
+
+                                    <TextBlock Text="Wavelength (nm)" 
+                                               Foreground="#BDC3C7"
+                                               Margin="0,0,0,5"/>
+
+                                    <TextBox Text="{Binding CalibrationWavelength}"
+                                             Style="{StaticResource TextBoxStyle}"
+                                             Width="Auto"/>
+
+                                </StackPanel>
+
+                            </Grid>
+
+                            <Button Content="🎯 Add Calibration Point" 
+                                    Command="{Binding AddPointCommand}"
+                                    Height="30"
+                                    Width="Auto"
+                                    Background="#1f1f1f"
+                                    Foreground="White"
+                                    Margin="0,0,0,10"
+                                    Style="{StaticResource ActionButtonStyle}"/>
+
+                            <Button Content="🗑 Clear" 
+                                    Command="{Binding ClearPointsCommand}"
+                                    Height="30"
+                                    Width="Auto"
+                                    Background="#1f1f1f"
+                                    Foreground="White"
+                                    Margin="0,0,0,10"
+                                    Style="{StaticResource ActionButtonStyle}"/>
+
+                            <Border Background="#262726" 
+                                    Padding="15" 
+                                    Margin="0,10,0,0">
+
+                                <StackPanel>
+
+                                    <DockPanel LastChildFill="True" Margin="0,0,0,12">
+
+                                        <Ellipse DockPanel.Dock="Right" 
+                                                 Width="8" Height="8" 
+                                                 Fill="{Binding StatusColor}" 
+                                                 VerticalAlignment="Center">
+
+                                            <Ellipse.Effect>
+                                                <BlurEffect Radius="4"/>
+                                            </Ellipse.Effect>
+
+                                        </Ellipse>
+
+                                        <TextBlock Text="Polynomial Coefficients" 
+                                                   FontSize="12"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"/>
+                                    </DockPanel>
+
+                                    <ItemsControl ItemsSource="{Binding CalibrationCoefficients}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,4">
+                                                    <Border x:Name="CoefBorder" 
+                                                            Background="#1f1f1f" 
+                                                            CornerRadius="4" 
+                                                            Padding="12,6">
+
+                                                        <TextBlock Text="{Binding StringFormat={}{0:E8}}"
+                                                                   Foreground="#E0E0E0"
+                                                                   FontFamily="Consolas"
+                                                                   FontSize="12"
+                                                                   HorizontalAlignment="Left"
+                                                                   VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <TextBlock Text="{Binding CalibrationStatus}" 
+                                               FontSize="10" 
+                                               Foreground="#858585" 
+                                               Margin="0,8,0,0"
+                                               HorizontalAlignment="Center"
+                                               FontStyle="Italic"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="2" 
+                            Background="#262726" 
+                            CornerRadius="5"
+                            Padding="15"
+                            Margin="0,5,0,5">
+
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" 
+                                        Margin="0,0,0,10">
+
+                                <Border Background="SlateGray" 
+                                        CornerRadius="5" 
+                                        Width="30" 
+                                        Height="30"
+                                        Padding="5"
+                                        VerticalAlignment="Center">
+
+                                    <TextBlock Text="2" 
+                                               FontSize="14" 
+                                               FontWeight="Bold"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+
+                                <TextBlock Text="Calibration Points" 
+                                           FontSize="13" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"/>
+
+                            </StackPanel>
+
+                            <Border Background="#262726" 
+                                    BorderBrush="#2A2A2A" 
+                                    BorderThickness="1"
+                                    Margin="0,0,0,10">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Border Grid.Row="0" 
+                                            Background="#1a1a1a" 
+                                            Padding="10,5">
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="40"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0" 
+                                                       Text="PIXEL" 
+                                                       Foreground="#858585" 
+                                                       FontSize="10" 
+                                                       FontWeight="Bold"/>
+
+                                            <TextBlock Grid.Column="1" 
+                                                       Text="WAVELENGTH" 
+                                                       Foreground="#858585" 
+                                                       FontSize="10" 
+                                                       FontWeight="Bold"/>
+
+                                        </Grid>
+
+                                    </Border>
+
+                                    <ScrollViewer Grid.Row="1" 
+                                                  MaxHeight="180" 
+                                                  VerticalScrollBarVisibility="Auto">
+
+                                        <ItemsControl ItemsSource="{Binding CalibrationPoints}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border x:Name="PointRow" 
+                                                            Background="Transparent" 
+                                                            BorderBrush="#2A2A2A" 
+                                                            BorderThickness="0,0,0,1">
+
+                                                        <Grid Margin="10,6">
+
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="40"/>
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <TextBlock Grid.Column="0" 
+                                                                       Text="{Binding Pixel}" 
+                                                                       Foreground="#E0E0E0" 
+                                                                       FontFamily="Consolas"
+                                                                       VerticalAlignment="Center"/>
+
+                                                            <StackPanel Grid.Column="1" 
+                                                                        Orientation="Horizontal"
+                                                                        VerticalAlignment="Center">
+
+                                                                <TextBlock Text="{Binding Wavelength, StringFormat='{}{0:F2}'}" 
+                                                                           Foreground="#3498DB" 
+                                                                           FontWeight="SemiBold"
+                                                                           FontFamily="Consolas"/>
+
+                                                                <TextBlock Text=" nm" 
+                                                                           Foreground="#666666" 
+                                                                           FontSize="9" 
+                                                                           Margin="2,1,0,0"/>
+
+                                                            </StackPanel>
+
+                                                            <Button Grid.Column="2"
+                                                                    Content="" 
+                                                                    FontFamily="Segoe MDL2 Assets"
+                                                                    FontSize="10"
+                                                                    Background="Transparent"
+                                                                    Foreground="#555555"
+                                                                    BorderThickness="0"
+                                                                    Cursor="Hand"
+                                                                    HorizontalAlignment="Right"
+                                                                    Command="{Binding DataContext.RemovePointCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                    CommandParameter="{Binding}">
+
+                                                                <Button.Style>
+                                                                    <Style TargetType="Button">
+                                                                        <Style.Triggers>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter Property="Foreground" Value="#E74C3C"/>
+                                                                            </Trigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                            </Button>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </Grid>
+                            </Border>
+
+                            <TextBlock Text="{Binding CalibrationPoints.Count, StringFormat='Points: {0} (minimum 4)'}"
+                                       HorizontalAlignment="Center"
+                                       Foreground="#95A5A6"
+                                       FontSize="10"
+                                       Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="3" 
+                            Background="#262726" 
+                            CornerRadius="5"
+                            Padding="15">
+
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <Border Background="DarkSlateGray" 
+                                        CornerRadius="5" 
+                                        Width="30" 
+                                        Height="30"
+                                        Padding="5"
+                                        VerticalAlignment="Center">
+
+                                    <TextBlock Text="3" 
+                                               FontSize="14" 
+                                               FontWeight="Bold"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+
+                                </Border>
+                                <TextBlock Text="РАСЧЕТ И ПРИМЕНЕНИЕ" 
+                                           FontSize="13" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <Button Content="🧮 РАССЧИТАТЬ КОЭФФИЦИЕНТЫ" 
+                                    Command="{Binding CalculateCalibrationCommand}"
+                                    Height="30"
+                                    Width="Auto"
+                                    Foreground="White"
+                                    Background="DarkSlateGray"
+                                    Margin="0,0,0,5"
+                                    Style ="{StaticResource ActionButtonStyle}"/>
+
+                            <Button Content="✅ ИНТЕРПОЛИРОВАТЬ КАЛИБРОВКУ"
+                                    Command="{Binding InterpolationCommand}"
+                                    Height="30"
+                                    Background="#1f1f1f"
+                                    Margin="0,0,0,10"
+                                    Width="Auto"
+                                    Foreground="White"
+                                    Style="{StaticResource ActionButtonStyle}"/>
+
+                            <Border Background="#1f1f1f" 
+                                    CornerRadius="5"
+                                    Padding="10">
+
+                                <TextBlock Text="💡 Добавьте минимум 4 калибровочные точки с известными длинами волн, затем рассчитайте коэффициенты."
+                                           Foreground="Gray"
+                                           FontSize="10"
+                                           TextWrapping="Wrap"/>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Page>

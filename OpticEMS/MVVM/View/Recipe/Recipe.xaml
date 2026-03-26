@@ -1,0 +1,752 @@
+﻿<Page x:Class="OpticEMS.MVVM.View.Recipe.Recipe"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:OpticEMS.MVVM.View.Recipe"
+      xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+      mc:Ignorable="d" 
+      d:DesignHeight="1080" d:DesignWidth="1920"
+      Title="Recipe">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" 
+                Background="#1a1a1a"
+                Padding="25,5,5,5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" 
+                           Text="Process Recipes" 
+                           FontSize="18" 
+                           FontWeight="Bold" 
+                           Foreground="White"
+                           VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="2" 
+                            Orientation="Horizontal" 
+                            HorizontalAlignment="Right">
+
+                    <Button Content="New recipe" 
+                            Width="120"
+                            Height="35"
+                            Foreground="White"
+                            Background="#222120"
+                            Style="{StaticResource ActionButtonStyle}"
+                            Command="{Binding NewRecipeCommand}"/>
+
+                    <Button Content="Rename"
+                            Width="120"
+                            Height="35"
+                            Foreground="White"
+                            Background="#222120"
+                            Style="{StaticResource ActionButtonStyle}"
+                            Command="{Binding RenameRecipeCommand}"/>
+
+                    <Button Grid.Column="2" 
+                            Content="Apply"
+                            Width="120"
+                            Height="35"
+                            Foreground="White"
+                            Background="#222120"
+                            Style="{StaticResource ActionButtonStyle}"
+                            Command="{Binding ApplySelectedRecipeCommand}"/>
+
+                    <Button Grid.Column="3" 
+                            Content="Save" 
+                            Width="120"
+                            Height="35"
+                            Foreground="White"
+                            Background="#222120"
+                            Style="{StaticResource ActionButtonStyle}"
+                            Command="{Binding SaveRecipeCommand}"/>
+
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="350"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" 
+                    Background="#252526"
+                    Margin="5,0,5,0">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" 
+                            Background="#1f1f1f"
+                            Padding="10">
+                        <StackPanel>
+                            <TextBlock Text="Recipe database"
+                                       FontWeight="Bold"
+                                      FontSize="12" 
+                                      Foreground="White"
+                                      Margin="0,0,0,10"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" 
+                                        Background="#3E3E40" 
+                                        CornerRadius="3"
+                                        Height="28">
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" 
+                                                   Text="🔍" 
+                                                   Margin="8,0"
+                                                   Foreground="#999999"
+                                                   VerticalAlignment="Center"/>
+
+                                        <TextBox Grid.Column="1" 
+                                                 Background="Transparent"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,8,0"
+                                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </Grid>
+                                </Border>
+
+                                <Button Grid.Column="1" 
+                                        Content="📁" 
+                                        Width="28" 
+                                        Height="28"
+                                        Margin="5,0,0,0"
+                                        Background="#3E3E40"
+                                        BorderThickness="0"
+                                        Foreground="White"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <ListView Grid.Row="2" 
+                              Background="Transparent"
+                              BorderThickness="0"
+                              ItemsSource="{Binding RecipesView}"
+                              SelectedItem="{Binding SelectedRecipe}"
+                              Margin="0,5,0,0"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListViewItem">
+                                            <Border x:Name="OuterBorder" 
+                                                    Background="Transparent" 
+                                                    BorderBrush="Transparent"
+                                                    BorderThickness="3,0,0,0" 
+                                                    Margin="2,1"
+                                                    SnapsToDevicePixels="True">
+
+                                                <ContentPresenter />
+
+                                            </Border>
+
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="OuterBorder" Property="Background" Value="#1AFFFFFF"/>
+                                                    <Setter TargetName="OuterBorder" Property="BorderBrush" Value="#3498DB"/>
+                                                </Trigger>
+
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="OuterBorder" Property="Background" Value="#3d3d40"/>
+                                                    <Setter TargetName="OuterBorder" Property="BorderBrush" Value="#3498DB"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="10,10,10,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" 
+                                               Text="📄" 
+                                               Foreground="White"
+                                               FontSize="16"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,12,0"/>
+
+                                    <StackPanel Grid.Column="1" 
+                                                VerticalAlignment="Center">
+
+                                        <TextBlock Text="{Binding Name}" 
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="White"/>
+
+                                        <TextBlock Text="{Binding CreatedAt, StringFormat='{}Created: {0:dd.MM.yyyy}'}" 
+                                                   FontSize="10"
+                                                   Foreground="#666666"/>
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Column="2" 
+                                               Text="{Binding LastModifiedAt, StringFormat='{}{0:HH:mm}'}" 
+                                               FontSize="11"
+                                               VerticalAlignment="Center"
+                                               Foreground="#999999"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <Border Grid.Row="3" 
+                            Background="#1f1f1f" 
+                            CornerRadius="0,0,5,5"
+                            Padding="10"
+                            BorderBrush="#3E3E40"
+                            BorderThickness="0,1,0,0">
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0"
+                                        Orientation="Horizontal">
+
+                                <TextBlock Text="All recipes: " 
+                                           Foreground="#999999"/>
+
+                                <TextBlock Text="{Binding RecipeCount}" 
+                                           Foreground="#999999"/>
+
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" 
+                                       Orientation="Horizontal">
+
+                                <Button Content="🗑️" 
+                                        Command="{Binding DeleteRecipeCommand}"
+                                        Style="{StaticResource ActionButtonStyle}"
+                                        Width="25" 
+                                        Height="25"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Foreground="#999999"/>
+
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" 
+                    Background="#1f1f1f">
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" 
+                                Background="#1f1f1f"
+                                Padding="15"
+                                Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" 
+                                           Text="{Binding SelectedRecipe.Name}" 
+                                           FontSize="24" 
+                                           FontWeight="Bold" 
+                                           Foreground="White"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="1"
+                                Padding="15"
+                                Margin="0,0,0,10">
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+
+                                    <TextBlock Text="Channel" 
+                                               FontSize="11" 
+                                               Foreground="#999999"/>
+
+                                    <TextBox Text="{Binding SelectedRecipe.Channel}" 
+                                             Background="#3E3E40"
+                                             BorderThickness="0"
+                                             Foreground="White"
+                                             Padding="8"
+                                             Margin="0,5,5,0"/>
+
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1">
+
+                                    <TextBlock Text="Process chamber" 
+                                              FontSize="11" 
+                                              Foreground="#999999"/>
+
+                                    <ComboBox Background="#3E3E40" 
+                                              BorderThickness="0"
+                                              Foreground="#3E3E40"
+                                              Padding="8"
+                                              Margin="0,5,0,0"
+                                              ItemsSource="{Binding ProcessChambers}"
+                                              SelectedItem="{Binding SelectedRecipe.ProcessChamber}"/>
+
+                                </StackPanel>
+
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="2" 
+                                Padding="15" 
+                                Margin="0,0,0,10">
+
+                            <StackPanel>
+
+                                <Grid Margin="0,0,0,10">
+
+                                    <TextBlock Text="Wavelength monitoring" 
+                                               FontSize="12" 
+                                               FontWeight="Bold" 
+                                               Foreground="White"/>
+
+                                    <Button Content="+ Add"
+                                            Style="{StaticResource ActionButtonStyle}"
+                                            Foreground="White"
+                                            Background="#222120"
+                                            Command="{Binding AddWavelengthCommand}" 
+                                            HorizontalAlignment="Right"
+                                            Padding="10,2"/>
+
+                                </Grid>
+
+                                <ItemsControl ItemsSource="{Binding WavelengthItems}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="3"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+
+                                            <Border BorderBrush="#3E3E40" 
+                                                    BorderThickness="1"
+                                                    Margin="5"
+                                                    Padding="10" 
+                                                    CornerRadius="4"
+                                                    Background="#1E1E1E">
+
+                                                <Border.Effect>
+                                                    <DropShadowEffect Color="Black" 
+                                                                      Direction="315" 
+                                                                      ShadowDepth="4" 
+                                                                      Opacity="0.6" 
+                                                                      BlurRadius="12"/>
+                                                </Border.Effect>
+
+                                                <StackPanel>
+                                                    <Grid>
+                                                        <TextBlock Text="Wavelength (nm)" 
+                                                                   FontSize="11" 
+                                                                   Foreground="#999999"/>
+
+                                                        <Button Content="✕" 
+                                                                Style="{StaticResource ActionButtonStyle}"
+                                                                Command="{Binding DataContext.RemoveWavelengthCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                Width="25" 
+                                                                Height="25"
+                                                                HorizontalAlignment="Right" 
+                                                                Background="Transparent"
+                                                                Foreground="Gray"
+                                                                BorderThickness="0"/>
+                                                    </Grid>
+
+                                                    <TextBox Text="{Binding Wavelength}" 
+                                                             Background="#3E3E40" 
+                                                             Foreground="White" 
+                                                             BorderThickness="0" 
+                                                             Padding="8" 
+                                                             Margin="0,5"/>
+
+                                                    <xctk:ColorPicker SelectedColor="{Binding Color, UpdateSourceTrigger=PropertyChanged}" 
+                                                                      Height="30" Margin="0,5,0,0"
+                                                                      Style="{StaticResource DarkColorPicker}" 
+                                                                      UsingAlphaChannel="False"/>
+
+                                                    <TextBlock Text="Detection window high"
+                                                               FontSize="11"
+                                                               Margin="0,10,0,0"
+                                                               Foreground="#999999"/>
+
+                                                    <TextBox Text="{Binding SignalHigh, UpdateSourceTrigger=PropertyChanged}"
+                                                             Background="#3E3E40"
+                                                             BorderThickness="0"
+                                                             Foreground="White"
+                                                             Padding="8"
+                                                             Margin="0,5,0,0"/>
+
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="3"
+                                Padding="15"
+                                Margin="0,0,0,10">
+
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" 
+                                           Text="Timing Parameters" 
+                                           FontSize="12" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           Margin="0,0,0,5"/>
+
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Row="0" 
+                                                Grid.Column="0"
+                                                Margin="0,0,10,5">
+
+                                        <TextBlock Text="Initial Delay" 
+                                                   FontSize="11" 
+                                                   Foreground="#999999"/>
+
+                                        <TextBox Text="{Binding SelectedRecipe.InitialDelay}" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"
+                                                 Margin="0,5,0,0"/>
+
+                                        <TextBlock Text="ms" 
+                                                   FontSize="10" 
+                                                   Foreground="#999999"
+                                                   Margin="0,2,0,0"/>
+
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="0" 
+                                                Grid.Column="1" 
+                                                Margin="0,0,0,15">
+
+                                        <TextBlock Text="Max. Endpoint Time" 
+                                                   FontSize="11" 
+                                                   Foreground="#999999"/>
+
+                                        <TextBox Text="{Binding SelectedRecipe.MaxEndpointTime}" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"
+                                                 Margin="0,5,0,0"/>
+
+                                        <TextBlock Text="ms" 
+                                                   FontSize="10" 
+                                                   Foreground="#999999"
+                                                   Margin="0,2,0,0"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" 
+                                                Grid.Column="0" 
+                                                Margin="0,0,10,5">
+
+                                        <TextBlock Text="Detection window (time)" 
+                                                   FontSize="11" 
+                                                   Foreground="#999999"/>
+
+                                        <TextBox Text="{Binding SelectedRecipe.DetectionWindowTime}" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"
+                                                 Margin="0,5,0,0"/>
+
+                                        <TextBlock Text="ms" 
+                                                   FontSize="10" 
+                                                   Foreground="#999999"
+                                                   Margin="0,2,0,0"/>
+
+                                    </StackPanel>
+
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="4"
+                                CornerRadius="5"
+                                Padding="15"
+                                Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" 
+                                           Text="Detection Parameters" 
+                                           FontSize="12" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           Margin="0,0,0,5"/>
+
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Row="0" 
+                                                Grid.Column="0" 
+                                                Margin="0,0,10,5">
+
+                                        <TextBlock Text="Exposure Time" 
+                                                   FontSize="11" 
+                                                   Foreground="#999999"/>
+
+                                        <TextBox Text="{Binding SelectedRecipe.ExposureMs}" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"
+                                                 Margin="0,5,0,0"/>
+
+                                        <TextBlock Text="%" 
+                                                   FontSize="10" 
+                                                   Foreground="#999999"
+                                                   Margin="0,2,0,0"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="0" 
+                                                Grid.Column="1" 
+                                                Margin="0,0,10,15">
+
+                                        <TextBlock Text="Auto Gain Warning" 
+                                                   FontSize="11" 
+                                                   Foreground="#999999"/>
+
+                                        <TextBox Text="85" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"
+                                                 Margin="0,5,0,0"/>
+
+                                        <TextBlock Text="%" 
+                                                   FontSize="10" 
+                                                   Foreground="#999999"
+                                                   Margin="0,2,0,0"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" 
+                                                Grid.Column="0" 
+                                                Margin="0,0,10,0">
+
+                                        <TextBlock Text="Windows IN" 
+                                                   FontSize="11" 
+                                                   Foreground="#999999"/>
+
+                                        <TextBox Text="{Binding SelectedRecipe.WindowInCount}" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"
+                                                 Margin="0,5,0,0"/>
+
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" 
+                                                Grid.Column="1" 
+                                                Margin="0,0,10,0">
+
+                                        <TextBlock Text="Windows OUT" 
+                                                   FontSize="11" 
+                                                   Foreground="#999999"/>
+
+                                        <TextBox Text="{Binding SelectedRecipe.WindowOutCount}" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"
+                                                 Margin="0,5,0,0"/>
+
+                                    </StackPanel>
+
+
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="5"
+                                CornerRadius="5"
+                                Padding="15">
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" 
+                                            Margin="0,0,10,0">
+
+                                    <TextBlock Text="Over Etch function" 
+                                               FontSize="11" 
+                                               Foreground="#999999"/>
+
+                                    <ComboBox Background="#3E3E40"
+                                              BorderThickness="0"
+                                              Foreground="#3E3E40"
+                                              Padding="8"
+                                              Margin="0,5,0,0"
+                                              ItemsSource="{Binding YesNoOptions}"
+                                              SelectedItem="{Binding SelectedOverEtchText}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1">
+
+                                    <TextBlock Text="Over Etch value" 
+                                               FontSize="11" 
+                                               Foreground="#999999"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBox Grid.Column="0" 
+                                                 Text="{Binding SelectedRecipe.OverEtchValue}" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"/>
+
+                                        <Border Grid.Column="1" 
+                                                Background="#3E3E40"
+                                                CornerRadius="0,3,3,0"
+                                                Padding="8,8">
+
+                                            <TextBlock Text="%" 
+                                                      Foreground="White"/>
+
+                                        </Border>
+
+                                    </Grid>
+
+                                </StackPanel>
+
+                            </Grid>
+
+                        </Border>
+                    </Grid>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="2" 
+                Background="#1f1f1f"
+                Padding="5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" 
+                            Orientation="Horizontal">
+
+                    <Ellipse Width="10" 
+                             Height="10" 
+                             Fill="Green" 
+                             Margin="0,0,8,0"/>
+
+                    <TextBlock Text="System is ready"
+                               Foreground="#999999"/>
+
+                </StackPanel>
+
+                <TextBlock Grid.Column="2" 
+                           Foreground="#999999"> 
+                    
+                    <Run Text="Last modified: "/> 
+                    <Run Text="{Binding SelectedRecipe.LastModifiedAt}"/>
+
+                </TextBlock>
+
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

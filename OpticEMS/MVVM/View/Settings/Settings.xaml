@@ -1,0 +1,78 @@
+﻿<Page x:Class="OpticEMS.MVVM.View.Settings.Settings"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:OpticEMS.MVVM.View.Settings"
+      mc:Ignorable="d"
+      xmlns:oxy="http://oxyplot.org/wpf"
+      Title="Program Settings"
+      Background="#1e1d1d"
+      Foreground="White">
+
+    <Page.Resources>
+
+        <Style TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#1f1f1f"/>
+            <Setter Property="Foreground" Value="#ECF0F1"/>
+            <Setter Property="BorderBrush" Value="#1f1f1f"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        
+        <StackPanel Grid.Column="0" 
+                    Background="#1e1d1d">
+            
+            <Button Content="Chamber settings" 
+                    Command="{Binding ShowChamberSettingsCommand}"
+                    Style="{StaticResource ActionButtonStyle}"
+                    Height="40"
+                    Width="200"
+                    Background="#1e1d1d" 
+                    Foreground="White"
+                    FontWeight="Bold"
+                    Margin="0"/>
+
+            <Button Content="Spectrometer Calibration" 
+                    Command="{Binding ShowCalibrationSettingsCommand}"
+                    Style="{StaticResource ActionButtonStyle}"
+                    Height="40"
+                    Width="200"
+                    Background="#1e1d1d" 
+                    Foreground="White"
+                    FontWeight="Bold"
+                    Margin="0"/>
+
+        </StackPanel>
+
+        <Grid Grid.Column="1">
+            
+            <Frame x:Name="SettingsPrame" 
+               NavigationUIVisibility="Hidden"
+               Content="{Binding CurrentViewModel}"/>
+            
+        </Grid>
+    </Grid>
+</Page>
