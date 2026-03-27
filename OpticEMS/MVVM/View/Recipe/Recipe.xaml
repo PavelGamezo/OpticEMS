@@ -462,7 +462,8 @@
                                                                 HorizontalAlignment="Right" 
                                                                 Background="Transparent"
                                                                 Foreground="Gray"
-                                                                BorderThickness="0"/>
+                                                                BorderThickness="0"
+                                                                CommandParameter="{Binding}"/>
                                                     </Grid>
 
                                                     <TextBox Text="{Binding Wavelength}" 

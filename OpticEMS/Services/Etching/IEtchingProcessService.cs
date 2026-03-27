@@ -4,10 +4,20 @@ namespace OpticEMS.Services.Etching
 {
     public interface IEtchingProcessService
     {
+        double DetectedAtSeconds { get; }
+
+        double OverEtchDurationSeconds { get; }
+
+        double TotalDurationSeconds { get; }
+
         void Start(RecipeModel recipe, uint[] startIntensities);
 
-        EndpointResult CheckEndpoint(uint[] currentIntensities, double elapsedMs);
+        void Pause();
+
+        void Resume();
 
         void Stop();
+
+        EndpointResult Update(uint[] currentIntensities);
     }
 }

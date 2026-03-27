@@ -1,105 +1,180 @@
 ﻿using OpticEMS.MVVM.Models;
+using System.Diagnostics;
 
 namespace OpticEMS.Services.Etching
 {
     public class EtchingProcessService : IEtchingProcessService
     {
-        private RecipeModel? _recipe;
-        private List<double> _baselines = new();
+        private RecipeModel? _recipe; 
+        private readonly Stopwatch _processTimer = new();
+
+        private double[] _baselineSums = Array.Empty<double>();
+        private int _baselineSamplesCount;
+        private double[] _finalBaselines = Array.Empty<double>();
+
         private int _inConfirmCount;
         private int _outConfirmCount;
         private bool _inStableWindow;
+        private bool _isOverEtching;
+        private double _overEtchStartTime;
+        private double _detectedAtMs;
+        private double _finishedAtMs;
 
-        public EndpointResult CheckEndpoint(uint[] currentIntensities, double elapsedMs)
+        private string _currentStatus = "Ready";
+
+        public double DetectedAtSeconds => _detectedAtMs / 1000.0;
+
+        public double TotalDurationSeconds => _finishedAtMs / 1000.0;
+
+        public double OverEtchDurationSeconds => (_finishedAtMs - _detectedAtMs) / 1000.0;
+
+        public EndpointResult Update(uint[] currentIntensities)
         {
+            if (_recipe == null)
+            {
+                return new EndpointResult(false, "No Recipe", false);
+            }
+
+            if (!_processTimer.IsRunning)
+            {
+                return new EndpointResult(false, "Paused", false);
+            }
+
+            double elapsedMs = _processTimer.Elapsed.TotalMilliseconds;
+
             if (elapsedMs >= _recipe.MaxEndpointTime)
             {
-                return new EndpointResult(true, "Force endpoint detected", true);
+                _finishedAtMs = elapsedMs;
+                return new EndpointResult(true, "Force endpoint detected (Timeout)", true);
             }
 
-            if (elapsedMs <= _recipe.InitialDelay && currentIntensities.Length > 0)
+            if (_isOverEtching)
             {
-                _baselines.Clear();
+                double timeInOverEtch = elapsedMs - _overEtchStartTime;
+                double remaining = _recipe.OverEtchValue - timeInOverEtch;
 
-                foreach (var intensity in currentIntensities)
+                if (remaining <= 0)
                 {
-                    _baselines.Add(intensity);
+                    _finishedAtMs = elapsedMs;
+                    return new EndpointResult(true, "Process Finished", false);
                 }
 
-                return new EndpointResult(false, "On going initial delay", false);
+                _currentStatus = $"Over-etching: {remaining / 1000.0:F1}s";
+                return new EndpointResult(false, _currentStatus, false);
             }
 
-            bool isSignalChanged = true;
-
-            for (int i = 0; i < _baselines.Count; i++)
+            if (elapsedMs <= _recipe.InitialDelay)
             {
-                var delta = (currentIntensities[i] - _baselines[i]) / _baselines[i] * 100;
-
-                if (_recipe.DetectionWindowHighs[i] != 0)
+                for (int i = 0; i < currentIntensities.Length; i++)
                 {
-                    bool isValueChanged = Math.Abs(delta) >= _recipe.DetectionWindowHighs[i];
-
-                    isSignalChanged = isSignalChanged && isValueChanged;
+                    if (i < _baselineSums.Length) _baselineSums[i] += currentIntensities[i];
                 }
+                _baselineSamplesCount++;
+
+                _currentStatus = "On going initial delay";
+                return new EndpointResult(false, _currentStatus, false);
             }
+
+            if (_baselineSamplesCount > 0)
+            {
+                for (int i = 0; i < _baselineSums.Length; i++)
+                {
+                    _finalBaselines[i] = _baselineSums[i] / _baselineSamplesCount;
+                }
+                _baselineSamplesCount = 0;
+            }
+
+            bool isSignalChanged = CheckIfSignalChanged(currentIntensities);
 
             if (!_inStableWindow)
             {
-                if (!isSignalChanged)
-                {
-                    _inConfirmCount++;
-                }
-                else
-                {
-                    _inConfirmCount = 0;
-                }
+                _inConfirmCount = !isSignalChanged ? _inConfirmCount + 1 : 0;
 
                 if (_inConfirmCount >= _recipe.WindowInCount)
                 {
                     _inStableWindow = true;
-
-                    return new(false, "Monitoring Endpoint...", false);
                 }
+                _currentStatus = "Stabilizing...";
             }
             else
             {
-                if (isSignalChanged)
-                {
-                    _outConfirmCount++;
-                }
-                else
-                {
-                    _outConfirmCount = 0;
-                }
+                _outConfirmCount = isSignalChanged ? _outConfirmCount + 1 : 0;
 
                 if (_outConfirmCount >= _recipe.WindowOutCount)
                 {
-                    return new(true, "Endpoint detected", false);
+                    _detectedAtMs = elapsedMs;
+
+                    if (_recipe.OverEtchEnabled && _recipe.OverEtchValue > 0)
+                    {
+                        _isOverEtching = true;
+                        _overEtchStartTime = elapsedMs;
+                        _currentStatus = "Over-etching...";
+                        return new EndpointResult(false, _currentStatus, false);
+                    }
+
+                    _finishedAtMs = elapsedMs;
+                    return new EndpointResult(true, "Endpoint Detected", false);
                 }
+                _currentStatus = "Monitoring...";
             }
 
-            return new EndpointResult(false, _inStableWindow ? "Monitoring Endpoint..." : "Stabilizing...", false);
+            return new EndpointResult(false, _currentStatus, false);
+        }
+
+        private bool CheckIfSignalChanged(uint[] currentIntensities)
+        {
+            bool anyChange = false;
+
+            for (int i = 0; i < _finalBaselines.Length; i++)
+            {
+                if (i >= currentIntensities.Length) break;
+                if (_recipe.DetectionWindowHighs[i] == 0) continue;
+
+                double baseline = _finalBaselines[i];
+                if (baseline == 0) continue;
+
+                double deltaPercent = Math.Abs(currentIntensities[i] - baseline) / baseline * 100.0;
+
+                if (deltaPercent >= _recipe.DetectionWindowHighs[i])
+                {
+                    anyChange = true;
+                    break;
+                }
+            }
+            return anyChange;
         }
 
         public void Start(RecipeModel recipe, uint[] startIntensities)
         {
             _recipe = recipe;
+            _processTimer.Restart();
+
             _inConfirmCount = 0;
             _outConfirmCount = 0;
             _inStableWindow = false;
-            _baselines.Clear();
+            _isOverEtching = false;
+            _overEtchStartTime = 0;
+            _detectedAtMs = 0;
+            _finishedAtMs = 0;
 
-            foreach (var startIntensity in startIntensities) 
-            {
-                _baselines.Add(startIntensity);
-            }
+            int count = startIntensities.Length;
+            _baselineSums = new double[count];
+            _baselineSamplesCount = 0;
+            _finalBaselines = new double[count];
+
+            _currentStatus = "On going initial delay";
         }
+
+        public void Pause() => _processTimer.Stop();
+
+        public void Resume() => _processTimer.Start();
 
         public void Stop()
         {
+            _processTimer.Stop();
             _recipe = null;
             _inStableWindow = false;
-            _baselines.Clear();
+            _currentStatus = "Stopped";
         }
     }
 }

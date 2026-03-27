@@ -12,7 +12,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpticEMS\OpticEMS.csproj" />
-    <ProjectReference Include="..\SolarTest.Api\OpticEMS.csproj" />
   </ItemGroup>
 
 </Project>

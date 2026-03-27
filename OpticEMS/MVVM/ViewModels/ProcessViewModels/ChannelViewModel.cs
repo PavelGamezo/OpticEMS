@@ -3,12 +3,12 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
+using OpticEMS.MVVM.Models;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Services.Calibration;
 using OpticEMS.Services.Dialogs;
-using OpticEMS.Services.Export;
-using OpticEMS.MVVM.Models;
 using OpticEMS.Services.Etching;
+using OpticEMS.Services.Export;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Threading;
@@ -33,9 +33,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private CancellationTokenSource _cancellationToken = new();
         private CancellationTokenSource _cancellationTokenStart = new();
         private bool _isRunning;
-        private bool _isEndpointReached; 
         private bool _isPaused;
         private readonly Stopwatch _stopwatch = new();
+
         private double[] _calibrationCoefficients = Array.Empty<double>();
         private DeviceProcessing? _deviceProcessing;
         private int[] _wavelengthsIndices = Array.Empty<int>();
@@ -140,7 +140,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _isRunning = true;
             _isPaused = false;
             _stopwatch.Restart();
-            _exportData.Clear();
+            _exportData.Clear();    
 
             ProcessChartViewModel.SetUpModel(Recipe.Wavelengths, Recipe.WavelengthColors);
 
@@ -162,11 +162,13 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             if (_isPaused)
             {
                 _stopwatch.Stop();
+                _endpointService.Pause();
                 ProcessStatus = "Paused";
             }
             else
             {
                 _stopwatch.Start();
+                _endpointService.Resume();
             }
 
             if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec) 
@@ -178,12 +180,15 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         [RelayCommand]
         public void StopProcess()
         {
-            if (!_isRunning) return;
+            if (!_isRunning)
+            {
+                return;
+            }
 
             _isRunning = false;
             _isPaused = false;
-            _isEndpointReached = false;
             _stopwatch.Stop();
+            _endpointService.Stop();
             _cancellationTokenStart.Cancel();
 
             if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec)
@@ -273,6 +278,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private async Task RunTopPlotLoopAsync(CancellationToken cancellationToken)
         {
             var periodicStopwatch = Stopwatch.StartNew();
+            periodicStopwatch.Start();
+
             long targetNextTickMs = 0;
             int interval = Recipe.DetectionWindowTime;
 
@@ -280,28 +287,26 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 targetNextTickMs += interval;
 
-                if (_isPaused)
+                if (!_isPaused && _isRunning)
                 {
-                    await Task.Delay(Recipe?.DetectionWindowTime ?? 100, cancellationToken);
-                    continue;
-                }
+                    var result = _endpointService.Update(_currentIntensities);
 
-                var elapsed = _stopwatch.Elapsed;
+                    ProcessStatus = result.Status;
 
-                if (Application.Current?.Dispatcher is Dispatcher dispatcher &&
-                    !dispatcher.HasShutdownStarted &&
-                    !dispatcher.HasShutdownFinished)
-                {
-                    await dispatcher.InvokeAsync(() =>
+                    if (Application.Current?.Dispatcher is Dispatcher dispatcher)
                     {
-                        RecordDataForExport(_currentIntensities);
+                        await dispatcher.InvokeAsync(() =>
+                        {
+                            RecordDataForExport(_currentIntensities);
+                            ProcessChartViewModel.UpdateTopPlot(_stopwatch.Elapsed, _currentIntensities);
+                        });
+                    }
 
-                        ProcessChartViewModel.UpdateTopPlot(elapsed, _currentIntensities);
-                    });
-                }
-                else
-                {
-                    break;
+                    if (result.IsDetected)
+                    {
+                        FinishProcess(result.IsForced);
+                        break;
+                    }
                 }
 
                 long currentMs = periodicStopwatch.ElapsedMilliseconds;
@@ -312,6 +317,46 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     await Task.Delay((int)sleepTime, cancellationToken);
                 }
             }
+        }
+
+        private void FinishProcess(bool forced)
+        {
+            _isRunning = false;
+            _isPaused = false;
+            _stopwatch.Stop();
+
+            double endpointTime = _endpointService.DetectedAtSeconds;
+            double overEtchTime = _endpointService.OverEtchDurationSeconds;
+            double totalTime = _endpointService.TotalDurationSeconds;
+
+            _endpointService.Stop();
+
+            if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec)
+            {
+                _deviceProcessing?.NotifyVirtualProcessPaused();
+            }
+
+            string report = forced
+                ? $"Process forced to stop at {totalTime:F1}s (Max Time reached)."
+                : $"Endpoint detected at: {endpointTime:F1} s\n" +
+                  $"Over-etch duration: {overEtchTime:F1} s\n" +
+                  $"Total process time: {totalTime:F1} s";
+
+            ProcessStatus = "Endpoint detected";
+
+            StopProcess();
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                if (forced)
+                {
+                    _dialogService.ShowError(report);
+                }
+                else
+                {
+                    _dialogService.ShowInformation(report);
+                }
+            });
         }
 
         private void LoadCalibration()
@@ -327,29 +372,22 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         {
             try
             {
-                if (!_isRunning)
-                {
-                    Recipe = recipe;
-
-                    SpectrumChartViewModel.UpdateAnnotations(Recipe.Wavelengths, Recipe.WavelengthColors);
-
-                    var targets = recipe.Wavelengths;
-                    _wavelengthsIndices = new int[targets.Count];
-                    var currentWavelengths = _deviceProcessing?.Wavelengths ?? Array.Empty<double>();
-
-                    for (int i = 0; i < targets.Count; i++)
-                    {
-                        _wavelengthsIndices[i] = _wavelengthMapper.FindNearestIndex(currentWavelengths, targets[i]);
-                    }
-
-                    _currentIntensities = new uint[Recipe.Wavelengths.Count];
-
-                    _dialogService.ShowInformation($"Recipe '{Recipe.Name}' for channel {Recipe.Channel + 1} applied successfully.");
-                }
-                else
+                if (_isRunning)
                 {
                     _dialogService.ShowInformation("Cannot apply recipe while process is running. Please stop the process first.");
+
+                    return;
                 }
+
+                Recipe = recipe;
+
+                SpectrumChartViewModel.UpdateAnnotations(Recipe.Wavelengths, Recipe.WavelengthColors);
+
+                UpdateInternalIndexes();
+
+                _currentIntensities = new uint[Recipe.Wavelengths.Count];
+
+                _dialogService.ShowInformation($"Recipe '{Recipe.Name}' for channel {Recipe.Channel + 1} applied successfully.");
             }
             catch (Exception ex)
             {
@@ -359,6 +397,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         private async void TriggerEndpoint(double elapsed, bool forced)
         {
+            _stopwatch.Stop();
             TimeSpan overEtch = TimeSpan.Zero;
 
             if (!forced && Recipe.OverEtchEnabled)
@@ -400,6 +439,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 }
 
                 HandleIncomingSpectrum(message.Intensities, message.Wavelengths);
+
+                UpdateInternalIntensities(message.Intensities, message.Wavelengths);
             });
         }
 
@@ -415,47 +456,26 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 SpectrumChartViewModel.UpdateChart(wavelengths, intensities);
             }, DispatcherPriority.Render);
 
-            _ = Task.Run(() => ProcessSpectrumData(intensities, wavelengths));
+            UpdateInternalIntensities(intensities, wavelengths);
         }
 
-        private void ProcessSpectrumData(uint[] data, double[] wavelengths)
+        private void UpdateInternalIntensities(uint[] intensities, double[] wavelengths)
         {
-            if (Recipe is null || _isPaused)
-            {
-                return;
-            }
-
-            if (_wavelengthsIndices.Length == 0)
-            {
-                var targetWavelengths = Recipe.Wavelengths;
-                _wavelengthsIndices = new int[targetWavelengths.Count];
-
-                for (int i = 0; i < targetWavelengths.Count; i++)
-                {
-                    _wavelengthsIndices[i] = _wavelengthMapper.FindNearestIndex(wavelengths, targetWavelengths[i]);
-                }
-            }
-
             for (int i = 0; i < _wavelengthsIndices.Length; i++)
             {
-                _currentIntensities[i] = data[_wavelengthsIndices[i]];
+                _currentIntensities[i] = intensities[_wavelengthsIndices[i]];
             }
+        }
 
-            if (_isRunning && !_isEndpointReached && !_isPaused)
+        private void UpdateInternalIndexes()
+        {
+            var targets = Recipe.Wavelengths;
+            _wavelengthsIndices = new int[targets.Count];
+            var currentWavelengths = _deviceProcessing?.Wavelengths ?? Array.Empty<double>();
+
+            for (int i = 0; i < targets.Count; i++)
             {
-                var elapsed = _stopwatch.Elapsed.TotalMilliseconds;
-                var result = _endpointService.CheckEndpoint(_currentIntensities, elapsed);
-
-                if (result.Status != ProcessStatus) 
-                {
-                    ProcessStatus = result.Status;
-                }
-
-                if (result.IsDetected)
-                {
-                    _isEndpointReached = true;
-                    TriggerEndpoint(elapsed, result.IsForced);
-                }
+                _wavelengthsIndices[i] = _wavelengthMapper.FindNearestIndex(currentWavelengths, targets[i]);
             }
         }
 
