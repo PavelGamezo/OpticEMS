@@ -40,6 +40,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         private double[] _calibrationCoefficients = Array.Empty<double>();
         private DeviceProcessing? _deviceProcessing;
+        private long _lastUiUpdateMs = 0;
         private int[] _wavelengthsIndices = Array.Empty<int>();
         public uint[] _currentIntensities = Array.Empty<uint>();
 
@@ -143,13 +144,13 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _isPaused = false;
             _stopwatch.Restart();
             _startTime = DateTime.Now;
-            _exportData.Clear();    
+            _exportData.Clear();
 
             ProcessChartViewModel.SetUpModel(Recipe.Wavelengths, Recipe.WavelengthColors);
 
-            _ = Task.Run(() => RunTopPlotLoopAsync(_cancellationTokenStart.Token));
+            _ = Task.Run(() => RunProcessLoopAsync(_cancellationTokenStart.Token));
 
-            _endpointService.Start(Recipe, _currentIntensities.ToArray());
+            _endpointService.Start(Recipe, _currentIntensities);
         }
 
         [RelayCommand]
@@ -196,7 +197,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
             if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec)
             {
-                _deviceProcessing?.NotifyVirtualProcessPaused();
+                _deviceProcessing?.NotifyVirtualProcessStopped();
             }
         }
 
@@ -299,7 +300,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         #region methods
 
-        private async Task RunTopPlotLoopAsync(CancellationToken cancellationToken)
+        private async Task RunProcessLoopAsync(CancellationToken cancellationToken)
         {
             bool overEtchStarted = false;
             var periodicStopwatch = Stopwatch.StartNew();
@@ -338,7 +339,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                                     ProcessChartViewModel.UpdateOverEtchArea(_stopwatch.Elapsed);
                                 }
                             }
-                        });
+                        }, DispatcherPriority.Render);
                     }
 
                     if (result.IsDetected)
@@ -360,21 +361,11 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         private void FinishProcess(bool forced)
         {
-            _isRunning = false;
-            _isPaused = false;
-            _stopwatch.Stop();
-            _endTime = DateTime.Now;
-
             double endpointTime = _endpointService.DetectedAtSeconds;
             double overEtchTime = _endpointService.OverEtchDurationSeconds;
             double totalTime = _endpointService.TotalDurationSeconds;
 
             _endpointService.Stop();
-
-            if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec)
-            {
-                _deviceProcessing?.NotifyVirtualProcessPaused();
-            }
 
             string report = forced
                 ? $"Process at channel {ChannelName} forced to stop at {totalTime:F1}s (Max Time reached)."
@@ -424,7 +415,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 SpectrumChartViewModel.UpdateAnnotations(Recipe.Wavelengths, Recipe.WavelengthColors);
 
                 UpdateInternalIndexes();
-
                 _currentIntensities = new uint[Recipe.Wavelengths.Count];
 
                 _dialogService.ShowInformation($"Recipe '{Recipe.Name}' for channel {Recipe.Channel + 1} applied successfully.");
@@ -434,39 +424,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 _dialogService.ShowError($"Failed to apply recipe: {ex.Message}");
             }
         }
-
-        /*
-        private async void TriggerEndpoint(double elapsed, bool forced)
-        {
-            _stopwatch.Stop();
-            TimeSpan overEtch = TimeSpan.Zero;
-
-            if (!forced && Recipe.OverEtchEnabled)
-            {
-                double overVal = Recipe.OverEtchValue;
-
-                overEtch = TimeSpan.FromMilliseconds(overVal);
-                string overEtchDisplay = overEtch.TotalSeconds.ToString("F1");
-
-                ProcessStatus = $"Over-etching for {overEtchDisplay} seconds...";
-
-                await Task.Delay(overEtch);
-            }
-
-            string message = forced
-                ? "Force endpoint triggered."
-                : $"Endpoint detected at {TimeSpan.FromMilliseconds(elapsed).TotalSeconds:F1}s.\n" +
-                  $"Over-etch duration: {overEtch.TotalSeconds:F1}s";
-
-            ProcessStatus = "Endpoint detected";
-
-            StopProcess();
-
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                _dialogService.ShowInformation(message);
-            });
-        }*/
 
         private bool IsExportEnabled() => _exportData.Count > 0 && !_isRunning;
 
@@ -492,12 +449,15 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 return;
             }
 
-            Application.Current?.Dispatcher?.Invoke(() =>
+            long currentMs = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            if (currentMs - _lastUiUpdateMs > 33)
             {
-                SpectrumChartViewModel.UpdateChart(wavelengths, intensities);
-            }, DispatcherPriority.Render);
-
-            UpdateInternalIntensities(intensities, wavelengths);
+                _lastUiUpdateMs = currentMs;
+                Application.Current?.Dispatcher?.InvokeAsync(() =>
+                {
+                    SpectrumChartViewModel.UpdateChart(wavelengths, intensities);
+                }, DispatcherPriority.Render);
+            }
         }
 
         private void UpdateInternalIntensities(uint[] intensities, double[] wavelengths)

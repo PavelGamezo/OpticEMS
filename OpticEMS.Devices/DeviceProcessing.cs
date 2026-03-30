@@ -161,5 +161,13 @@ namespace OpticEMS.Devices
                 vSpec.PauseProcess();
             }
         }
+
+        public void NotifyVirtualProcessStopped()
+        {
+            if (_device is VirtualSpec vSpec)
+            {
+                vSpec.StopProcess();
+            }
+        }
     }
 }

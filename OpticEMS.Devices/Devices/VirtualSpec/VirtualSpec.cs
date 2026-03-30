@@ -82,6 +82,12 @@ namespace OpticEMS.Devices.Devices.VirtualSpec
 
         public void PauseProcess() => _isRunning = !_isRunning;
 
+        public void StopProcess()
+        {
+            _phase = 1;
+            _isRunning = false;
+        }
+
         private uint[] GenerateSpectrum()
         {
             uint[] data = new uint[PIXELS];

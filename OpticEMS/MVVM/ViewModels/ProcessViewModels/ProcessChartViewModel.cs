@@ -80,6 +80,23 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
+        public void ResetChart()
+        {
+            foreach (var series in PlotModel.Series.OfType<LineSeries>())
+            {
+                series.Points.Clear();
+            }
+
+            PlotModel.Annotations.Clear();
+
+            foreach (var axis in PlotModel.Axes)
+            {
+                axis.Reset();
+            }
+
+            PlotModel.InvalidatePlot(true);
+        }
+
         public void UpdateTopPlot(TimeSpan elapsedTime, uint[] intensities)
         {
             double xValue = DateTimeAxis.ToDouble(_epoch.Add(elapsedTime));
