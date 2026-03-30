@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using OpticEMS.Common.Helpers;
 using OxyPlot;
+using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using System.Windows.Media;
@@ -10,6 +11,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
     public partial class ProcessChartViewModel : ObservableObject
     {
         private readonly DateTime _epoch = new DateTime(2000, 1, 1);
+        private RectangleAnnotation? _activeOverEtchArea;
 
         [ObservableProperty]
         private ViewResolvingPlotModel _plotModel;
@@ -91,6 +93,55 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
 
             PlotModel.InvalidatePlot(true);
+        }
+
+        public void StartOverEtchArea(TimeSpan startTime)
+        {
+            double xValue = DateTimeAxis.ToDouble(_epoch.Add(startTime));
+
+            _activeOverEtchArea = new RectangleAnnotation
+            {
+                MinimumX = xValue,
+                MaximumX = xValue,
+                Fill = OxyColor.FromAColor(30, OxyColors.OrangeRed),
+                Stroke = OxyColors.OrangeRed,
+                StrokeThickness = 1,
+                Layer = AnnotationLayer.BelowSeries,
+                Text = "OVER-ETCHING"
+            };
+
+            PlotModel.Annotations.Add(_activeOverEtchArea);
+            PlotModel.InvalidatePlot(false);
+        }
+
+        public void UpdateOverEtchArea(TimeSpan currentTime)
+        {
+            double xValue = DateTimeAxis.ToDouble(_epoch.Add(currentTime));
+
+            if (_activeOverEtchArea != null)
+            {
+                _activeOverEtchArea.MaximumX = xValue;
+                PlotModel.InvalidatePlot(false);
+            }
+        }
+
+        public void MarkEndpoint(TimeSpan elapsedTime, string label = "Endpoint")
+        {
+            double xValue = DateTimeAxis.ToDouble(_epoch.Add(elapsedTime));
+
+            var marker = new LineAnnotation
+            {
+                Type = LineAnnotationType.Vertical,
+                X = xValue,
+                Color = OxyColors.Red,
+                LineStyle = LineStyle.Dash,
+                StrokeThickness = 2,
+                Text = label,
+                TextColor = OxyColors.White
+            };
+
+            PlotModel.Annotations.Add(marker);
+            PlotModel.InvalidatePlot(false);
         }
     }
 }

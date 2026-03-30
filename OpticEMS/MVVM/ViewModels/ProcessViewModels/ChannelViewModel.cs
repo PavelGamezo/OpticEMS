@@ -301,6 +301,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         private async Task RunTopPlotLoopAsync(CancellationToken cancellationToken)
         {
+            bool overEtchStarted = false;
             var periodicStopwatch = Stopwatch.StartNew();
             periodicStopwatch.Start();
 
@@ -323,6 +324,20 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                         {
                             RecordDataForExport(_currentIntensities);
                             ProcessChartViewModel.UpdateTopPlot(_stopwatch.Elapsed, _currentIntensities);
+
+                            if (result.Status.Contains("Over") || result.Status.Contains("Endpoint Detected"))
+                            {
+                                if (!overEtchStarted)
+                                {
+                                    ProcessChartViewModel.MarkEndpoint(_stopwatch.Elapsed);
+                                    ProcessChartViewModel.StartOverEtchArea(_stopwatch.Elapsed);
+                                    overEtchStarted = true;
+                                }
+                                else
+                                {
+                                    ProcessChartViewModel.UpdateOverEtchArea(_stopwatch.Elapsed);
+                                }
+                            }
                         });
                     }
 
