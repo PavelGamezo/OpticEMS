@@ -27,7 +27,7 @@
             <pset:ChamberSettings/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmproc:ProcessViewModel}">
-            <pproc:Process/>
+            <pproc:ProcessLayout/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmset:SettingsViewModel}">
             <pset:Settings/>

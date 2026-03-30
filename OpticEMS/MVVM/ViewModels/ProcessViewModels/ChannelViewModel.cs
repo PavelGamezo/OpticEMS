@@ -35,6 +35,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private bool _isRunning;
         private bool _isPaused;
         private readonly Stopwatch _stopwatch = new();
+        private DateTime _startTime;
+        private DateTime _endTime;
 
         private double[] _calibrationCoefficients = Array.Empty<double>();
         private DeviceProcessing? _deviceProcessing;
@@ -140,6 +142,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _isRunning = true;
             _isPaused = false;
             _stopwatch.Restart();
+            _startTime = DateTime.Now;
             _exportData.Clear();    
 
             ProcessChartViewModel.SetUpModel(Recipe.Wavelengths, Recipe.WavelengthColors);
@@ -210,7 +213,14 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 if (dialog.ShowDialog() == true)
                 {
-                    _exportManager.ExportAsTextFormat(dialog.FileName, Recipe.Name, ChannelName, Recipe.Wavelengths, _exportData);
+                    double endpointTime = _endpointService.DetectedAtSeconds;
+                    double overEtchDurationSeconds = _endpointService.OverEtchDurationSeconds;
+
+                    var overEtchStartTime = _startTime.AddSeconds(endpointTime);
+                    var overEtchEndTime = overEtchStartTime.AddSeconds(overEtchDurationSeconds);
+
+                    _exportManager.ExportAsTextFormat(dialog.FileName, _startTime, _endTime, overEtchStartTime, overEtchEndTime,
+                        Recipe.Name, ChannelName, Recipe.Wavelengths, _exportData);
 
                     _dialogService.ShowInformation("Data exported successfully.");
                 }
@@ -234,7 +244,14 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 if (dialog.ShowDialog() == true)
                 {
-                    _exportManager.ExportAsXLS(dialog.FileName, Recipe.Name, ChannelName, Recipe.Wavelengths, _exportData);
+                    double endpointTime = _endpointService.DetectedAtSeconds;
+                    double overEtchDurationSeconds = _endpointService.OverEtchDurationSeconds;
+
+                    var overEtchStartTime = _startTime.AddSeconds(endpointTime);
+                    var overEtchEndTime = overEtchStartTime.AddSeconds(overEtchDurationSeconds);
+
+                    _exportManager.ExportAsXLS(dialog.FileName, _startTime, _endTime, overEtchStartTime, overEtchEndTime,
+                        Recipe.Name, ChannelName, Recipe.Wavelengths, _exportData);
 
                     _dialogService.ShowInformation("Data exported successfully.");
                 }
@@ -260,7 +277,14 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 if (dialog.ShowDialog() == true)
                 {
-                    _exportManager.ExportAsTextFormat(dialog.FileName, Recipe.Name, ChannelName, Recipe.Wavelengths, _exportData);
+                    double endpointTime = _endpointService.DetectedAtSeconds;
+                    double overEtchDurationSeconds = _endpointService.OverEtchDurationSeconds;
+
+                    var overEtchStartTime = _startTime.AddSeconds(endpointTime);
+                    var overEtchEndTime = overEtchStartTime.AddSeconds(overEtchDurationSeconds);
+
+                    _exportManager.ExportAsTextFormat(dialog.FileName, _startTime, _endTime, overEtchStartTime, overEtchEndTime,
+                        Recipe.Name, ChannelName, Recipe.Wavelengths, _exportData);
 
                     _dialogService.ShowInformation("Data exported successfully");
                 }
@@ -324,6 +348,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _isRunning = false;
             _isPaused = false;
             _stopwatch.Stop();
+            _endTime = DateTime.Now;
 
             double endpointTime = _endpointService.DetectedAtSeconds;
             double overEtchTime = _endpointService.OverEtchDurationSeconds;
@@ -337,10 +362,10 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
 
             string report = forced
-                ? $"Process forced to stop at {totalTime:F1}s (Max Time reached)."
-                : $"Endpoint detected at: {endpointTime:F1} s\n" +
-                  $"Over-etch duration: {overEtchTime:F1} s\n" +
-                  $"Total process time: {totalTime:F1} s";
+                ? $"Process at channel {ChannelName} forced to stop at {totalTime:F1}s (Max Time reached)."
+                : $"Endpoint detected in channel \n{ChannelName} at: {endpointTime:F1} s\n" +
+                  $"Over-etch duration: {overEtchTime:F2} s\n" +
+                  $"Total process time: {totalTime:F2} s";
 
             ProcessStatus = "Endpoint detected";
 
@@ -395,6 +420,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
+        /*
         private async void TriggerEndpoint(double elapsed, bool forced)
         {
             _stopwatch.Stop();
@@ -425,7 +451,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 _dialogService.ShowInformation(message);
             });
-        }
+        }*/
 
         private bool IsExportEnabled() => _exportData.Count > 0 && !_isRunning;
 
