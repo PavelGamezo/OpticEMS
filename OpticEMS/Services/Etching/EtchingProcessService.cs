@@ -51,13 +51,15 @@ namespace OpticEMS.Services.Etching
             if (_isOverEtching)
             {
                 double timeInOverEtch = elapsedMs - _overEtchStartTime;
-                double remaining = _recipe.OverEtchValue - timeInOverEtch;
 
-                if (remaining <= 0)
+                if (timeInOverEtch >= _recipe.OverEtchValue)
                 {
-                    _finishedAtMs = elapsedMs;
+                    _finishedAtMs = _overEtchStartTime + _recipe.OverEtchValue;
+
                     return new EndpointResult(true, "Process Finished", false);
                 }
+
+                double remaining = _recipe.OverEtchValue - timeInOverEtch;
 
                 _currentStatus = $"Over-etching: {remaining / 1000.0:F1}s";
                 return new EndpointResult(false, _currentStatus, false);
@@ -127,20 +129,33 @@ namespace OpticEMS.Services.Etching
 
             for (int i = 0; i < _finalBaselines.Length; i++)
             {
-                if (i >= currentIntensities.Length) break;
-                if (_recipe.DetectionWindowHighs[i] == 0) continue;
+                if (i >= currentIntensities.Length)
+                {
+                    break;
+                }
+
+                if (_recipe.DetectionWindowHighs[i] == 0)
+                {
+                    continue;
+                }
 
                 double baseline = _finalBaselines[i];
-                if (baseline == 0) continue;
+                if (baseline == 0)
+                {
+                    continue;
+                }
 
                 double deltaPercent = Math.Abs(currentIntensities[i] - baseline) / baseline * 100.0;
-
                 if (deltaPercent >= _recipe.DetectionWindowHighs[i])
                 {
                     anyChange = true;
-                    break;
+                }
+                else
+                {
+                    return false;
                 }
             }
+
             return anyChange;
         }
 

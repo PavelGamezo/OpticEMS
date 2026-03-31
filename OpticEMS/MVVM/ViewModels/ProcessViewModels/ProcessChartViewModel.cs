@@ -69,7 +69,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 var target = new LineSeries
                 {
-                    Title = "Wavelength 1",
+                    Title = $"Wavelength {i + 1}",
                     Color = oxyColor,
                     StrokeThickness = 2,
                     MarkerSize = 3,
@@ -78,23 +78,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 PlotModel.Series.Add(target);
             }
-        }
-
-        public void ResetChart()
-        {
-            foreach (var series in PlotModel.Series.OfType<LineSeries>())
-            {
-                series.Points.Clear();
-            }
-
-            PlotModel.Annotations.Clear();
-
-            foreach (var axis in PlotModel.Axes)
-            {
-                axis.Reset();
-            }
-
-            PlotModel.InvalidatePlot(true);
         }
 
         public void UpdateTopPlot(TimeSpan elapsedTime, uint[] intensities)
@@ -124,7 +107,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 Stroke = OxyColors.OrangeRed,
                 StrokeThickness = 1,
                 Layer = AnnotationLayer.BelowSeries,
-                Text = "OVER-ETCHING"
+                Text = "OVER-ETCHING",
+                FontWeight = FontWeights.Bold,
+                Font = "Segoe UI Semibold",
             };
 
             PlotModel.Annotations.Add(_activeOverEtchArea);
@@ -154,6 +139,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 LineStyle = LineStyle.Dash,
                 StrokeThickness = 2,
                 Text = label,
+                FontWeight = FontWeights.Bold,
+                Font = "Segoe UI Semibold",
                 TextColor = OxyColors.White
             };
 
