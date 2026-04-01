@@ -34,6 +34,9 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         private string _selectedOverEtchText = "No";
 
         [ObservableProperty]
+        private string _selectedAutocalibrationText = "No";
+
+        [ObservableProperty]
         private ObservableCollection<WavelengthMonitorItem> _wavelengthItems = new();
 
         public Action<RecipeModel>? ApplyRecipeRequested { get; set; }
@@ -254,6 +257,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                 LoadWavelengthsToUI();
 
                 SelectedOverEtchText = value.OverEtchEnabled ? "Yes" : "No";
+                SelectedAutocalibrationText = value.AutocalibrationEnabled ? "Yes" : "No";
             }
         }
 
@@ -279,6 +283,14 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             if (SelectedRecipe != null)
             {
                 SelectedRecipe.OverEtchEnabled = (value == "Yes");
+            }
+        }
+
+        partial void OnSelectedAutocalibrationTextChanged(string value)
+        {
+            if (SelectedRecipe != null)
+            {
+                SelectedRecipe.AutocalibrationEnabled = (value == "Yes");
             }
         }
     }

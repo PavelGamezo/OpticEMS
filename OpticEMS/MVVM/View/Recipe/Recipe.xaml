@@ -800,6 +800,74 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    
+                                    <TextBlock Text="Autocalibration" 
+                                               FontSize="12" 
+                                               FontWeight="Bold" 
+                                               Foreground="White"
+                                               Margin="0,5,0,0"/>
+
+                                    <Border Margin="6,5,0,0" 
+                                            Width="14" 
+                                            Height="14" 
+                                            CornerRadius="7" 
+                                            Background="#444444" 
+                                            Cursor="Help"
+                                            VerticalAlignment="Center"
+                                            ToolTipService.InitialShowDelay="100">
+
+                                        <TextBlock Text="?" 
+                                                   FontSize="10" 
+                                                   FontWeight="Bold"
+                                                   Foreground="#AAAAAA" 
+                                                   HorizontalAlignment="Center" 
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,0,1"/>
+
+                                        <Border.ToolTip>
+
+                                            <ToolTip Background="#252526" 
+                                                     Foreground="White" 
+                                                     BorderBrush="#454545"
+                                                     Padding="10"
+                                                     HasDropShadow="True">
+
+                                                <StackPanel Width="200">
+                                                    <TextBlock Text="Autocalibration" 
+                                                               FontWeight="Bold" 
+                                                               Foreground="White"/>
+
+                                                    <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                           Height="108"
+                                                           Width="192"
+                                                           Stretch="Uniform" 
+                                                           Margin="0,5"
+                                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                    <TextBlock Text="Upper intensity limits used as triggers for state changes in the detection algorithm." 
+                                                               Foreground="#CCCCCC" 
+                                                               FontSize="11" 
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+
+                                            </ToolTip>
+
+                                        </Border.ToolTip>
+
+                                    </Border>
+
+                                </StackPanel>
+
+                                <ComboBox Background="#3E3E40"
+                                          BorderThickness="0"
+                                          Foreground="#3E3E40"
+                                          Padding="8"
+                                          Margin="0,5,0,0"
+                                          ItemsSource="{Binding YesNoOptions}"
+                                          SelectedItem="{Binding SelectedAutocalibrationText}"/>
+
                             </StackPanel>
                         </Border>
 

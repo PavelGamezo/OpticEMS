@@ -28,6 +28,8 @@ namespace OpticEMS.MVVM.Models
 
         public int MaxEndpointTime { get; set; }
 
+        public bool AutocalibrationEnabled { get; set; }
+
         public bool OverEtchEnabled { get; set; }
 
         public int OverEtchValue { get; set; }

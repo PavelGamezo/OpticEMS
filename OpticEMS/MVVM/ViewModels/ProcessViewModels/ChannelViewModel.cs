@@ -26,6 +26,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private readonly IEtchingProcessService _endpointService;
         private readonly ISettingsProvider _configureProvider;
         private readonly IExportManager _exportManager;
+        private readonly ICalibrationService _calibrationService;
 
         #endregion
 
@@ -36,6 +37,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private CancellationTokenSource _cancellationTokenStart = new();
         private bool _isRunning;
         private bool _isPaused;
+        private bool _isIndicesCorrected;
         private readonly Stopwatch _stopwatch = new();
         private DateTime _startTime;
         private DateTime _endTime;
@@ -84,7 +86,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             IEtchingProcessService endpointService,
             ISettingsProvider configureProvider,
             IExportManager exportManager,
-            IRecipeFileManager recipeFileManager) 
+            IRecipeFileManager recipeFileManager,
+            ICalibrationService calibrationService) 
         {
             _wavelengthMapper = wavelengthMapper;
             _dialogService = dialogService;
@@ -92,6 +95,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _configureProvider = configureProvider;
             _exportManager = exportManager;
             _recipeFileManager = recipeFileManager;
+            _calibrationService = calibrationService;
 
             _cancellationToken = new CancellationTokenSource();
             _cancellationTokenStart = new CancellationTokenSource();
@@ -201,6 +205,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
             _isRunning = false;
             _isPaused = false;
+            _isIndicesCorrected = false;
             _stopwatch.Stop();
             _endpointService.Stop();
             _cancellationTokenStart.Cancel();
@@ -312,12 +317,12 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         private async Task RunProcessLoopAsync(CancellationToken cancellationToken)
         {
-            bool overEtchStarted = false;
             var periodicStopwatch = Stopwatch.StartNew();
             periodicStopwatch.Start();
 
             long targetNextTickMs = 0;
             int interval = Recipe.DetectionWindowTime;
+            var overEtchStarted = false;
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -426,6 +431,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 UpdateInternalIndexes();
                 _currentIntensities = new uint[Recipe.Wavelengths.Count];
+                _isIndicesCorrected = false;
 
                 _dialogService.ShowInformation($"Recipe '{Recipe.Name}' for channel {Recipe.Channel + 1} applied successfully.");
             }
@@ -472,10 +478,46 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         private void UpdateInternalIntensities(uint[] intensities, double[] wavelengths)
         {
+            if (!_isIndicesCorrected && _isRunning && intensities.Length > 0 && Recipe.AutocalibrationEnabled)
+            {
+                CorrectIndices(intensities);
+                return;
+            }
+
             for (int i = 0; i < _wavelengthsIndices.Length; i++)
             {
-                _currentIntensities[i] = intensities[_wavelengthsIndices[i]];
+                int idx = _wavelengthsIndices[i];
+                _currentIntensities[i] = (idx >= 0 && idx < intensities.Length)
+                    ? intensities[idx]
+                    : 0;
             }
+        }
+
+        private void CorrectIndices(uint[] intensities)
+        {
+            if (_wavelengthsIndices.Length == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _wavelengthsIndices.Length; i++)
+            {
+                _calibrationService.CorrectWavelengthIndices(intensities, ref _wavelengthsIndices[i]);
+            }
+
+            _isIndicesCorrected = true;
+
+            _currentIntensities = new uint[_wavelengthsIndices.Length];
+            for (int i = 0; i < _wavelengthsIndices.Length; i++)
+            {
+                int idx = _wavelengthsIndices[i];
+                _currentIntensities[i] = (idx >= 0 && idx < intensities.Length)
+                    ? intensities[idx]
+                    : 0;
+            }
+
+            SaveUpdatedWavelengths();
+            SpectrumChartViewModel.UpdateAnnotations(Recipe.Wavelengths, Recipe.WavelengthColors);
         }
 
         private void UpdateInternalIndexes()

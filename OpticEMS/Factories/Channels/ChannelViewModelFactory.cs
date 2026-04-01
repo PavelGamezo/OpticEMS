@@ -26,6 +26,7 @@ namespace OpticEMS.Factories.Channels
             ISettingsProvider configProvider = _serviceProvider.GetRequiredService<ISettingsProvider>();
             IExportManager exportManager = _serviceProvider.GetRequiredService<IExportManager>();
             IRecipeFileManager recipeFileManager = _serviceProvider.GetRequiredService<IRecipeFileManager>();
+            ICalibrationService calibrationService = _serviceProvider.GetRequiredService<ICalibrationService>();
 
             var id = configuration.ChannelId;
 
@@ -36,7 +37,8 @@ namespace OpticEMS.Factories.Channels
                 endpointService,
                 configProvider,
                 exportManager,
-                recipeFileManager);
+                recipeFileManager,
+                calibrationService);
         }
     }
 }
