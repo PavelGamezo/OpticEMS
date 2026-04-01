@@ -12,7 +12,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
     {
         [ObservableProperty]
         private ViewResolvingPlotModel _plotModel = SetUpModel();
-        
+
+        public event Action OnWavelengthMoved;
+
         public static ViewResolvingPlotModel SetUpModel()
         {
             var plotModel = new ViewResolvingPlotModel()
@@ -84,27 +86,29 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         }
 
         public void UpdateAnnotations(
-            IReadOnlyList<double> targetWavelengths,
+            IList<double> targetWavelengths,
             IReadOnlyList<Color> wavelengthColors)
         {
-            var oldAnnotations = PlotModel.Annotations
+            var toRemove = PlotModel.Annotations
                 .Where(annotations => annotations.Tag?.ToString() == "WavelengthMarker")
                 .ToList();
 
-            foreach (var old in oldAnnotations)
+            foreach (var old in toRemove)
             {
                 PlotModel.Annotations.Remove(old);
             }
 
             for (int i = 0; i < targetWavelengths.Count; i++)
             {
+                int index = i;
+
                 var oxyColor = OxyColor.FromArgb(
                     wavelengthColors[i].A,
                     wavelengthColors[i].R,
                     wavelengthColors[i].G,
                     wavelengthColors[i].B);
 
-                PlotModel.Annotations.Add(new LineAnnotation
+                var annotation = new LineAnnotation
                 {
                     Type = LineAnnotationType.Vertical,
                     X = targetWavelengths[i],
@@ -112,12 +116,54 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     LineStyle = LineStyle.Dash,
                     StrokeThickness = 2,
                     Tag = "WavelengthMarker",
-                    Text = $"Wavelength: {targetWavelengths[i]}nm"
-                });
+                    Text = $"Wavelength: {targetWavelengths[i]}nm",
+                    ClipByYAxis = true,
+                };
+
+                annotation.MouseDown += (s, e) =>
+                {
+                    if (e.ChangedButton == OxyMouseButton.Left)
+                    {
+                        annotation.StrokeThickness = 4;
+                        PlotModel.InvalidatePlot(false);
+                        e.Handled = true;
+                    }
+                };
+
+                annotation.MouseMove += (s, e) =>
+                {
+                    double newX = annotation.InverseTransform(e.Position).X;
+
+                    newX = Math.Round(newX, 1);
+
+                    annotation.X = newX;
+                    annotation.Text = $"{newX:F1}nm";
+
+                    if (index < targetWavelengths.Count)
+                    {
+                        targetWavelengths[index] = newX;
+                    }
+
+                    PlotModel.InvalidatePlot(false);
+                    e.Handled = true;
+                };
+
+                annotation.MouseUp += (s, e) =>
+                {
+                    annotation.StrokeThickness = 2;
+
+                    OnWavelengthMoved?.Invoke();
+
+                    PlotModel.InvalidatePlot(false);
+                    e.Handled = true;
+                };
+
+                PlotModel.Annotations.Add(annotation);
             }
 
             PlotModel.InvalidatePlot(false);
         }
+
         public void Dispose()
         {
             if (PlotModel != null)

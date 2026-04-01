@@ -9,6 +9,7 @@ using OpticEMS.Services.Calibration;
 using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Etching;
 using OpticEMS.Services.Export;
+using OpticEMS.Services.Files;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Threading;
@@ -20,6 +21,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         #region services
 
         private readonly IWavelengthMapper _wavelengthMapper;
+        private readonly IRecipeFileManager _recipeFileManager;
         private readonly IDialogService _dialogService;
         private readonly IEtchingProcessService _endpointService;
         private readonly ISettingsProvider _configureProvider;
@@ -81,13 +83,15 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             IDialogService dialogService,
             IEtchingProcessService endpointService,
             ISettingsProvider configureProvider,
-            IExportManager exportManager) 
+            IExportManager exportManager,
+            IRecipeFileManager recipeFileManager) 
         {
             _wavelengthMapper = wavelengthMapper;
             _dialogService = dialogService;
             _endpointService = endpointService;
             _configureProvider = configureProvider;
             _exportManager = exportManager;
+            _recipeFileManager = recipeFileManager;
 
             _cancellationToken = new CancellationTokenSource();
             _cancellationTokenStart = new CancellationTokenSource();
@@ -104,6 +108,12 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
             SpectrumChartViewModel = new SpectrumChartViewModel();
             ProcessChartViewModel = new ProcessChartViewModel();
+
+            SpectrumChartViewModel.OnWavelengthMoved += () =>
+            {
+                UpdateInternalIndexes();
+                SaveUpdatedWavelengths();
+            };
 
             Task.Run(() =>
             {
@@ -489,6 +499,22 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             };
 
             _exportData.Add(timePoint);
+        }
+
+        private void SaveUpdatedWavelengths()
+        {
+            Recipe.Wavelengths.Clear();
+
+            foreach (var wavelengthIndex in _wavelengthsIndices)
+            {
+                var wavelength = _wavelengthMapper.FindWavelengthByPixel((uint)wavelengthIndex, _calibrationCoefficients);
+
+                double roundedWavelength = Math.Round(wavelength, 2);
+
+                Recipe.Wavelengths.Add(roundedWavelength);
+            }
+
+            _recipeFileManager.SaveRecipe(Recipe);
         }
 
         public void Dispose() 

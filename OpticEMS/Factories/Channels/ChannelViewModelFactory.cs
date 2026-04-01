@@ -5,6 +5,7 @@ using OpticEMS.Services.Calibration;
 using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Etching;
 using OpticEMS.Services.Export;
+using OpticEMS.Services.Files;
 
 namespace OpticEMS.Factories.Channels
 {
@@ -24,6 +25,7 @@ namespace OpticEMS.Factories.Channels
             IEtchingProcessService endpointService = _serviceProvider.GetRequiredService<IEtchingProcessService>();
             ISettingsProvider configProvider = _serviceProvider.GetRequiredService<ISettingsProvider>();
             IExportManager exportManager = _serviceProvider.GetRequiredService<IExportManager>();
+            IRecipeFileManager recipeFileManager = _serviceProvider.GetRequiredService<IRecipeFileManager>();
 
             var id = configuration.ChannelId;
 
@@ -33,7 +35,8 @@ namespace OpticEMS.Factories.Channels
                 dialogService,
                 endpointService,
                 configProvider,
-                exportManager);
+                exportManager,
+                recipeFileManager);
         }
     }
 }

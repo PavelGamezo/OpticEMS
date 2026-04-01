@@ -287,8 +287,7 @@
 
                         <Border Grid.Row="0" 
                                 Background="#1f1f1f"
-                                Padding="15"
-                                Margin="0,0,0,10">
+                                Padding="15">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -296,114 +295,234 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0" 
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                                    <TextBlock Grid.Column="0" 
                                            Text="{Binding SelectedRecipe.Name}" 
                                            FontSize="24" 
                                            FontWeight="Bold" 
                                            Foreground="White"/>
+
+                                    <Border Margin="10,0,0,0" 
+                                            Width="14" 
+                                            Height="14" 
+                                            CornerRadius="7" 
+                                            Background="#444444" 
+                                            Cursor="Help"
+                                            VerticalAlignment="Center"
+                                            ToolTipService.InitialShowDelay="100">
+
+                                        <TextBlock Text="?" 
+                                                   FontSize="10" 
+                                                   FontWeight="Bold"
+                                                   Foreground="#AAAAAA" 
+                                                   HorizontalAlignment="Center" 
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,0,1"/>
+
+                                        <Border.ToolTip>
+
+                                            <ToolTip Background="#252526" 
+                                                     Foreground="White" 
+                                                     BorderBrush="#454545"
+                                                     Padding="10"
+                                                     HasDropShadow="True">
+
+                                                <StackPanel Width="200">
+
+                                                    <TextBlock Text="Recipe Name" 
+                                                               FontWeight="Bold" 
+                                                               Foreground="White" 
+                                                               Margin="0,0,0,5"/>
+
+                                                    <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                           Height="108"
+                                                           Width="192"
+                                                           Stretch="Uniform" 
+                                                           Margin="0,5"
+                                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                    <TextBlock Text="Unique identifier for the current process configuration." 
+                                                               Foreground="#CCCCCC" 
+                                                               FontSize="11" 
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+
+                                            </ToolTip>
+
+                                        </Border.ToolTip>
+
+                                    </Border>
+                                </StackPanel>
                             </Grid>
                         </Border>
 
                         <Border Grid.Row="1"
-                                Padding="15"
-                                Margin="0,0,0,10">
+                                Padding="15">
 
                             <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
 
-                                <StackPanel Grid.Column="0">
+                                <TextBlock Grid.Row="0" 
+                                           Text="Chamber setup" 
+                                           FontSize="12" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           Margin="0,0,0,5"/>
+
+                                <Grid Grid.Row="1">
                                     
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="Channel" 
-                                                   FontSize="11" 
-                                                   Foreground="#999999" 
-                                                   VerticalAlignment="Center"/>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                                        <Border Margin="6,0,0,0" 
-                                                Width="14" 
-                                                Height="14" 
-                                                CornerRadius="7" 
-                                                Background="#444444" 
-                                                Cursor="Help"
-                                                VerticalAlignment="Center"
-                                                ToolTipService.InitialShowDelay="100">
+                                    <StackPanel Grid.Column="0">
 
-                                            <TextBlock Text="?" 
-                                                       FontSize="10" 
-                                                       FontWeight="Bold"
-                                                       Foreground="#AAAAAA" 
-                                                       HorizontalAlignment="Center" 
-                                                       VerticalAlignment="Center"
-                                                       Margin="0,0,0,1"/>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="Channel" 
+                                                       FontSize="11" 
+                                                       Foreground="#999999" 
+                                                       VerticalAlignment="Center"/>
 
-                                            <Border.ToolTip>
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
 
-                                                <ToolTip Background="#252526" 
-                                                         Foreground="White" 
-                                                         BorderBrush="#454545"
-                                                         Padding="10"
-                                                         HasDropShadow="True">
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
 
-                                                    <StackPanel Width="200">
-                                                        <TextBlock Text="Channel number" 
-                                                                   FontWeight="Bold" 
-                                                                   Foreground="White" 
-                                                                   Margin="0,0,0,5"/>
+                                                <Border.ToolTip>
 
-                                                        <Image Source="pack://application:,,,/Common/Images/splash.png"
-                                                               Height="108"
-                                                               Width="192"
-                                                               Stretch="Uniform" 
-                                                               Margin="0,5"
-                                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
 
-                                                        <TextBlock Text="Ensure the number matches the controlled channel number." 
-                                                                   Foreground="#CCCCCC" 
-                                                                   FontSize="11" 
-                                                                   TextWrapping="Wrap"/>
-                                                    </StackPanel>
+                                                        <StackPanel Width="200">
+                                                            <TextBlock Text="Channel number" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
 
-                                                </ToolTip>
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                            </Border.ToolTip>
+                                                            <TextBlock Text="Ensure the number matches the controlled channel number." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
 
-                                        </Border>
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+                                        </StackPanel>
+
+                                        <TextBox Text="{Binding SelectedRecipe.Channel, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"
+                                                 Margin="0,5,5,0"
+                                                 VerticalContentAlignment="Center"/>
                                     </StackPanel>
 
-                                    <TextBox Text="{Binding SelectedRecipe.Channel, UpdateSourceTrigger=PropertyChanged}" 
-                                             Background="#3E3E40"
-                                             BorderThickness="0"
-                                             Foreground="White"
-                                             Padding="8"
-                                             Margin="0,5,5,0"
-                                             VerticalContentAlignment="Center"/>
-                                </StackPanel>
+                                    <StackPanel Grid.Column="1">
 
-                                <StackPanel Grid.Column="1">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
 
-                                    <TextBlock Text="Process chamber" 
-                                              FontSize="11" 
-                                              Foreground="#999999"/>
+                                            <TextBlock Text="Process chamber" 
+                                                       FontSize="11" 
+                                                       Foreground="#999999"/>
 
-                                    <ComboBox Background="#3E3E40" 
-                                              BorderThickness="0"
-                                              Foreground="#3E3E40"
-                                              Padding="8"
-                                              Margin="0,5,0,0"
-                                              ItemsSource="{Binding ProcessChambers}"
-                                              SelectedItem="{Binding SelectedRecipe.ProcessChamber}"/>
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
 
-                                </StackPanel>
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
 
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="200">
+                                                            <TextBlock Text="Process chamber" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="Ensure the chamber value matches the controlled chamber." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+                                        </StackPanel>
+
+                                        <ComboBox Background="#3E3E40" 
+                                                  BorderThickness="0"
+                                                  Foreground="#3E3E40"
+                                                  Padding="8"
+                                                  Margin="0,5,0,0"
+                                                  ItemsSource="{Binding ProcessChambers}"
+                                                  SelectedItem="{Binding SelectedRecipe.ProcessChamber}"/>
+
+                                    </StackPanel>
+
+                                </Grid>
                             </Grid>
                         </Border>
 
                         <Border Grid.Row="2" 
-                                Padding="15" 
-                                Margin="0,0,0,10">
+                                Padding="15,0,15,0">
 
                             <StackPanel>
 
@@ -412,15 +531,15 @@
                                     <TextBlock Text="Wavelength monitoring" 
                                                FontSize="12" 
                                                FontWeight="Bold" 
-                                               Foreground="White"/>
+                                               Foreground="White"
+                                               Margin="0,5,0,0"/>
 
                                     <Button Content="+ Add"
                                             Style="{StaticResource ActionButtonStyle}"
                                             Foreground="White"
                                             Background="#222120"
                                             Command="{Binding AddWavelengthCommand}" 
-                                            HorizontalAlignment="Right"
-                                            Padding="10,2"/>
+                                            HorizontalAlignment="Right"/>
 
                                 </Grid>
 
@@ -435,7 +554,7 @@
 
                                             <Border BorderBrush="#3E3E40" 
                                                     BorderThickness="1"
-                                                    Margin="5"
+                                                    Margin="0,15,5,0"
                                                     Padding="10" 
                                                     CornerRadius="4"
                                                     Background="#1E1E1E">
@@ -449,16 +568,72 @@
                                                 </Border.Effect>
 
                                                 <StackPanel>
+                                                    
                                                     <Grid>
-                                                        <TextBlock Text="Wavelength (nm)" 
-                                                                   FontSize="11" 
-                                                                   Foreground="#999999"/>
+
+                                                        <StackPanel Orientation="Horizontal">
+                                                            
+                                                            <TextBlock Text="Wavelength" 
+                                                                       FontSize="11" 
+                                                                       Foreground="#999999"/>
+                                                            
+                                                            <Border Margin="6,0,0,0" 
+                                                                    Width="14" 
+                                                                    Height="14" 
+                                                                    CornerRadius="7" 
+                                                                    Background="#444444" 
+                                                                    Cursor="Help"
+                                                                    VerticalAlignment="Center"
+                                                                    ToolTipService.InitialShowDelay="100">
+
+                                                                <TextBlock Text="?" 
+                                                                           FontSize="10" 
+                                                                           FontWeight="Bold"
+                                                                           Foreground="#AAAAAA" 
+                                                                           HorizontalAlignment="Center" 
+                                                                           VerticalAlignment="Center"
+                                                                           Margin="0,0,0,1"/>
+
+                                                                <Border.ToolTip>
+
+                                                                    <ToolTip Background="#252526" 
+                                                                             Foreground="White" 
+                                                                             BorderBrush="#454545"
+                                                                             Padding="10"
+                                                                             HasDropShadow="True">
+
+                                                                        <StackPanel Width="200">
+                                                                            <TextBlock Text="Target Wavelengths (nm)" 
+                                                                                       FontWeight="Bold" 
+                                                                                       Foreground="White" 
+                                                                                       Margin="0,0,0,5"/>
+
+                                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                                   Height="108"
+                                                                                   Width="192"
+                                                                                   Stretch="Uniform" 
+                                                                                   Margin="0,5"
+                                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                                            <TextBlock Text="Specific spectral lines (in nanometers) monitored to track chemical species in the plasma." 
+                                                                                       Foreground="#CCCCCC" 
+                                                                                       FontSize="11" 
+                                                                                       TextWrapping="Wrap"/>
+                                                                        </StackPanel>
+
+                                                                    </ToolTip>
+
+                                                                </Border.ToolTip>
+
+                                                            </Border>
+                                                        </StackPanel>
 
                                                         <Button Content="✕" 
                                                                 Style="{StaticResource ActionButtonStyle}"
                                                                 Command="{Binding DataContext.RemoveWavelengthCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                                Width="25" 
-                                                                Height="25"
+                                                                Width="15" 
+                                                                Height="15"
+                                                                Margin="0"
                                                                 HorizontalAlignment="Right" 
                                                                 Background="Transparent"
                                                                 Foreground="Gray"
@@ -473,16 +648,126 @@
                                                              Padding="8" 
                                                              Margin="0,5"/>
 
+                                                    <StackPanel Orientation="Horizontal">
+
+                                                        <TextBlock Text="Color" 
+                                                                   FontSize="11" 
+                                                                   Foreground="#999999"/>
+                                                        
+                                                        <Border Margin="6,0,0,0" 
+                                                                Width="14" 
+                                                                Height="14" 
+                                                                CornerRadius="7" 
+                                                                Background="#444444" 
+                                                                Cursor="Help"
+                                                                VerticalAlignment="Center"
+                                                                ToolTipService.InitialShowDelay="100">
+
+                                                            <TextBlock Text="?" 
+                                                                       FontSize="10" 
+                                                                       FontWeight="Bold"
+                                                                       Foreground="#AAAAAA" 
+                                                                       HorizontalAlignment="Center" 
+                                                                       VerticalAlignment="Center"
+                                                                       Margin="0,0,0,1"/>
+
+                                                            <Border.ToolTip>
+
+                                                                <ToolTip Background="#252526" 
+                                                                         Foreground="White" 
+                                                                         BorderBrush="#454545"
+                                                                         Padding="10"
+                                                                         HasDropShadow="True">
+
+                                                                    <StackPanel Width="200">
+                                                                        <TextBlock Text="Target colors" 
+                                                                                   FontWeight="Bold" 
+                                                                                   Foreground="White" 
+                                                                                   Margin="0,0,0,5"/>
+
+                                                                        <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                               Height="108"
+                                                                               Width="192"
+                                                                               Stretch="Uniform" 
+                                                                               Margin="0,5"
+                                                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                                        <TextBlock Text="Assigned colors for each wavelength to distinguish them on the real-time charts." 
+                                                                                   Foreground="#CCCCCC" 
+                                                                                   FontSize="11" 
+                                                                                   TextWrapping="Wrap"/>
+                                                                    </StackPanel>
+
+                                                                </ToolTip>
+
+                                                            </Border.ToolTip>
+
+                                                        </Border>
+                                                    </StackPanel>
+
                                                     <xctk:ColorPicker SelectedColor="{Binding Color, UpdateSourceTrigger=PropertyChanged}" 
                                                                       Height="30" Margin="0,5,0,0"
                                                                       Style="{StaticResource DarkColorPicker}" 
                                                                       UsingAlphaChannel="False"/>
 
-                                                    <TextBlock Text="Detection window high"
-                                                               FontSize="11"
-                                                               Margin="0,10,0,0"
-                                                               Foreground="#999999"/>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        
+                                                        <TextBlock Text="Detection window high"
+                                                                   FontSize="11"
+                                                                   Margin="0,10,0,0"
+                                                                   Foreground="#999999"/>
+                                                        
+                                                        <Border Margin="6,10,0,0" 
+                                                                Width="14" 
+                                                                Height="14" 
+                                                                CornerRadius="7" 
+                                                                Background="#444444" 
+                                                                Cursor="Help"
+                                                                VerticalAlignment="Center"
+                                                                ToolTipService.InitialShowDelay="100">
 
+                                                            <TextBlock Text="?" 
+                                                                       FontSize="10" 
+                                                                       FontWeight="Bold"
+                                                                       Foreground="#AAAAAA" 
+                                                                       HorizontalAlignment="Center" 
+                                                                       VerticalAlignment="Center"
+                                                                       Margin="0,0,0,1"/>
+
+                                                            <Border.ToolTip>
+
+                                                                <ToolTip Background="#252526" 
+                                                                         Foreground="White" 
+                                                                         BorderBrush="#454545"
+                                                                         Padding="10"
+                                                                         HasDropShadow="True">
+
+                                                                    <StackPanel Width="200">
+                                                                        <TextBlock Text="Detection window high" 
+                                                                                   FontWeight="Bold" 
+                                                                                   Foreground="White"/>
+
+                                                                        <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                               Height="108"
+                                                                               Width="192"
+                                                                               Stretch="Uniform" 
+                                                                               Margin="0,5"
+                                                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                                        <TextBlock Text="Upper intensity limits used as triggers for state changes in the detection algorithm." 
+                                                                                   Foreground="#CCCCCC" 
+                                                                                   FontSize="11" 
+                                                                                   TextWrapping="Wrap"/>
+                                                                    </StackPanel>
+
+                                                                </ToolTip>
+
+                                                            </Border.ToolTip>
+
+                                                        </Border>
+
+                                                    </StackPanel>
+                                                    
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="*"/>
@@ -519,8 +804,7 @@
                         </Border>
 
                         <Border Grid.Row="3"
-                                Padding="15"
-                                Margin="0,0,0,10">
+                                Padding="15,10,15,0">
 
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -549,9 +833,63 @@
                                                 Grid.Column="0"
                                                 Margin="0,0,10,5">
 
-                                        <TextBlock Text="Initial Delay" 
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                                            <TextBlock Text="Initial Delay" 
                                                    FontSize="11" 
                                                    Foreground="#999999"/>
+
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
+
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
+
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="200">
+                                                            
+                                                            <TextBlock Text="InitialDelay / Ignorance Period (ms)" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="The period at the start of the process where the algorithm ignores signal fluctuations (e.g., during plasma ignition)." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+                                        </StackPanel>
 
                                         <TextBox Text="{Binding SelectedRecipe.InitialDelay}" 
                                                  Background="#3E3E40"
@@ -571,9 +909,63 @@
                                                 Grid.Column="1" 
                                                 Margin="0,0,0,15">
 
-                                        <TextBlock Text="Max. Endpoint Time" 
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            
+                                            <TextBlock Text="Max. Endpoint Time" 
                                                    FontSize="11" 
                                                    Foreground="#999999"/>
+                                            
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
+
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
+
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="200">
+
+                                                            <TextBlock Text="Maximum Process Time" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="A fail-safe timer that forces the process to stop if the Endpoint is not detected within this limit." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+                                        </StackPanel>
 
                                         <TextBox Text="{Binding SelectedRecipe.MaxEndpointTime}" 
                                                  Background="#3E3E40"
@@ -592,10 +984,66 @@
                                                 Grid.Column="2" 
                                                 Margin="5,0,0,5">
 
-                                        <TextBlock Text="Detection window (time)" 
+                                        <StackPanel Orientation="Horizontal">
+
+
+                                            <TextBlock Text="Detection Window Time" 
                                                    FontSize="11" 
                                                    Foreground="#999999"/>
 
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
+
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
+
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="200">
+
+                                                            <TextBlock Text="Detection Window Time / Cycle Time" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="This parameter sets the heartbeat of the detection algorithm. Every {DetectionWindowTime}ms, the system averages points to analyze signal trends. The result must remain stable for {WindowOutCount} consecutive cycles to trigger the process Stop." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+
+                                        </StackPanel>
+                                        
                                         <TextBox Text="{Binding SelectedRecipe.DetectionWindowTime}" 
                                                  Background="#3E3E40"
                                                  BorderThickness="0"
@@ -616,8 +1064,7 @@
 
                         <Border Grid.Row="4"
                                 CornerRadius="5"
-                                Padding="15"
-                                Margin="0,0,0,10">
+                                Padding="15,10,15,0">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -645,9 +1092,63 @@
                                                 Grid.Column="0" 
                                                 Margin="0,0,10,15">
 
-                                        <TextBlock Text="Exposure Time" 
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                                            <TextBlock Text="Exposure Time" 
                                                    FontSize="11" 
                                                    Foreground="#999999"/>
+
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
+
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
+
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="200">
+
+                                                            <TextBlock Text="Exposure Time (ms)" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="The amount of time the spectrometer sensor collects light for a single scan. Higher values increase signal but slow down the sampling rate." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+                                        </StackPanel>
 
                                         <TextBox Text="{Binding SelectedRecipe.ExposureMs}" 
                                                  Background="#3E3E40"
@@ -661,13 +1162,69 @@
                                                    Foreground="#999999"
                                                    Margin="0,2,0,0"/>
                                     </StackPanel>
+                                    
                                     <StackPanel Grid.Row="0" 
                                                 Grid.Column="1" 
                                                 Margin="0,0,10,0">
 
-                                        <TextBlock Text="Windows IN" 
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                                            <TextBlock Text="Windows IN" 
                                                    FontSize="11" 
                                                    Foreground="#999999"/>
+
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
+
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
+
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="200">
+
+                                                            <TextBlock Text="Window In Count" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="Number of raw data points averaged to filter out high-frequency noise from the incoming signal." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+
+                                        </StackPanel>
 
                                         <TextBox Text="{Binding SelectedRecipe.WindowInCount}" 
                                                  Background="#3E3E40"
@@ -679,12 +1236,65 @@
                                     </StackPanel>
 
                                     <StackPanel Grid.Row="0" 
-                                                Grid.Column="2" 
-                                                Margin="0,0,10,0">
+                                                Grid.Column="2">
 
-                                        <TextBlock Text="Windows OUT" 
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                                            <TextBlock Text="Windows OUT" 
                                                    FontSize="11" 
                                                    Foreground="#999999"/>
+
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
+
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
+
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="200">
+
+                                                            <TextBlock Text="Window Out Count" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="Number of consecutive positive readings required to confirm that the Endpoint has actually been reached (prevents false triggers)." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+                                        </StackPanel>
 
                                         <TextBox Text="{Binding SelectedRecipe.WindowOutCount}" 
                                                  Background="#3E3E40"
@@ -695,69 +1305,193 @@
 
                                     </StackPanel>
 
-
                                 </Grid>
                             </Grid>
                         </Border>
 
                         <Border Grid.Row="5"
                                 CornerRadius="5"
-                                Padding="15">
+                                Padding="15,10,15,0">
 
                             <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
 
-                                <StackPanel Grid.Column="0" 
-                                            Margin="0,0,10,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
 
-                                    <TextBlock Text="Over Etch function" 
-                                               FontSize="11" 
-                                               Foreground="#999999"/>
+                                <TextBlock Grid.Row="0" 
+                                           Text="Over Etching Parameters" 
+                                           FontSize="12" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           Margin="0,0,0,5"/>
 
-                                    <ComboBox Background="#3E3E40"
-                                              BorderThickness="0"
-                                              Foreground="#3E3E40"
-                                              Padding="8"
-                                              Margin="0,5,0,0"
-                                              ItemsSource="{Binding YesNoOptions}"
-                                              SelectedItem="{Binding SelectedOverEtchText}"/>
-                                </StackPanel>
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                                <StackPanel Grid.Column="1">
+                                    <StackPanel Grid.Column="0" 
+                                                Margin="0,0,10,0">
 
-                                    <TextBlock Text="Over Etch value" 
-                                               FontSize="11" 
-                                               Foreground="#999999"/>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Orientation="Horizontal">
 
-                                        <TextBox Grid.Column="0" 
-                                                 Text="{Binding SelectedRecipe.OverEtchValue}" 
-                                                 Background="#3E3E40"
-                                                 BorderThickness="0"
-                                                 Foreground="White"
-                                                 Padding="8"/>
+                                            <TextBlock Text="Over Etch Enabled" 
+                                                       FontSize="11" 
+                                                       Foreground="#999999"/>
 
-                                        <Border Grid.Column="1" 
-                                                Background="#3E3E40"
-                                                CornerRadius="0,3,3,0"
-                                                Padding="8,8">
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
 
-                                            <TextBlock Text="%" 
-                                                      Foreground="White"/>
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
 
-                                        </Border>
+                                                <Border.ToolTip>
 
-                                    </Grid>
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
 
-                                </StackPanel>
+                                                        <StackPanel Width="200">
 
+                                                            <TextBlock Text="Enable Over-etch Phase" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="Toggle to allow additional etching after the primary Endpoint is detected." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+
+                                        </StackPanel>
+
+                                        <ComboBox Background="#3E3E40"
+                                                  BorderThickness="0"
+                                                  Foreground="#3E3E40"
+                                                  Padding="8"
+                                                  Margin="0,5,0,0"
+                                                  ItemsSource="{Binding YesNoOptions}"
+                                                  SelectedItem="{Binding SelectedOverEtchText}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1">
+
+                                        <StackPanel Orientation="Horizontal">
+
+                                            <TextBlock Text="Over Etch Value" 
+                                                       FontSize="11" 
+                                                       Foreground="#999999"/>
+
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
+
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
+
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="200">
+
+                                                            <TextBlock Text="Over-etch Duration (ms)" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="The precise amount of extra time the process continues to ensure complete removal of the layer." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+
+                                        </StackPanel>
+                                        <Grid Margin="0,5,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBox Grid.Column="0" 
+                                                     Text="{Binding SelectedRecipe.OverEtchValue}" 
+                                                     Background="#3E3E40"
+                                                     BorderThickness="0"
+                                                     Foreground="White"
+                                                     Padding="8"/>
+
+                                            <Border Grid.Column="1" 
+                                                    Background="#3E3E40"
+                                                    CornerRadius="0,3,3,0"
+                                                    Padding="8,8">
+
+                                                <TextBlock Text="ms" 
+                                                           Foreground="White"/>
+
+                                            </Border>
+
+                                        </Grid>
+
+                                    </StackPanel>
+                                </Grid>
+                                
                             </Grid>
 
                         </Border>

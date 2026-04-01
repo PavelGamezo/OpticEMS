@@ -49,10 +49,10 @@
 
         public double FindWavelengthByPixel(uint pixel, double[]? coefficients)
         {
-            var wavelength = coefficients[0]
-                    + coefficients[1] * pixel
-                    + coefficients[2] * Math.Pow(pixel, 2)
-                    + coefficients[3] * Math.Pow(pixel, 3);
+            var wavelength = coefficients[3]
+                    + coefficients[2] * pixel
+                    + coefficients[1] * Math.Pow(pixel, 2)
+                    + coefficients[0] * Math.Pow(pixel, 3);
 
             return wavelength;
         }
