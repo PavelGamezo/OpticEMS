@@ -20,6 +20,10 @@
     <PackageReference Include="EPPlus" Version="4.5.3.3" />
     <PackageReference Include="Extended.Wpf.Toolkit" Version="5.0.0" />
     <PackageReference Include="MathNet.Numerics" Version="6.0.0-beta2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
     <PackageReference Include="OxyPlot.Wpf" Version="2.2.0" />
@@ -29,6 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpticEMS.Contracts\OpticEMS.Contracts.csproj" />
+    <ProjectReference Include="..\OpticEMS.Data\OpticEMS.Data.csproj" />
     <ProjectReference Include="..\OpticEMS.Devices\OpticEMS.Devices.csproj" />
     <ProjectReference Include="..\OpticEMS.Notifications\OpticEMS.Notifications.csproj" />
   </ItemGroup>

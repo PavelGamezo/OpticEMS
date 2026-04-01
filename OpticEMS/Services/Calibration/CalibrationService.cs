@@ -5,7 +5,6 @@ namespace OpticEMS.Services.Calibration
 {
     public class CalibrationService : ICalibrationService
     {
-        //private const int CORRECTION_PIXELS_WINDOW = 2;
         private const int CORRECTION_PIXELS_WINDOW = 2;
 
         public double[] CalculateCoefficients(IEnumerable<CalibrationPoint> calibrationPoints)
