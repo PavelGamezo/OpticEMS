@@ -10,7 +10,7 @@ namespace OpticEMS.Data.Database.Context
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            var path = Path.Combine("optic_ems.db");
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "optic_ems.db");
 
             optionsBuilder.UseSqlite($"Data Source={path}");
         }

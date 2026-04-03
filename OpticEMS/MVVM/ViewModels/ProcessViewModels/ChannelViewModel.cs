@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
 using OpticEMS.MVVM.Models;
@@ -12,6 +13,7 @@ using OpticEMS.Services.Export;
 using OpticEMS.Services.Files;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
@@ -69,6 +71,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         public ProcessChartViewModel ProcessChartViewModel { get; }
 
+        public SpectralLinesCatalogViewModel SpectralLinesCatalogViewModel { get; }
+
         #endregion
 
         #region props
@@ -80,14 +84,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         #endregion
 
         #region ctor
-        public ChannelViewModel(int id,
-            IWavelengthMapper wavelengthMapper,
-            IDialogService dialogService,
-            IEtchingProcessService endpointService,
-            ISettingsProvider configureProvider,
-            IExportManager exportManager,
-            IRecipeFileManager recipeFileManager,
-            ICalibrationService calibrationService) 
+        public ChannelViewModel(int id, IWavelengthMapper wavelengthMapper, IDialogService dialogService,
+            IEtchingProcessService endpointService, ISettingsProvider configureProvider, IExportManager exportManager,
+            IRecipeFileManager recipeFileManager, ICalibrationService calibrationService, ISpectralLineRepository spectralLineRepository) 
         {
             _wavelengthMapper = wavelengthMapper;
             _dialogService = dialogService;
@@ -112,6 +111,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
             SpectrumChartViewModel = new SpectrumChartViewModel();
             ProcessChartViewModel = new ProcessChartViewModel();
+            SpectralLinesCatalogViewModel = new SpectralLinesCatalogViewModel(
+                ChannelId, spectralLineRepository, dialogService);
 
             SpectrumChartViewModel.OnWavelengthMoved += () =>
             {
@@ -456,6 +457,14 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 UpdateInternalIntensities(message.Intensities, message.Wavelengths);
             });
+
+            WeakReferenceMessenger.Default.Register<SpectralLineSelectionMessage>(this, (recipient, message) =>
+            {
+                if (message.ChannelId == this.ChannelId)
+                {
+                    UpdateSpectrumAnnotations(message.Wavelength, (Color)ColorConverter.ConvertFromString(message.ColorHex));
+                }
+            });
         }
 
         private void HandleIncomingSpectrum(uint[] intensities, double[] wavelengths)
@@ -557,6 +566,27 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
 
             _recipeFileManager.SaveRecipe(Recipe);
+        }
+
+        private void UpdateSpectrumAnnotations(double wavelength, Color color)
+        {
+            Application.Current?.Dispatcher?.Invoke(() =>
+            {
+                var selectedCatalogLines = SpectralLinesCatalogViewModel.SpectralLines
+                    .Where(line => line.IsSelected)
+                    .ToList();
+
+                var wavelengths = selectedCatalogLines.Select(l => l.Wavelength).ToList();
+                var colors = selectedCatalogLines.Select(l => l.LineColor).ToList();
+
+                if (Recipe != null)
+                {
+                    wavelengths.AddRange(Recipe.Wavelengths);
+                    colors.AddRange(Recipe.WavelengthColors);
+                }
+
+                SpectrumChartViewModel.UpdateAnnotations(wavelengths, colors);
+            }, DispatcherPriority.Render);
         }
 
         public void Dispose() 

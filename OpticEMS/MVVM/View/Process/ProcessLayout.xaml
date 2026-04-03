@@ -168,28 +168,9 @@
                                                CanFloat="True">
 
                             <Grid Grid.Column="2" 
-                                  Background="#262726"
-                                  x:Name="SideMenuParent">
-
-                                <Button x:Name="BtnToggleMenu"
-                                        Style="{StaticResource ActionButtonStyle}"
-                                        Width="20" Height="40"
-                                        VerticalAlignment="Center"
-                                        HorizontalAlignment="Left"
-                                        Margin="-20,0,0,0"
-                                        Background="#262726"
-                                        Foreground="Gray"
-                                        Content="▶"
-                                        Cursor="Hand"
-                                        Panel.ZIndex="10">
-
-                                    <Button.Resources>
-                                        <Style TargetType="Border">
-                                            <Setter Property="CornerRadius" Value="5,0,0,5"/>
-                                        </Style>
-                                    </Button.Resources>
-                                </Button>
-                                <Border Background="#262726" x:Name="SideContentBorder">
+                                  Background="#262726">
+                                
+                                <Border Background="#262726">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="*"/>
@@ -315,18 +296,18 @@
                                                                     </Grid.ColumnDefinitions>
 
                                                                     <TextBlock Grid.Column="0" 
-                                                                               Text="Wavelength:" 
-                                                                               Style="{StaticResource ParameterLabelStyle}"/>
+                                                           Text="Wavelength:" 
+                                                           Style="{StaticResource ParameterLabelStyle}"/>
 
                                                                     <StackPanel Grid.Column="1" 
-                                                                                Orientation="Horizontal" 
-                                                                                HorizontalAlignment="Right">
+                                                            Orientation="Horizontal" 
+                                                            HorizontalAlignment="Right">
 
                                                                         <TextBlock Text="{Binding}" 
-                                                                                   Style="{StaticResource ParameterValueStyle}"/>
+                                                               Style="{StaticResource ParameterValueStyle}"/>
 
                                                                         <TextBlock Text=" nm" 
-                                                                                   Style="{StaticResource ParameterLabelStyle}" Margin="2,0,0,5"/>
+                                                               Style="{StaticResource ParameterLabelStyle}" Margin="2,0,0,5"/>
 
                                                                     </StackPanel>
 
@@ -366,6 +347,17 @@
                                     </Grid>
                                 </Border>
                             </Grid>
+                        </xcad:LayoutAnchorable>
+                    </xcad:LayoutAnchorablePane>
+
+                    <xcad:LayoutAnchorablePane DockWidth="360">
+                        <xcad:LayoutAnchorable Title="Spectral Line's Explorer"
+                                               CanClose="False"
+                                               CanAutoHide="True"
+                                               CanFloat="True">
+
+
+                            <ContentControl Content="{Binding SelectedChannel.SpectralLinesCatalogViewModel}" />
                         </xcad:LayoutAnchorable>
                     </xcad:LayoutAnchorablePane>
 

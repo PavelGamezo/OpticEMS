@@ -60,9 +60,6 @@ namespace OpticEMS.ViewModels
         private void ShowRecipe() => CurrentViewModel = _recipeViewModel;
 
         [RelayCommand]
-        private void ShowTab() => CurrentViewModel = _processViewModel;
-
-        [RelayCommand]
         private void MoveWindow() => _windowService.Move();
 
         [RelayCommand]

@@ -25,28 +25,28 @@ namespace OpticEMS.Data.Repositories
             return spectralLine;
         }
 
-        public IEnumerable<SpectralLine> GetLinesAsync()
+        public List<SpectralLine> GetLines()
         {
-            var spectralLines = _context.SpectralLines.AsEnumerable();
+            var spectralLines = _context.SpectralLines.ToList();
 
             return spectralLines;
         }
 
-        public IEnumerable<SpectralLine> GetLinesByElementAsync(string element)
+        public List<SpectralLine> GetLinesByElement(string element)
         {
             var spectralLines = _context.SpectralLines
                 .Where(line => line.Element == element)
                 .OrderBy(line => line.Wavelength)
-                .AsEnumerable();
+                .ToList();
 
             return spectralLines;
         }
 
-        public IEnumerable<SpectralLine> GetLinesByRangeAsync(double minWavelength, double maxWavelength)
+        public List<SpectralLine> GetLinesByRange(double minWavelength, double maxWavelength)
         {
             var spectralLines = _context.SpectralLines
                 .Where(line => line.Wavelength >= minWavelength && line.Wavelength <= maxWavelength)
-                .AsEnumerable();
+                .ToList();
 
             return spectralLines;
         }

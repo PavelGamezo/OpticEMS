@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace OpticEMS.Data.Database.Migrations
+namespace OpticEMS.Data.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -18,7 +18,8 @@ namespace OpticEMS.Data.Database.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Element = table.Column<string>(type: "TEXT", nullable: false),
                     Wavelength = table.Column<double>(type: "REAL", nullable: false),
-                    Ionization = table.Column<string>(type: "TEXT", nullable: false)
+                    Ionization = table.Column<string>(type: "TEXT", nullable: false),
+                    ColorHex = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

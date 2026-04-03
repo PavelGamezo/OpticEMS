@@ -4,11 +4,11 @@
     {
         Task<SpectralLine?> GetLineByIdAsync(int id, CancellationToken cancellationToken);
 
-        IEnumerable<SpectralLine> GetLinesAsync();
+        List<SpectralLine> GetLines();
 
-        IEnumerable<SpectralLine> GetLinesByElementAsync(string element);
+        List<SpectralLine> GetLinesByElement(string element);
 
-        IEnumerable<SpectralLine> GetLinesByRangeAsync(double minWavelength, double maxWavelength);
+        List<SpectralLine> GetLinesByRange(double minWavelength, double maxWavelength);
 
         Task AddLineAsync(SpectralLine line, CancellationToken cancellationToken);
 

@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AvalonDock.Themes.WPFUI" Version="1.1.0" />
+    <PackageReference Include="AvalonDock.Themes.WPFUI" Version="1.0.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Dirkster.AvalonDock" Version="4.72.1" />
     <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
@@ -61,6 +61,10 @@
     <Compile Update="MVVM\View\Windows\ApplicationMessageBox.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Common\Themes\" />
   </ItemGroup>
 
 </Project>

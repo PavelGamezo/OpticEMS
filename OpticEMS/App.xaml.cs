@@ -1,6 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Settings;
+using OpticEMS.Data.Database.Context;
+using OpticEMS.Data.Repositories;
+using OpticEMS.Data.Services;
 using OpticEMS.Factories.Channels;
 using OpticEMS.MVVM.Models;
 using OpticEMS.MVVM.ViewModels.ProcessViewModels;
@@ -50,10 +54,25 @@ namespace OpticEMS
             services.AddScoped<IExportManager, ExportManager>();
             services.AddTransient<IEtchingProcessService, EtchingProcessService>();
 
+            // Repositories
+            services.AddScoped<ISpectralLineRepository, SpectralLineRepository>();
+
+            // Databases
+            services.AddScoped<AppDbContext>();
+
             // Orchestrators
 
             // Factories
             services.AddScoped<IChannelViewModelFactory, ChannelViewModelFactory>();
+
+            services.AddTransient<Func<int, SpectralLinesCatalogViewModel>>(provider =>
+            {
+                return channelId => new SpectralLinesCatalogViewModel(
+                    channelId,
+                    provider.GetRequiredService<ISpectralLineRepository>(),
+                    provider.GetRequiredService<IDialogService>()
+                );
+            });
 
             // ViewModels
             services.AddSingleton<ProcessViewModel>();
@@ -73,6 +92,13 @@ namespace OpticEMS
         protected override async void OnStartup(StartupEventArgs e)
         {
             await Host.StartAsync();
+
+            using (var db = new AppDbContext())
+            {
+                await db.Database.EnsureCreatedAsync();
+
+                await SpectralLinesSeeder.SeedFromCsvAsync(db);
+            }
 
             var mainWindow = Host.Services.GetRequiredService<MainWindow>();
 
