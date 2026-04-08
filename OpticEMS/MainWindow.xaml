@@ -33,7 +33,7 @@
         <DataTemplate DataType="{x:Type vmproc:ChannelViewModel}">
             <pproc:Channel/>
         </DataTemplate>
-            <DataTemplate DataType="{x:Type vmproc:ProcessViewModel}">
+        <DataTemplate DataType="{x:Type vmproc:ProcessViewModel}">
             <pproc:DemoProcess/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmproc:ChannelDetailsViewModel}">

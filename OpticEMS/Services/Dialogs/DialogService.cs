@@ -37,5 +37,10 @@ namespace OpticEMS.Services.Dialogs
 
             return string.Empty;
         }
+
+        public void ShowInformationWithAutoClose(string message, int timeoutMs = 4500)
+        {
+            ApplicationMessageBox.ShowWithAutoClose(message, null, Owner, MessageType.Info);
+        }
     }
 }

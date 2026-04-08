@@ -15,7 +15,8 @@
     <Grid>
         <xcad:DockingManager 
             DocumentsSource="{Binding Channels}"
-            ActiveContent="{Binding SelectedChannel, Converter={StaticResource ActiveContentConverter}}">
+            ActiveContent="{Binding SelectedChannel, Mode=TwoWay, Converter={StaticResource ActiveContentConverter}}"
+            Validation.ErrorTemplate="{x:Null}">
 
             <DockingManager.Theme>
                 <VS2022DarkTheme/>

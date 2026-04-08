@@ -5,6 +5,7 @@ using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
 using OpticEMS.MVVM.Models;
+using OpticEMS.MVVM.View.Windows;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Services.Calibration;
 using OpticEMS.Services.Dialogs;
@@ -43,7 +44,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private readonly Stopwatch _stopwatch = new();
         private DateTime _startTime;
         private DateTime _endTime;
-
+        private ApplicationMessageBox? _activeDialog;
         private double[] _calibrationCoefficients = Array.Empty<double>();
         private DeviceProcessing? _deviceProcessing;
         private long _lastUiUpdateMs = 0;
@@ -392,8 +393,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _endpointService.Stop();
 
             string report = forced
-                ? $"Process at channel {ChannelName} forced to stop at {totalTime:F1}s (Max Time reached)."
-                : $"Endpoint detected in channel \n{ChannelName} at: {endpointTime:F1} s\n" +
+                ? $"Process at channel {ChannelName} forced to stop at {totalTime:F2}s (Max Time reached)."
+                : $"Endpoint detected in channel \n{ChannelName} at: {endpointTime:F2} s\n" +
                   $"Over-etch duration: {overEtchTime:F2} s\n" +
                   $"Total process time: {totalTime:F2} s";
 
@@ -409,7 +410,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 }
                 else
                 {
-                    _dialogService.ShowInformation(report);
+                    _dialogService.ShowInformationWithAutoClose(report);
                 }
             });
         }

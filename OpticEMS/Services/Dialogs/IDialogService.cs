@@ -9,5 +9,7 @@
         void ShowInformation(string message);
 
         string? ShowRenameQuestion(string currentName);
+
+        void ShowInformationWithAutoClose(string message, int timeoutMs = 3000);
     }
 }

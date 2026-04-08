@@ -1,8 +1,5 @@
 ﻿using AvalonDock.Layout;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Text;
 using System.Windows.Data;
 
 namespace OpticEMS.Common.Helpers
@@ -18,11 +15,20 @@ namespace OpticEMS.Common.Helpers
         {
             if (value is LayoutContent layoutContent)
             {
-                if (layoutContent.Content != null)
-                    return layoutContent.Content;
+                return layoutContent.Content ?? value;
+            }
 
-                if (layoutContent is LayoutDocument doc && doc.Content != null)
-                    return doc.Content;
+            // Если пришёл ContentPresenter или другой контрол
+            if (value is System.Windows.FrameworkElement fe)
+            {
+                var parent = System.Windows.Media.VisualTreeHelper.GetParent(fe);
+                while (parent != null)
+                {
+                    if (parent is LayoutContent lc)
+                        return lc.Content ?? value;
+
+                    parent = System.Windows.Media.VisualTreeHelper.GetParent(parent);
+                }
             }
 
             return value;
