@@ -10,10 +10,12 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
     {
         private readonly ISpectralLineRepository _spectralLineRepository;
         private readonly IDialogService _dialogService;
-
         private readonly int _channelId;
 
-        public SpectralLinesCatalogViewModel(int channelId, 
+        private List<SpectralLineModel> _allLines = new();
+
+        public SpectralLinesCatalogViewModel(
+            int channelId,
             ISpectralLineRepository spectralLineRepository,
             IDialogService dialogService)
         {
@@ -26,186 +28,121 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             MinWavelength = 200;
             MaxWavelength = 800;
 
-            LoadData();
-            LoadAvailableElements();
-            LoadAvailableIonizations();
+            _ = Initialize();
         }
 
-        public IEnumerable<SpectralLineModel> SelectedSpectralLines
+        private async Task Initialize()
+        {
+            await LoadDataAsync();
+            UpdateAvailableElements();
+            UpdateAvailableIonizations();
+            ApplyFilters();
+        }
+
+        public IEnumerable<SpectralLineModel> SelectedSpectralLines 
             => SpectralLines.Where(line => line.IsSelected);
 
         [ObservableProperty]
-        private ObservableCollection<SpectralLineModel> _spectralLines = new();
+        private ObservableCollection<SpectralLineModel> spectralLines = new();
 
         [ObservableProperty]
-        private ObservableCollection<string> _availableElements = new();
+        private ObservableCollection<string> availableElements = new();
 
         [ObservableProperty]
-        private string _selectedElement;
+        private string selectedElement;
 
         [ObservableProperty]
-        private ObservableCollection<string> _availableIonizations = new();
+        private ObservableCollection<string> availableIonizations = new();
 
         [ObservableProperty]
-        private string _selectedIonization;
+        private string selectedIonization;
 
         [ObservableProperty]
-        private double _minWavelength = 200;
+        private double minWavelength;
 
         [ObservableProperty]
-        private double _maxWavelength = 800;
-        
-        private void LoadAvailableIonizations()
+        private double maxWavelength;
+
+
+        private async Task LoadDataAsync()
         {
-            AvailableIonizations.Clear();
-
-            var availableElements = SpectralLines
-                .Select(line => line.Ionization)
-                .Distinct()
-                .OrderBy(element => element)
-                .ToList();
-
-            foreach (var element in availableElements)
+            try
             {
-                AvailableIonizations.Add(element);
+                var lines = await _spectralLineRepository.GetLinesAsync();
+
+                _allLines = lines.Select(dbLine => new SpectralLineModel(_channelId)
+                {
+                    Id = dbLine.Id,
+                    Element = dbLine.Element,
+                    Ionization = dbLine.Ionization,
+                    Wavelength = dbLine.Wavelength,
+                    ColorHex = dbLine.ColorHex ?? "#3498DB"
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowError($"Data load error: {ex.Message}");
             }
         }
 
-        private void LoadAvailableElements()
+        private void ApplyFilters()
+        {
+            if (_allLines.Count == 0)
+                return;
+
+            var filtered = _allLines
+                .Where(l => l.Wavelength >= MinWavelength && l.Wavelength <= MaxWavelength)
+                .Where(l => SelectedElement == null || l.Element == SelectedElement)
+                .Where(l => SelectedIonization == null || l.Ionization == SelectedIonization)
+                .ToList();
+
+            SpectralLines.Clear();
+            foreach (var line in filtered)
+                SpectralLines.Add(line);
+        }
+
+        private void UpdateAvailableElements()
         {
             AvailableElements.Clear();
 
-            var availableElements = SpectralLines
-                .Select(line => line.Element)
-                .Distinct()
-                .OrderBy(element => element)
-                .ToList();
+            foreach (var el in _allLines.Select(l => l.Element).Distinct().OrderBy(x => x))
+                AvailableElements.Add(el);
 
-            foreach (var element in availableElements)
+            if (!AvailableElements.Contains(SelectedElement))
             {
-                AvailableElements.Add(element);
+                SelectedElement = AvailableElements.FirstOrDefault();
             }
         }
 
-        private void LoadData()
+        private void UpdateAvailableIonizations()
         {
-            try
-            {
-                var lines = _spectralLineRepository.GetLines();
+            AvailableIonizations.Clear();
 
-                SpectralLines.Clear();
+            foreach (var ion in _allLines.Select(l => l.Ionization).Distinct().OrderBy(x => x))
+                AvailableIonizations.Add(ion);
 
-                foreach (var dbLine in lines)
-                {
-                    var model = new SpectralLineModel(_channelId)
-                    {
-                        Id = dbLine.Id,
-                        Element = dbLine.Element,
-                        Ionization = dbLine.Ionization,
-                        Wavelength = dbLine.Wavelength,
-                        ColorHex = dbLine.ColorHex ?? "#3498DB"
-                    };
-
-                    SpectralLines.Add(model);
-                }
-            }
-            catch (Exception exception)
-            {
-                _dialogService.ShowError($"Data export error: {exception.Message}");
-            }
+            if (!AvailableIonizations.Contains(SelectedIonization))
+                SelectedIonization = AvailableIonizations.FirstOrDefault();
         }
 
-        private void LoadDataByChangingWavelength()
+        partial void OnSelectedElementChanged(string value)
         {
-            try
-            {
-                var lines = _spectralLineRepository.GetLinesByRange(MinWavelength, MaxWavelength);
-
-                SpectralLines.Clear();
-
-                foreach (var dbLine in lines)
-                {
-                    var model = new SpectralLineModel(_channelId)
-                    {
-                        Id = dbLine.Id,
-                        Element = dbLine.Element,
-                        Ionization = dbLine.Ionization,
-                        Wavelength = dbLine.Wavelength,
-                        ColorHex = dbLine.ColorHex ?? "#3498DB"
-                    };
-
-                    SpectralLines.Add(model);
-                }
-            }
-            catch (Exception exception)
-            {
-                _dialogService.ShowError($"Data export error: {exception.Message}");
-            }
+            ApplyFilters();
         }
 
-        private void LoadDataByChangingElement()
+        partial void OnSelectedIonizationChanged(string value)
         {
-            try
-            {
-                var lines = _spectralLineRepository.GetLinesByElement(SelectedElement);
-
-                SpectralLines.Clear();
-
-                foreach (var dbLine in lines)
-                {
-                    var model = new SpectralLineModel(_channelId)
-                    {
-                        Id = dbLine.Id,
-                        Element = dbLine.Element,
-                        Ionization = dbLine.Ionization,
-                        Wavelength = dbLine.Wavelength,
-                        ColorHex = dbLine.ColorHex ?? "#3498DB"
-                    };
-
-                    SpectralLines.Add(model);
-                }
-            }
-            catch (Exception exception)
-            {
-                _dialogService.ShowError($"Data export error: {exception.Message}");
-            }
+            ApplyFilters();
         }
 
-        private void LoadDataByChangingIonization()
+        partial void OnMinWavelengthChanged(double value)
         {
-            try
-            {
-                var lines = _spectralLineRepository.GetLinesByElement(SelectedIonization);
-
-                SpectralLines.Clear();
-
-                foreach (var dbLine in lines)
-                {
-                    var model = new SpectralLineModel(_channelId)
-                    {
-                        Id = dbLine.Id,
-                        Element = dbLine.Element,
-                        Ionization = dbLine.Ionization,
-                        Wavelength = dbLine.Wavelength,
-                        ColorHex = dbLine.ColorHex ?? "#3498DB"
-                    };
-
-                    SpectralLines.Add(model);
-                }
-            }
-            catch (Exception exception)
-            {
-                _dialogService.ShowError($"Data export error: {exception.Message}");
-            }
+            ApplyFilters();
         }
 
-        partial void OnSelectedElementChanged(string value) => LoadDataByChangingElement();
-
-        partial void OnSelectedIonizationChanged(string value) => LoadDataByChangingIonization();
-
-        partial void OnMinWavelengthChanged(double value) => LoadDataByChangingWavelength();
-
-        partial void OnMaxWavelengthChanged(double value) => LoadDataByChangingWavelength();
-
+        partial void OnMaxWavelengthChanged(double value)
+        {
+            ApplyFilters();
+        }
     }
 }

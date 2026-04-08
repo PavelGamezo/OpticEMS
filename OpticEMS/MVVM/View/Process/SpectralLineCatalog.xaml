@@ -8,8 +8,8 @@
 
     <UserControl.Resources>
         <SolidColorBrush x:Key="PrimaryAccent" Color="#007ACC"/>
-        <SolidColorBrush x:Key="BgDark" Color="#1E1E1E"/>
-        <SolidColorBrush x:Key="BgLighter" Color="#2D2D30"/>
+        <SolidColorBrush x:Key="BgDark" Color="#1f1f1f"/>
+        <SolidColorBrush x:Key="BgLighter" Color="#272727"/>
         <SolidColorBrush x:Key="TextMuted" Color="#969696"/>
         <SolidColorBrush x:Key="TextMain" Color="#E0E0E0"/>
 
@@ -37,7 +37,7 @@
             <Setter Property="ColumnHeaderStyle">
                 <Setter.Value>
                     <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="#1A1A1A"/>
+                        <Setter Property="Background" Value="#272727"/>
                         <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
                         <Setter Property="Padding" Value="10,8"/>
                         <Setter Property="FontWeight" Value="SemiBold"/>
@@ -88,6 +88,7 @@
                 Margin="12" 
                 Padding="16" 
                 CornerRadius="4">
+            
             <Border.Effect>
                 <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
             </Border.Effect>
@@ -103,10 +104,24 @@
                     </Grid.ColumnDefinitions>
 
                     <TextBlock Text="Element" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextMuted}"/>
-                    <ComboBox Grid.Column="1" Foreground="Black" ItemsSource="{Binding AvailableElements}" SelectedItem="{Binding SelectedElement}"/>
+                    <ComboBox Grid.Column="1" 
+                              Foreground="White" 
+                              ItemsSource="{Binding AvailableElements}"
+                              SelectedItem="{Binding SelectedElement}"
+                              Style="{StaticResource ComboBoxStyle}"
+                              Background="#272727"
+                              BorderBrush="#272727"
+                              Width="80"/>
 
                     <TextBlock Text="Ion" Grid.Column="3" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextMuted}"/>
-                    <ComboBox Grid.Column="4" Foreground="Black" ItemsSource="{Binding AvailableIonizations}" SelectedItem="{Binding SelectedIonization}"/>
+                    <ComboBox Grid.Column="4" 
+                              Foreground="White" 
+                              ItemsSource="{Binding AvailableIonizations}" 
+                              SelectedItem="{Binding SelectedIonization}"
+                              Style="{StaticResource ComboBoxStyle}"
+                              Background="#272727"
+                              BorderBrush="#272727"
+                              Width="80"/>
                 </Grid>
 
                 <StackPanel>

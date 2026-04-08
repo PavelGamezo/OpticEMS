@@ -6,7 +6,9 @@
 
     <Application.Resources>
 
-        <Style x:Key="ModernContextMenu" TargetType="ContextMenu">
+        <ResourceDictionary>
+
+            <Style x:Key="ModernContextMenu" TargetType="ContextMenu">
             <Setter Property="Background" Value="#1B1B1C"/>
             <Setter Property="BorderBrush" Value="#333333"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -472,6 +474,14 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary Source="/AvalonDock.Themes.VS2022;component/DarkBrushs.xaml" />
+            <ResourceDictionary Source="/AvalonDock.Themes.VS2022;component/LightBrushs.xaml" />
+            <ResourceDictionary Source="/AvalonDock.Themes.VS2022;component/BlueBrushs.xaml" />
+        </ResourceDictionary.MergedDictionaries>
+
+        </ResourceDictionary>
     </Application.Resources>
 </Application>
 

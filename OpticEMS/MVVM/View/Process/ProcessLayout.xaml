@@ -3,7 +3,8 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:xcad="https://github.com/Dirkster99/AvalonDock"
+      xmlns:xcad="clr-namespace:AvalonDock;assembly=AvalonDock"
+      xmlns:ml="clr-namespace:AvalonDock.Themes.VS2022.Themes;assembly=AvalonDock.Themes.VS2022"
       mc:Ignorable="d"
       d:DesignHeight="700"
       d:DesignWidth="1200"
@@ -13,14 +14,14 @@
         <xcad:DockingManager x:Name="DockManager">
 
             <xcad:DockingManager.Theme>
-                <xcad:Vs2013DarkTheme/>
+                <VS2022DarkTheme/>
             </xcad:DockingManager.Theme>
 
-            <xcad:LayoutRoot>
-                <xcad:LayoutPanel Orientation="Horizontal">
+            <LayoutRoot>
+                <LayoutPanel Orientation="Horizontal">
 
-                    <xcad:LayoutDocumentPane>
-                        <xcad:LayoutDocument Title="Process View" CanClose="False">
+                    <LayoutDocumentPane>
+                        <LayoutDocument Title="Process View" CanClose="False">
 
                             <Grid Grid.Column="0">
                                 <Grid.RowDefinitions>
@@ -158,11 +159,11 @@
 
                                 </Border>
                             </Grid>
-                        </xcad:LayoutDocument>
-                    </xcad:LayoutDocumentPane>
+                        </LayoutDocument>
+                    </LayoutDocumentPane>
 
-                    <xcad:LayoutAnchorablePane DockWidth="360">
-                        <xcad:LayoutAnchorable Title="Channels &amp; Details"
+                    <LayoutAnchorablePane DockWidth="360">
+                        <LayoutAnchorable Title="Channels &amp; Details"
                                                CanClose="False"
                                                CanAutoHide="True"
                                                CanFloat="True">
@@ -347,22 +348,22 @@
                                     </Grid>
                                 </Border>
                             </Grid>
-                        </xcad:LayoutAnchorable>
-                    </xcad:LayoutAnchorablePane>
+                        </LayoutAnchorable>
+                    </LayoutAnchorablePane>
 
-                    <xcad:LayoutAnchorablePane DockWidth="360">
-                        <xcad:LayoutAnchorable Title="Spectral Line's Explorer"
+                    <LayoutAnchorablePane DockWidth="360">
+                        <LayoutAnchorable Title="Spectral Line's Explorer"
                                                CanClose="False"
                                                CanAutoHide="True"
                                                CanFloat="True">
 
 
                             <ContentControl Content="{Binding SelectedChannel.SpectralLinesCatalogViewModel}" />
-                        </xcad:LayoutAnchorable>
-                    </xcad:LayoutAnchorablePane>
+                        </LayoutAnchorable>
+                    </LayoutAnchorablePane>
 
-                </xcad:LayoutPanel>
-            </xcad:LayoutRoot>
+                </LayoutPanel>
+            </LayoutRoot>
         </xcad:DockingManager>
     </Grid>
 </Page>

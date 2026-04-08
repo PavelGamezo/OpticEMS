@@ -27,7 +27,10 @@
             <pset:ChamberSettings/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmproc:ProcessViewModel}">
-            <pproc:ProcessLayout/>
+            <pproc:DemoProcess/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmproc:ChannelDetailsViewModel}">
+            <pproc:ChannelDetails/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmset:SettingsViewModel}">
             <pset:Settings/>
@@ -312,7 +315,7 @@
                                 VerticalAlignment="Center"
                                 Height="45">
 
-                        <ToggleButton Content="Process"
+                        <ToggleButton Content="Process Monitoring"
                                       Style="{StaticResource TabButtonStyle}"
                                       Command="{Binding ShowSygnalCommand}"
                                       IsChecked="{Binding IsProcessSelected, Mode=OneWay}"
