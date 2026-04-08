@@ -73,6 +73,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         public SpectralLinesCatalogViewModel SpectralLinesCatalogViewModel { get; }
 
+        public ChannelDetailsViewModel ChannelDetailsViewModel { get; }
+
         #endregion
 
         #region props
@@ -113,6 +115,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             ProcessChartViewModel = new ProcessChartViewModel();
             SpectralLinesCatalogViewModel = new SpectralLinesCatalogViewModel(
                 ChannelId, spectralLineRepository, dialogService);
+            ChannelDetailsViewModel = new ChannelDetailsViewModel(this);
+
 
             SpectrumChartViewModel.OnWavelengthMoved += () =>
             {
@@ -197,7 +201,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         }
 
         [RelayCommand]
-        public void StopProcess()
+        public async Task StopProcessAsync()
         {
             if (!_isRunning)
             {
@@ -214,6 +218,10 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec)
             {
                 _deviceProcessing?.NotifyVirtualProcessStopped();
+
+                await Task.Delay(5000);
+
+                StartProcessAsync();
             }
         }
 
@@ -391,7 +399,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
             ProcessStatus = "Endpoint detected";
 
-            StopProcess();
+            StopProcessAsync();
 
             Application.Current.Dispatcher.Invoke(() =>
             {

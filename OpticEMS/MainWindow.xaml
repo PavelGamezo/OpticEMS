@@ -10,6 +10,7 @@
         xmlns:pproc="clr-namespace:OpticEMS.MVVM.View.Process"
         xmlns:pset="clr-namespace:OpticEMS.MVVM.View.Settings"
         xmlns:prec="clr-namespace:OpticEMS.MVVM.View.Recipe"
+        xmlns:help="clr-namespace:OpticEMS.Common.Helpers"
         xmlns:oxy="http://oxyplot.org/wpf"
         mc:Ignorable="d"
         Background="#1C2833"
@@ -20,13 +21,19 @@
         FontFamily="Segoe UI Semibold">
 
     <Window.Resources>
+
+        <help:ActiveContentConverter x:Key="ActiveContentConverter" />
+
         <DataTemplate DataType="{x:Type vmset:CalibrationSettingsViewModel}">
             <pset:CalibrationSettings/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmset:ChamberSettingsViewModel}">
             <pset:ChamberSettings/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type vmproc:ProcessViewModel}">
+        <DataTemplate DataType="{x:Type vmproc:ChannelViewModel}">
+            <pproc:Channel/>
+        </DataTemplate>
+            <DataTemplate DataType="{x:Type vmproc:ProcessViewModel}">
             <pproc:DemoProcess/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmproc:ChannelDetailsViewModel}">
