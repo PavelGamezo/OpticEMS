@@ -21,6 +21,25 @@ namespace OpticEMS.MVVM.View.Process
         public DemoProcess()
         {
             InitializeComponent();
+
+            dockingManager.Loaded += DockingManager_Loaded;
+        }
+
+        private void DockingManager_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Если нужно принудительно пересоздать layout
+                if (dockingManager.Layout == null || dockingManager.Layout.RootPanel == null)
+                {
+                    dockingManager.Layout = new AvalonDock.Layout.LayoutRoot();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Логирование
+                System.Diagnostics.Debug.WriteLine("AvalonDock init error: " + ex);
+            }
         }
     }
 }

@@ -19,6 +19,7 @@ using OpticEMS.Services.Spectrometers;
 using OpticEMS.Services.Times;
 using OpticEMS.Services.Windows;
 using OpticEMS.ViewModels;
+using System.IO;
 using System.Windows;
 
 namespace OpticEMS
@@ -91,6 +92,8 @@ namespace OpticEMS
 
         protected override async void OnStartup(StartupEventArgs e)
         {
+            Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+
             await Host.StartAsync();
 
             using (var db = new AppDbContext())

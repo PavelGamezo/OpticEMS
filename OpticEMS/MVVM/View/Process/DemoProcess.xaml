@@ -13,9 +13,10 @@
       Title="Process">
 
     <Grid>
-        <xcad:DockingManager 
+        <xcad:DockingManager
+            x:Name="dockingManager"
             DocumentsSource="{Binding Channels}"
-            ActiveContent="{Binding SelectedChannel, Mode=TwoWay, Converter={StaticResource ActiveContentConverter}}"
+            ActiveContent="{Binding SelectedChannel, Mode=TwoWay, Converter={StaticResource ActiveContentConverter}, Delay=200}"
             Validation.ErrorTemplate="{x:Null}">
 
             <DockingManager.Theme>

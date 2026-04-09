@@ -18,7 +18,6 @@ namespace OpticEMS.Common.Helpers
                 return layoutContent.Content ?? value;
             }
 
-            // Если пришёл ContentPresenter или другой контрол
             if (value is System.Windows.FrameworkElement fe)
             {
                 var parent = System.Windows.Media.VisualTreeHelper.GetParent(fe);
