@@ -50,6 +50,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private long _lastUiUpdateMs = 0;
         private int[] _wavelengthsIndices = Array.Empty<int>();
         public uint[] _currentIntensities = Array.Empty<uint>();
+        private bool _isDemoMode = false;
 
         #endregion
 
@@ -87,6 +88,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         #endregion
 
         #region ctor
+
         public ChannelViewModel(int id, IWavelengthMapper wavelengthMapper, IDialogService dialogService,
             IEtchingProcessService endpointService, ISettingsProvider configureProvider, IExportManager exportManager,
             IRecipeFileManager recipeFileManager, ICalibrationService calibrationService, ISpectralLineRepository spectralLineRepository) 
@@ -129,6 +131,11 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 _deviceProcessing.StartContinueScan(1, 1, _cancellationToken.Token);
             });
+        }
+
+        public ChannelViewModel()
+        {
+            
         }
 
         #endregion
@@ -220,10 +227,19 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 _deviceProcessing?.NotifyVirtualProcessStopped();
 
-                await Task.Delay(5000);
+                if (_isDemoMode)
+                {
+                    await Task.Delay(5000);
 
-                StartProcessAsync();
+                    StartProcessAsync();
+                }
             }
+        }
+
+        [RelayCommand]
+        public async Task ToggleDemoMode()
+        {
+            _isDemoMode = !_isDemoMode;
         }
 
         [RelayCommand(CanExecute = nameof(IsExportEnabled))]
@@ -430,7 +446,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 if (_isRunning)
                 {
-                    _dialogService.ShowInformation("Cannot apply recipe while process is running. Please stop the process first.");
+                    _dialogService.ShowError("Cannot apply recipe while process is running. Please stop the process first.");
 
                     return;
                 }
@@ -443,7 +459,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 _currentIntensities = new uint[Recipe.Wavelengths.Count];
                 _isIndicesCorrected = false;
 
-                _dialogService.ShowInformation($"Recipe '{Recipe.Name}' for channel {Recipe.Channel + 1} applied successfully.");
+                _dialogService.ShowInformation($"Recipe '{Recipe.Name}' for channel {Recipe.Channel} applied successfully.");
             }
             catch (Exception ex)
             {

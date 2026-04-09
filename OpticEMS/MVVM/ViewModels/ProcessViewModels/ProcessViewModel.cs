@@ -42,7 +42,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         private void OnApplyRecipeRequested(RecipeModel recipe)
         {
-            var targetChannel = Channels.FirstOrDefault(c => c.ChannelId == recipe.Channel); 
+            var targetChannel = Channels.FirstOrDefault(c => c.ChannelId == recipe.Channel - 1); 
 
             if (targetChannel != null)
             {
@@ -50,18 +50,23 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             } 
             else 
             { 
-                _dialogService.ShowInformation($"Channel {recipe.Channel} not found");
+                _dialogService.ShowError($"Channel {recipe.Channel} not found");
             }
         }
 
         private void InitializeChannels()
         {
-            var count = _spectrometerService.GetConnectedSpectrometersCount();
             var appConfig = AppSettings.Default.Devices;
 
             foreach (var config in appConfig)
             {
                 var channel = _channelViewModelFactory.Create(config);
+                Channels.Add(channel);
+            }
+
+            if (Channels.Count == 0)
+            {
+                var channel = _channelViewModelFactory.CreateDefault();
                 Channels.Add(channel);
             }
 

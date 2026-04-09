@@ -121,6 +121,12 @@
                     </StackPanel>
                 </Button>
 
+                <Button Style="{StaticResource ActionButtonStyle}"
+                        Command="{Binding ToggleDemoModeCommand}"
+                        Background="#1f1f1f"
+                        HorizontalAlignment="Stretch"
+                        Width="40"/>
+
             </StackPanel>
 
             <ContentControl Grid.Row="1" 

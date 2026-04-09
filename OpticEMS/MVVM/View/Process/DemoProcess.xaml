@@ -19,9 +19,9 @@
             ActiveContent="{Binding SelectedChannel, Mode=TwoWay, Converter={StaticResource ActiveContentConverter}, Delay=200}"
             Validation.ErrorTemplate="{x:Null}">
 
-            <DockingManager.Theme>
-                <VS2022DarkTheme/>
-            </DockingManager.Theme>
+            <xcad:DockingManager.Theme>
+                <xcad:VS2022DarkTheme/>
+            </xcad:DockingManager.Theme>
 
             <xcad:DockingManager.LayoutItemContainerStyle>
                 <Style TargetType="{x:Type xcad:LayoutItem}">

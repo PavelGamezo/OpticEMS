@@ -382,7 +382,6 @@
                                     
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0">
@@ -452,78 +451,6 @@
                                                  Margin="0,5,5,0"
                                                  VerticalContentAlignment="Center"/>
                                     </StackPanel>
-
-                                    <StackPanel Grid.Column="1">
-
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-
-                                            <TextBlock Text="Process chamber" 
-                                                       FontSize="11" 
-                                                       Foreground="#999999"/>
-
-                                            <Border Margin="6,0,0,0" 
-                                                    Width="14" 
-                                                    Height="14" 
-                                                    CornerRadius="7" 
-                                                    Background="#444444" 
-                                                    Cursor="Help"
-                                                    VerticalAlignment="Center"
-                                                    ToolTipService.InitialShowDelay="100">
-
-                                                <TextBlock Text="?" 
-                                                           FontSize="10" 
-                                                           FontWeight="Bold"
-                                                           Foreground="#AAAAAA" 
-                                                           HorizontalAlignment="Center" 
-                                                           VerticalAlignment="Center"
-                                                           Margin="0,0,0,1"/>
-
-                                                <Border.ToolTip>
-
-                                                    <ToolTip Background="#252526" 
-                                                             Foreground="White" 
-                                                             BorderBrush="#454545"
-                                                             Padding="10"
-                                                             HasDropShadow="True">
-
-                                                        <StackPanel Width="200">
-                                                            <TextBlock Text="Process chamber" 
-                                                                       FontWeight="Bold" 
-                                                                       Foreground="White" 
-                                                                       Margin="0,0,0,5"/>
-
-                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
-                                                                   Height="108"
-                                                                   Width="192"
-                                                                   Stretch="Uniform" 
-                                                                   Margin="0,5"
-                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
-
-                                                            <TextBlock Text="Ensure the chamber value matches the controlled chamber." 
-                                                                       Foreground="#CCCCCC" 
-                                                                       FontSize="11" 
-                                                                       TextWrapping="Wrap"/>
-                                                        </StackPanel>
-
-                                                    </ToolTip>
-
-                                                </Border.ToolTip>
-
-                                            </Border>
-                                        </StackPanel>
-
-                                        <ComboBox Background="#3E3E40" 
-                                                  BorderThickness="0"
-                                                  Foreground="White"
-                                                  Padding="8"
-                                                  Margin="0,5,0,0"
-                                                  ItemsSource="{Binding ProcessChambers}"
-                                                  SelectedItem="{Binding SelectedRecipe.ProcessChamber}"
-                                                  Style="{StaticResource ComboBoxStyle}"
-                                                  Height="32"/>
-
-                                    </StackPanel>
-
                                 </Grid>
                             </Grid>
                         </Border>

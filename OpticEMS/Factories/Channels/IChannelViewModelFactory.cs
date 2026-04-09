@@ -6,5 +6,7 @@ namespace OpticEMS.Factories.Channels
     public interface IChannelViewModelFactory
     {
         ChannelViewModel Create(DeviceInfo configuration);
+
+        ChannelViewModel CreateDefault();
     }
 }

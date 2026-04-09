@@ -29,7 +29,6 @@ namespace OpticEMS.MVVM.View.Process
         {
             try
             {
-                // Если нужно принудительно пересоздать layout
                 if (dockingManager.Layout == null || dockingManager.Layout.RootPanel == null)
                 {
                     dockingManager.Layout = new AvalonDock.Layout.LayoutRoot();

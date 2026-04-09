@@ -153,7 +153,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
         {
             ChannelSettings.Add(new ChannelModel
             {
-                ChannelId = ChannelSettings.Count,
+                ChannelId = ChannelSettings.Count + 1,
                 AvailableSpectrometers = GetAvailableSpectrometers(),
                 SelectedSpectrometer = "VirtualSpec"
             });
@@ -170,7 +170,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 
                     for (int i = 0; i < ChannelSettings.Count; i++)
                     {
-                        ChannelSettings[i].ChannelId = i;
+                        ChannelSettings[i].ChannelId = i + 1;
                     }
                 }
             }

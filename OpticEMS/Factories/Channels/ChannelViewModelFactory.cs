@@ -43,5 +43,7 @@ namespace OpticEMS.Factories.Channels
                 calibrationService,
                 spectralLineRepository);
         }
+
+        public ChannelViewModel CreateDefault() => new ChannelViewModel();
     }
 }
