@@ -6,6 +6,8 @@
 
         bool AskWarningQuestion(string message);
 
+        bool AskPassword();
+
         void ShowInformation(string message);
 
         string? ShowRenameQuestion(string currentName);

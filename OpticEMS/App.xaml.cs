@@ -10,6 +10,8 @@ using OpticEMS.License.Common;
 using OpticEMS.License.Handlers;
 using OpticEMS.MVVM.Models;
 using OpticEMS.MVVM.View.Activation;
+using OpticEMS.MVVM.View.Windows;
+using OpticEMS.MVVM.ViewModels;
 using OpticEMS.MVVM.ViewModels.Activation;
 using OpticEMS.MVVM.ViewModels.ProcessViewModels;
 using OpticEMS.MVVM.ViewModels.RecipeViewModels;
@@ -91,9 +93,12 @@ namespace OpticEMS
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<SpectrumChartViewModel>();
             services.AddSingleton<ProcessChartViewModel>();
+            services.AddSingleton<ActivationViewModel>();
+            services.AddSingleton<PasswordDialogViewModel>();
 
             // Windows
             services.AddTransient<MainWindow>();
+            services.AddTransient<PasswordWindow>();
         }
 
         protected override async void OnStartup(StartupEventArgs e)
@@ -110,19 +115,6 @@ namespace OpticEMS
 
         private async void CheckLicense(StartupEventArgs e)
         {
-//#if DEBUG
-//            var crackWindow = new MainWindow();
-//            OpticEMSLicense cracklic = new OpticEMSLicense()
-//            {
-//                CreateDateTime = DateTime.Now,
-//                ExpireDateTime = DateTime.Now.AddDays(365)
-//            };
-//            Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
-//            Current.MainWindow = crackWindow;
-//            crackWindow.Show();
-//            crackWindow.Activate();
-//            return;
-//#endif
             OpticEMSLicense license = null;
             LicenseStatus status;
             byte[] certPubicKeyData;
@@ -157,10 +149,14 @@ namespace OpticEMS
                     Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
                     await Host.StartAsync();
 
+                    var settings = Host.Services.GetRequiredService<ISettingsProvider>();
+
+                    settings.MaxAllowedChannels = license.ChannelCount;
+                    settings.EntrySecret = license.EntrySecret;
+
                     using (var db = new AppDbContext())
                     {
                         await db.Database.EnsureCreatedAsync();
-
                         await SpectralLinesSeeder.SeedFromCsvAsync(db);
                     }
 
@@ -168,7 +164,6 @@ namespace OpticEMS
                     mainWindow.Show();
 
                     base.OnStartup(e);
-
                     break;
 
                 case LicenseStatus.Expired:
@@ -179,10 +174,12 @@ namespace OpticEMS
                     break;
 
                 default:
+                    
                     MessageBox.Show(message, string.Empty, MessageBoxButton.OK, MessageBoxImage.Warning);
                     ShowActivationWindow(certPubicKeyData);
 
                     break;
+
             }
         }
 

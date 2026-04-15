@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Common\Images\splash.png" />
     <None Remove="LicenseVerify.cer" />
   </ItemGroup>
 
@@ -18,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <SplashScreen Include="Common\Images\splash.ico" />
+    <SplashScreen Include="Common\Images\splash.png" />
   </ItemGroup>
 
   <ItemGroup>

@@ -15,6 +15,10 @@
 
     <Window.Resources>
 
+        <DataTemplate DataType="{x:Type vm:ActivationViewModel}">
+            <local:License />
+        </DataTemplate>
+
         <Style x:Key="ModernLicenseTextBox" TargetType="TextBox">
             <Setter Property="Background" Value="#2D2D2D"/>
             <Setter Property="Foreground" Value="#D4D4D4"/>
@@ -191,165 +195,6 @@
         <MouseBinding MouseAction="LeftClick" Command="{Binding MoveWindowCommand}"/>
     </Window.InputBindings>
 
-    <Grid>
-        <Border CornerRadius="8" Background="#1f1f1f" BorderBrush="#333" BorderThickness="1">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="15" Direction="270" Opacity="0.5" ShadowDepth="3"/>
-            </Border.Effect>
-        </Border>
-
-        <DockPanel Margin="30">
-            
-            <TextBlock Text="Optic Emission Monitoring System 2026" 
-                       DockPanel.Dock="Top" 
-                       FontSize="26" 
-                       FontWeight="Bold" 
-                       Foreground="White" 
-                       Margin="0,0,0,15"/>
-
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0">
-
-                    <TextBlock Text="Unique ID" 
-                               FontSize="22" 
-                               Foreground="White" 
-                               Margin="0,0,0,15"/>
-
-                    <TextBlock Text="{Binding Uid}" 
-                               FontSize="12"
-                               Foreground="#AAA" 
-                               Margin="0,0,0,15"/>
-
-                    <TextBlock Text="Activation Key" 
-                               FontSize="22" 
-                               Foreground="White" 
-                               Margin="0,0,0,15"/>
-
-                    <TextBox Text="{Binding LicenseKey, Mode=TwoWay}"
-                             Style="{StaticResource ModernLicenseTextBox}"
-                             Width="540"
-                             Height="120" 
-                             TextWrapping="Wrap"
-                             VerticalScrollBarVisibility="Auto"
-                             FontFamily="Consolas" 
-                             FontSize="12" 
-                             Background="#333" 
-                             BorderBrush="#333"
-                             Foreground="#CCC"
-                             Padding="10"
-                             Margin="0,0,0,15"/>
-
-                    <TextBlock Text="Version" 
-                               FontSize="22" 
-                               Foreground="White" 
-                               Margin="0,0,0,15"/>
-
-                    <Grid Margin="0,0,0,30">
-
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <TextBlock Grid.Row="0" 
-                                   Grid.Column="0" 
-                                   Text="Edition:" 
-                                   Style="{StaticResource OpticLabelHeader}"/>
-
-                        <TextBlock Grid.Row="0" 
-                                   Grid.Column="1" 
-                                   Text="{Binding Edition}" 
-                                   Style="{StaticResource OpticLabelValue}"/>
-
-                        <TextBlock Grid.Row="1" 
-                                   Grid.Column="0" 
-                                   Text="Version:"
-                                   Style="{StaticResource OpticLabelHeader}"/>
-
-                        <TextBlock Grid.Row="1" 
-                                   Grid.Column="1" 
-                                   Text="{Binding ProjectVersion}" 
-                                   Style="{StaticResource OpticLabelValue}"/>
-
-                        <TextBlock Grid.Row="2" 
-                                   Grid.Column="0" 
-                                   Text="Instance:" 
-                                   Style="{StaticResource OpticLabelHeader}"/>
-
-                        <TextBlock Grid.Row="2" 
-                                   Grid.Column="1" 
-                                   Text="{Binding Instance}" 
-                                   Style="{StaticResource OpticLabelValue}"/>
-
-                    </Grid>
-
-                    <TextBlock Text="License" 
-                               FontSize="22" 
-                               Foreground="White" 
-                               Margin="0,0,0,15"/>
-
-                    <TextBlock TextWrapping="Wrap" 
-                               Foreground="#AAA" 
-                               FontSize="13" 
-                               LineHeight="18">
-                        
-                        This computer program is protected by copyright law and international treaties. Unauthorized 
-                        reproduction or distribution of this program, or any portion of it, may result in severe civil and 
-                        criminal penalties, and will be prosecuted to the maximum extent possible under the law.
-                        <LineBreak/>
-                        © 2026 Izovac Ltd. All rights reserved.
-
-                    </TextBlock>
-                </StackPanel>
-
-                <StackPanel Grid.Column="1" VerticalAlignment="Top" Margin="20,0,0,0">
-
-                    <Button Content="Copy UID"
-                            Command="{Binding CopyToClipboardUidCommand}"
-                            Background="#1a1a1a"
-                            Foreground="White"
-                            Style="{StaticResource ActionButtonStyle}" 
-                            Margin="0,0,0,10"/>
-
-                    <Button Content="Copy Version"
-                            Command="{Binding CopyToClipboardVersionCommand}"
-                            Background="#1a1a1a"
-                            Foreground="White"
-                            Width="100"
-                            Style="{StaticResource ActionButtonStyle}" 
-                            Margin="0,0,0,10"/>
-
-                    <Button Content="Apply License"
-                            Command="{Binding ApplyLicenseCommand}"
-                            Background="#333"
-                            Foreground="White"
-                            Width="100"
-                            Style="{StaticResource ActionButtonStyle}" 
-                            Margin="0,0,0,10"/>
-                </StackPanel>
-            </Grid>
-        </DockPanel>
-
-        <Button Content="✕" 
-                Command="{Binding CloseWindowCommand}" 
-                HorizontalAlignment="Right" 
-                VerticalAlignment="Top"
-                Margin="10,1,1,0"
-                Width="40"
-                Height="40"
-                Style="{StaticResource ButtonStyle}"
-                Foreground="White"/>
-    </Grid>
+    <UserControl Content="{Binding}"/>
+    
 </Window>

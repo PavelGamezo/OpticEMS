@@ -4,6 +4,10 @@ namespace OpticEMS.License.Common
 {
     public sealed class OpticEMSLicense : License
     {
+        public override string AppName { get => "OpticEMS"; set; }
+
+        public override string EntrySecret { get => "enginerico"; set; }
+
         public override LicenseStatus DoExtraValidation(out string validationMsg)
         {
             LicenseStatus licStatus;

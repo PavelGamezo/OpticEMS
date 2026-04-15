@@ -4,9 +4,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpticEMS"
+        xmlns:vmact="clr-namespace:OpticEMS.MVVM.ViewModels.Activation"
         xmlns:vmset="clr-namespace:OpticEMS.MVVM.ViewModels.SettingsViewModels"
         xmlns:vmrec="clr-namespace:OpticEMS.MVVM.ViewModels.RecipeViewModels"
         xmlns:vmproc="clr-namespace:OpticEMS.MVVM.ViewModels.ProcessViewModels"
+        xmlns:pact="clr-namespace:OpticEMS.MVVM.View.Activation"
         xmlns:pproc="clr-namespace:OpticEMS.MVVM.View.Process"
         xmlns:pset="clr-namespace:OpticEMS.MVVM.View.Settings"
         xmlns:prec="clr-namespace:OpticEMS.MVVM.View.Recipe"
@@ -53,6 +55,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmproc:SpectralLinesCatalogViewModel}">
             <pproc:SpectralLineCatalog />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmact:ActivationViewModel}">
+            <pact:License />
         </DataTemplate>
 
         <Style x:Key="TabButtonStyle" TargetType="ToggleButton">

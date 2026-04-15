@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using OpticEMS.MVVM.ViewModels.Activation;
 
 namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 {
@@ -10,6 +11,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 
         private readonly ChamberSettingsViewModel _chamberSettingsViewModel;
         private readonly CalibrationSettingsViewModel _calibrationSettingsViewModel;
+        private readonly ActivationViewModel _activationViewModel;
 
         [RelayCommand]
         private void ShowCalibrationSettings() => CurrentViewModel = _calibrationSettingsViewModel;
@@ -17,11 +19,16 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
         [RelayCommand]
         private void ShowChamberSettings() => CurrentViewModel = _chamberSettingsViewModel;
 
+        [RelayCommand]
+        private void ShowLicense() => CurrentViewModel = _activationViewModel;
+
         public SettingsViewModel(ChamberSettingsViewModel chamberSettingsViewModel,
-            CalibrationSettingsViewModel calibrationSettingsViewModel)
+            CalibrationSettingsViewModel calibrationSettingsViewModel,
+            ActivationViewModel activationViewModel)
         {
             _calibrationSettingsViewModel = calibrationSettingsViewModel;
             _chamberSettingsViewModel = chamberSettingsViewModel;
+            _activationViewModel = activationViewModel;
 
             CurrentViewModel = _calibrationSettingsViewModel;
         }

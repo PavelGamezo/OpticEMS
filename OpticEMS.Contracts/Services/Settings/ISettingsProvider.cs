@@ -2,6 +2,10 @@
 {
     public interface ISettingsProvider
     {
+        int MaxAllowedChannels { get; set; }
+
+        string EntrySecret { get; set; }
+
         IReadOnlyList<DeviceInfo> GetAll();
 
         DeviceInfo? GetByChannelId(int deviceId);

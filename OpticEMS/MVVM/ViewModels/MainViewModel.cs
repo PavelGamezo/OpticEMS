@@ -1,8 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using OpticEMS.Contracts.Services.Settings;
+using OpticEMS.MVVM.ViewModels;
 using OpticEMS.MVVM.ViewModels.ProcessViewModels;
 using OpticEMS.MVVM.ViewModels.RecipeViewModels;
 using OpticEMS.MVVM.ViewModels.SettingsViewModels;
+using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Times;
 using OpticEMS.Services.Windows;
 
@@ -12,11 +15,14 @@ namespace OpticEMS.ViewModels
     {
         private readonly IWindowService _windowService;
         private readonly ITimeService _timeService;
+        private readonly ISettingsProvider _settingsProvider;
+        private readonly IDialogService _dialogService;
 
         private readonly ProcessViewModel _processViewModel;
         private readonly SettingsViewModel _settingsViewModel;
         private readonly ChamberSettingsViewModel _chamberSettingsViewModel;
         private readonly RecipeViewModel _recipeViewModel;
+        private readonly PasswordDialogViewModel _passwordDialogViewModel;
 
         private CancellationTokenSource _cancellationToken = new();
 
@@ -27,31 +33,43 @@ namespace OpticEMS.ViewModels
         private object _currentViewModel;
 
         public MainViewModel(IWindowService windowService,
+            ISettingsProvider settingsProvider,
+            IDialogService dialogService,
             ITimeService timeService,
             ProcessViewModel process,
             SettingsViewModel settings,
             RecipeViewModel recipe,
-            ChamberSettingsViewModel chamberSettingsViewModel)
+            ChamberSettingsViewModel chamberSettingsViewModel,
+            PasswordDialogViewModel passwordDialogViewModel)
         {
             _windowService = windowService;
             _timeService = timeService;
+            _settingsProvider = settingsProvider;
+            _dialogService = dialogService;
 
             _processViewModel = process;
             _settingsViewModel = settings;
             _recipeViewModel = recipe;
+            _chamberSettingsViewModel = chamberSettingsViewModel;
+            _passwordDialogViewModel = passwordDialogViewModel;
 
             _timeService.TimeChanged += OnTimeChanged;
             _timeService.Start(_cancellationToken.Token);
 
             CurrentViewModel = _processViewModel;
-            _chamberSettingsViewModel = chamberSettingsViewModel;
         }
 
         [RelayCommand]
         private void ShowSygnal() => CurrentViewModel = _processViewModel;
 
         [RelayCommand]
-        private void ShowSettings() => CurrentViewModel = _settingsViewModel;
+        private void ShowSettings()
+        {
+            if (_dialogService.AskPassword())
+            {
+                CurrentViewModel = _settingsViewModel;
+            }
+        }
 
         [RelayCommand]
         private void ShowChamberSettings() => CurrentViewModel = _chamberSettingsViewModel;

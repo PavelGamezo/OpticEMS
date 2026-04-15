@@ -65,6 +65,16 @@
                     FontWeight="Bold"
                     Margin="0"/>
 
+            <Button Content="License" 
+                    Command="{Binding ShowLicenseCommand}"
+                    Style="{StaticResource ActionButtonStyle}"
+                    Height="40"
+                    Width="200"
+                    Background="#1e1d1d" 
+                    Foreground="White"
+                    FontWeight="Bold"
+                    Margin="0"/>
+
         </StackPanel>
 
         <Grid Grid.Column="1">

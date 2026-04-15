@@ -6,12 +6,14 @@ using OpticEMS.Services.Spectrometers;
 using OpticEMS.MVVM.Models;
 using System.Collections.ObjectModel;
 using OpticEMS.MVVM.ViewModels.RecipeViewModels;
+using OpticEMS.Contracts.Services.Settings;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {
     public partial class ProcessViewModel : ObservableObject
     {
         private readonly IChannelViewModelFactory _channelViewModelFactory;
+        private readonly ISettingsProvider _settingsProvider;
         private readonly ISpectrometerService _spectrometerService;
         private readonly IDialogService _dialogService;
         private RecipeViewModel _recipeViewModel;
@@ -22,11 +24,13 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private ChannelViewModel? _selectedChannel;
 
         public ProcessViewModel(IChannelViewModelFactory channelViewModelFactory,
+            ISettingsProvider settingsProvider,
             ISpectrometerService spectrometerService,
             IDialogService dialogService,
             RecipeViewModel recipeViewModel)
         {
             _channelViewModelFactory = channelViewModelFactory;
+            _settingsProvider = settingsProvider;
             _spectrometerService = spectrometerService;
             _recipeViewModel = recipeViewModel;
             _dialogService = dialogService;
@@ -56,15 +60,19 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         private void InitializeChannels()
         {
-            var appConfig = AppSettings.Default.Devices;
+            var allDevices = _settingsProvider.GetAll();
 
-            foreach (var config in appConfig)
+            int limit = _settingsProvider.MaxAllowedChannels;
+
+            var limitedDevices = allDevices.Take(limit).ToList();
+
+            foreach (var config in limitedDevices)
             {
                 var channel = _channelViewModelFactory.Create(config);
                 Channels.Add(channel);
             }
 
-            if (Channels.Count == 0)
+            if (Channels.Count == 0 && limit > 0)
             {
                 var channel = _channelViewModelFactory.CreateDefault();
                 Channels.Add(channel);

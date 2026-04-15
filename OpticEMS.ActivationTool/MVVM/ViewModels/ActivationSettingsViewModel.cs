@@ -36,6 +36,7 @@ namespace OpticEMS.ActivationTool.MVVM.ViewModels
             try
             {
                 LicenseSettings.License.Uid = Hwid;
+                LicenseSettings.License.ChannelCount = ChannelCount;
                 var licenseKey = LicenseSettings.Generate();
 
                 WeakReferenceMessenger.Default.Send(new LicenseKeyGenerated(licenseKey));

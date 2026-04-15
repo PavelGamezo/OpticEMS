@@ -16,6 +16,10 @@ namespace OpticEMS.Services.Settings
             _devices = LoadDevices();
         }
 
+        public int MaxAllowedChannels { get; set; } = 1;
+
+        public string EntrySecret { get; set; }
+
         private ObservableCollection<DeviceInfo> LoadDevices()
         {
             if (string.IsNullOrWhiteSpace(_settings.DevicesXml))

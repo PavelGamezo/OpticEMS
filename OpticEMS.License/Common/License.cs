@@ -6,7 +6,10 @@ namespace OpticEMS.License.Common
     public abstract class License : ILicense
     {
         [XmlIgnore]
-        public string AppName { get; private set; }
+        public abstract string AppName { get; set; }
+
+        [XmlElement("EntrySecret")]
+        public abstract string EntrySecret { get; set; }
 
         [XmlElement("Uid")]
         public string Uid { get; set; }
@@ -16,6 +19,9 @@ namespace OpticEMS.License.Common
 
         [XmlElement("ExpireDateTime")]
         public DateTime ExpireDateTime { get; set; }
+
+        [XmlElement("ChannelCount")]
+        public int ChannelCount { get; set; }
 
         public abstract LicenseStatus DoExtraValidation(out string validationMsg);
     }
