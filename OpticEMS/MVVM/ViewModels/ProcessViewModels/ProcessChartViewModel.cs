@@ -12,6 +12,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
     {
         private readonly DateTime _epoch = new DateTime(2000, 1, 1);
         private RectangleAnnotation? _activeOverEtchArea;
+        private RectangleAnnotation? _activeMonitoringArea;
+        private RectangleAnnotation? _activeDelayArea;
 
         [ObservableProperty]
         private ViewResolvingPlotModel _plotModel;
@@ -146,6 +148,112 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
             PlotModel.Annotations.Add(marker);
             PlotModel.InvalidatePlot(false);
+        }
+
+        public void MarkEndpointMonitoring(TimeSpan elapsedTime, string label = "Monitoring")
+        {
+            double xValue = DateTimeAxis.ToDouble(_epoch.Add(elapsedTime));
+
+            var marker = new LineAnnotation
+            {
+                Type = LineAnnotationType.Vertical,
+                X = xValue,
+                Color = OxyColors.RoyalBlue,
+                LineStyle = LineStyle.Dash,
+                StrokeThickness = 2,
+                Text = label,
+                FontWeight = FontWeights.Bold,
+                Font = "Segoe UI Semibold",
+                TextColor = OxyColors.White
+            };
+
+            PlotModel.Annotations.Add(marker);
+            PlotModel.InvalidatePlot(false);
+        }
+
+        public void StartEndpointMonitoringArea(TimeSpan startTime)
+        {
+            double xValue = DateTimeAxis.ToDouble(_epoch.Add(startTime));
+
+            _activeMonitoringArea = new RectangleAnnotation
+            {
+                MinimumX = xValue,
+                MaximumX = xValue,
+                Fill = OxyColor.FromAColor(30, OxyColors.RoyalBlue),
+                Stroke = OxyColors.RoyalBlue,
+                StrokeThickness = 1,
+                Layer = AnnotationLayer.BelowSeries,
+                Text = "MONITORING",
+                FontWeight = FontWeights.Bold,
+                Font = "Segoe UI Semibold",
+            };
+
+            PlotModel.Annotations.Add(_activeMonitoringArea);
+            PlotModel.InvalidatePlot(false);
+        }
+
+        public void UpdateMonitoringArea(TimeSpan currentTime)
+        {
+            double xValue = DateTimeAxis.ToDouble(_epoch.Add(currentTime));
+
+            if (_activeMonitoringArea != null)
+            {
+                _activeMonitoringArea.MaximumX = xValue;
+                PlotModel.InvalidatePlot(false);
+            }
+        }
+
+        public void MarkInitialDelay(TimeSpan elapsedTime, string label = "InitialDelay")
+        {
+            double xValue = DateTimeAxis.ToDouble(_epoch.Add(elapsedTime));
+
+            var marker = new LineAnnotation
+            {
+                Type = LineAnnotationType.Vertical,
+                X = xValue,
+                Color = OxyColors.DarkSeaGreen,
+                LineStyle = LineStyle.Dash,
+                StrokeThickness = 2,
+                Text = label,
+                FontWeight = FontWeights.Bold,
+                Font = "Segoe UI Semibold",
+                TextColor = OxyColors.White
+            };
+
+            PlotModel.Annotations.Add(marker);
+            PlotModel.InvalidatePlot(false);
+        }
+
+        public void StartInitialDelayArea(TimeSpan startTime)
+        {
+            double xValue = DateTimeAxis.ToDouble(_epoch.Add(startTime));
+
+            _activeDelayArea = new RectangleAnnotation
+            {
+                MinimumX = xValue,
+                MaximumX = xValue,
+                Fill = OxyColor.FromAColor(30, OxyColors.DarkSeaGreen),
+                Stroke = OxyColors.DarkSeaGreen,
+                StrokeThickness = 1,
+                Layer = AnnotationLayer.BelowSeries,
+                Text = "INITIAL DELAY",
+                FontWeight = FontWeights.Bold,
+                Font = "Segoe UI Semibold",
+            };
+
+            PlotModel.Annotations.Add(_activeDelayArea);
+            PlotModel.InvalidatePlot(false);
+        }
+
+        public void UpdateInitialDelayArea(TimeSpan currentTime)
+        {
+            double xValue = DateTimeAxis.ToDouble(_epoch.Add(currentTime));
+
+            if (_activeDelayArea != null)
+            {
+                _activeDelayArea.MaximumX = xValue;
+                PlotModel.InvalidatePlot(false);
+            }
         }
     }
 }

@@ -167,24 +167,18 @@
         </Style>
 
         <Style x:Key="DarkColorPicker" TargetType="{x:Type xctk:ColorPicker}">
-            <!-- Основные свойства самого ColorPicker -->
             <Setter Property="Background"          Value="#3E3E40"/>
             <Setter Property="Foreground"          Value="#E0E0E0"/>
             <Setter Property="BorderBrush"         Value="#4A4A4A"/>
             <Setter Property="BorderThickness"     Value="1"/>
             <Setter Property="DropDownBackground"  Value="#3E3E40"/>
-            <!-- фон всего popup -->
             <Setter Property="TabBackground"       Value="#3E3E40"/>
-            <!-- фон области вкладок -->
             <Setter Property="HeaderBackground"    Value="#2D2D2D"/>
-            <!-- фон заголовков вкладок -->
             <Setter Property="TabForeground"       Value="#C0C0C0"/>
-            <!-- !!! важно - текст вкладок -->
             <Setter Property="RecentColorsHeader"  Value="Недавние"/>
             <Setter Property="StandardColorsHeader" Value="Standart"/>
             <Setter Property="AvailableColorsHeader" Value="All colors"/>
 
-            <!-- Стиль кнопки (выпадающий триггер) -->
             <Setter Property="ButtonStyle">
                 <Setter.Value>
                     <Style TargetType="ToggleButton">

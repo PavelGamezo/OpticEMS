@@ -96,7 +96,7 @@ namespace OpticEMS.Services.Etching
                 {
                     _inStableWindow = true;
                 }
-                _currentStatus = "Stabilizing...";
+                _currentStatus = "Monitoring...";
             }
             else
             {

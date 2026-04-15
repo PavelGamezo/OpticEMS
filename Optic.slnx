@@ -3,9 +3,11 @@
     <Platform Name="Any CPU" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="OpticEMS.ActivationTool/OpticEMS.ActivationTool.csproj" Id="a9c71549-9e87-4b20-b0ed-f6472f566d27" />
   <Project Path="OpticEMS.Contracts/OpticEMS.Contracts.csproj" Id="4e89a98e-ec8c-43ac-a1e8-071fee0cfd10" />
   <Project Path="OpticEMS.Data/OpticEMS.Data.csproj" Id="e413f5f8-0234-497b-9319-7b545ac84765" />
   <Project Path="OpticEMS.Devices/OpticEMS.Devices.csproj" Id="6d1e6ae3-9c2a-4ea9-87cf-24c20f62ccfa" />
+  <Project Path="OpticEMS.License/OpticEMS.License.csproj" Id="9f4a3c70-70d7-4ba5-8bc2-f3db526b1b3c" />
   <Project Path="OpticEMS.Notifications/OpticEMS.Notifications.csproj" Id="07ec5935-bee1-4281-9ef3-1aadf4e3e18c" />
   <Project Path="OpticEMS.Processing/OpticEMS.Processing.csproj" Id="1c4150d6-9e7d-47a9-8ea0-56249ef83ba6" />
   <Project Path="OpticEMS/OpticEMS.csproj" Id="162e9700-f815-4a6f-beb7-e50dc3d4d941" />

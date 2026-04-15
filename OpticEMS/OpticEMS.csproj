@@ -6,10 +6,19 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Common\Images\splash.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Common\Images\splash.png" />
+    <None Remove="LicenseVerify.cer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="LicenseVerify.cer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <SplashScreen Include="Common\Images\splash.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,11 +43,8 @@
     <ProjectReference Include="..\OpticEMS.Contracts\OpticEMS.Contracts.csproj" />
     <ProjectReference Include="..\OpticEMS.Data\OpticEMS.Data.csproj" />
     <ProjectReference Include="..\OpticEMS.Devices\OpticEMS.Devices.csproj" />
+    <ProjectReference Include="..\OpticEMS.License\OpticEMS.License.csproj" />
     <ProjectReference Include="..\OpticEMS.Notifications\OpticEMS.Notifications.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Common\Images\splash.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -60,10 +66,34 @@
     <Compile Update="MVVM\View\Windows\ApplicationMessageBox.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Common\Themes\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
 </Project>

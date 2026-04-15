@@ -349,6 +349,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             long targetNextTickMs = 0;
             int interval = Recipe.DetectionWindowTime;
             var overEtchStarted = false;
+            var monitoringStarted = false;
+            var delayStarted = false;
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -362,12 +364,25 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                     if (Application.Current?.Dispatcher is Dispatcher dispatcher)
                     {
-                        await dispatcher.InvokeAsync(() =>
+                        _ = dispatcher.InvokeAsync(() =>
                         {
                             RecordDataForExport(_currentIntensities);
                             ProcessChartViewModel.UpdateTopPlot(_stopwatch.Elapsed, _currentIntensities);
 
-                            if (result.Status.Contains("Over") || result.Status.Contains("Endpoint Detected"))
+                            if (result.Status.Contains("Monitoring"))
+                            {
+                                if (!monitoringStarted)
+                                {
+                                    ProcessChartViewModel.MarkEndpointMonitoring(_stopwatch.Elapsed);
+                                    ProcessChartViewModel.StartEndpointMonitoringArea(_stopwatch.Elapsed);
+                                    monitoringStarted = true;
+                                }
+                                else
+                                {
+                                    ProcessChartViewModel.UpdateMonitoringArea(_stopwatch.Elapsed);
+                                }
+                            }
+                            else if (result.Status.Contains("Over") || result.Status.Contains("Endpoint Detected"))
                             {
                                 if (!overEtchStarted)
                                 {
@@ -453,7 +468,10 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 Recipe = recipe;
 
-                SpectrumChartViewModel.UpdateAnnotations(Recipe.Wavelengths, Recipe.WavelengthColors);
+                Task.Run(() =>
+                {
+                    SpectrumChartViewModel.UpdateAnnotations(Recipe.Wavelengths, Recipe.WavelengthColors);
+                });
 
                 UpdateInternalIndexes();
                 _currentIntensities = new uint[Recipe.Wavelengths.Count];

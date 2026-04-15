@@ -1,0 +1,355 @@
+﻿<Window x:Class="OpticEMS.MVVM.View.Activation.ActivationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:OpticEMS.MVVM.ViewModels.Activation"
+        xmlns:local="clr-namespace:OpticEMS.MVVM.View.Activation"
+        mc:Ignorable="d" 
+        Height="660" Width="720"
+        WindowStartupLocation="CenterScreen"
+        AllowsTransparency="True" 
+        WindowStyle="None"
+        Background="Transparent" 
+        FontFamily="Segoe UI Semibold" FontSize="14">
+
+    <Window.Resources>
+
+        <Style x:Key="ModernLicenseTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#2D2D2D"/>
+            <Setter Property="Foreground" Value="#D4D4D4"/>
+            <Setter Property="BorderBrush" Value="#3E3E42"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="SelectionBrush" Value="#333"/>
+            <Setter Property="CaretBrush" Value="White"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                          Focusable="false" 
+                                          HorizontalScrollBarVisibility="Hidden" 
+                                          VerticalScrollBarVisibility="Auto"
+                                          Padding="{TemplateBinding Padding}"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="true">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#555555"/>
+                                <Setter TargetName="border" Property="Background" Value="#323232"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="true">
+                                <Setter TargetName="border" Property="BorderBrush" Value="LightGray"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="WindowControlButton" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                        Background="{TemplateBinding Background}"
+                        BorderThickness="0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" 
+                                Property="Background" 
+                                Value="#1f1f1f"/>
+                            </Trigger>
+
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" 
+                                Property="Background" 
+                                Value="#1a1a1a"/>
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style x:Key="ButtonStyle" TargetType="Button" BasedOn="{StaticResource WindowControlButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Trigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Duration="0:0:0.2"
+                                         Storyboard.TargetProperty="Opacity"
+                                         To="0.8"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
+                    <Trigger.ExitActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Duration="0:0:0.3"
+                                         Storyboard.TargetProperty="Opacity"
+                                         To="1"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.ExitActions>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="OpticLabelHeader" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#AAA"/>
+            <Setter Property="Margin" Value="0,0,25,8"/>
+            <Setter Property="FontSize" Value="15"/>
+        </Style>
+
+        <Style x:Key="OpticLabelValue" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="FontSize" Value="15"/>
+        </Style>
+
+        <Style x:Key="OpticButtonBase" TargetType="Button">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="15,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" CornerRadius="4" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="8" Opacity="0.2" ShadowDepth="1"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="OpticSecondaryButton" TargetType="Button" BasedOn="{StaticResource OpticButtonBase}">
+            <Setter Property="Background" Value="#333"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#444"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <Style x:Key="OpticCloseButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#AAA"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="Red"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <MouseBinding MouseAction="LeftClick" Command="{Binding MoveWindowCommand}"/>
+    </Window.InputBindings>
+
+    <Grid>
+        <Border CornerRadius="8" Background="#1f1f1f" BorderBrush="#333" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="15" Direction="270" Opacity="0.5" ShadowDepth="3"/>
+            </Border.Effect>
+        </Border>
+
+        <DockPanel Margin="30">
+            
+            <TextBlock Text="Optic Emission Monitoring System 2026" 
+                       DockPanel.Dock="Top" 
+                       FontSize="26" 
+                       FontWeight="Bold" 
+                       Foreground="White" 
+                       Margin="0,0,0,15"/>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+
+                    <TextBlock Text="Unique ID" 
+                               FontSize="22" 
+                               Foreground="White" 
+                               Margin="0,0,0,15"/>
+
+                    <TextBlock Text="{Binding Uid}" 
+                               FontSize="12"
+                               Foreground="#AAA" 
+                               Margin="0,0,0,15"/>
+
+                    <TextBlock Text="Activation Key" 
+                               FontSize="22" 
+                               Foreground="White" 
+                               Margin="0,0,0,15"/>
+
+                    <TextBox Text="{Binding LicenseKey, Mode=TwoWay}"
+                             Style="{StaticResource ModernLicenseTextBox}"
+                             Width="540"
+                             Height="120" 
+                             TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto"
+                             FontFamily="Consolas" 
+                             FontSize="12" 
+                             Background="#333" 
+                             BorderBrush="#333"
+                             Foreground="#CCC"
+                             Padding="10"
+                             Margin="0,0,0,15"/>
+
+                    <TextBlock Text="Version" 
+                               FontSize="22" 
+                               Foreground="White" 
+                               Margin="0,0,0,15"/>
+
+                    <Grid Margin="0,0,0,30">
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" 
+                                   Grid.Column="0" 
+                                   Text="Edition:" 
+                                   Style="{StaticResource OpticLabelHeader}"/>
+
+                        <TextBlock Grid.Row="0" 
+                                   Grid.Column="1" 
+                                   Text="{Binding Edition}" 
+                                   Style="{StaticResource OpticLabelValue}"/>
+
+                        <TextBlock Grid.Row="1" 
+                                   Grid.Column="0" 
+                                   Text="Version:"
+                                   Style="{StaticResource OpticLabelHeader}"/>
+
+                        <TextBlock Grid.Row="1" 
+                                   Grid.Column="1" 
+                                   Text="{Binding ProjectVersion}" 
+                                   Style="{StaticResource OpticLabelValue}"/>
+
+                        <TextBlock Grid.Row="2" 
+                                   Grid.Column="0" 
+                                   Text="Instance:" 
+                                   Style="{StaticResource OpticLabelHeader}"/>
+
+                        <TextBlock Grid.Row="2" 
+                                   Grid.Column="1" 
+                                   Text="{Binding Instance}" 
+                                   Style="{StaticResource OpticLabelValue}"/>
+
+                    </Grid>
+
+                    <TextBlock Text="License" 
+                               FontSize="22" 
+                               Foreground="White" 
+                               Margin="0,0,0,15"/>
+
+                    <TextBlock TextWrapping="Wrap" 
+                               Foreground="#AAA" 
+                               FontSize="13" 
+                               LineHeight="18">
+                        
+                        This computer program is protected by copyright law and international treaties. Unauthorized 
+                        reproduction or distribution of this program, or any portion of it, may result in severe civil and 
+                        criminal penalties, and will be prosecuted to the maximum extent possible under the law.
+                        <LineBreak/>
+                        © 2026 Izovac Ltd. All rights reserved.
+
+                    </TextBlock>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Top" Margin="20,0,0,0">
+
+                    <Button Content="Copy UID"
+                            Command="{Binding CopyToClipboardUidCommand}"
+                            Background="#1a1a1a"
+                            Foreground="White"
+                            Style="{StaticResource ActionButtonStyle}" 
+                            Margin="0,0,0,10"/>
+
+                    <Button Content="Copy Version"
+                            Command="{Binding CopyToClipboardVersionCommand}"
+                            Background="#1a1a1a"
+                            Foreground="White"
+                            Width="100"
+                            Style="{StaticResource ActionButtonStyle}" 
+                            Margin="0,0,0,10"/>
+
+                    <Button Content="Apply License"
+                            Command="{Binding ApplyLicenseCommand}"
+                            Background="#333"
+                            Foreground="White"
+                            Width="100"
+                            Style="{StaticResource ActionButtonStyle}" 
+                            Margin="0,0,0,10"/>
+                </StackPanel>
+            </Grid>
+        </DockPanel>
+
+        <Button Content="✕" 
+                Command="{Binding CloseWindowCommand}" 
+                HorizontalAlignment="Right" 
+                VerticalAlignment="Top"
+                Margin="10,1,1,0"
+                Width="40"
+                Height="40"
+                Style="{StaticResource ButtonStyle}"
+                Foreground="White"/>
+    </Grid>
+</Window>
