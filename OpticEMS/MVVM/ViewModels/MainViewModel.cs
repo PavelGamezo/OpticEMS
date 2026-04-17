@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Math;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.MVVM.ViewModels;
 using OpticEMS.MVVM.ViewModels.ProcessViewModels;
@@ -8,6 +9,7 @@ using OpticEMS.MVVM.ViewModels.SettingsViewModels;
 using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Times;
 using OpticEMS.Services.Windows;
+using Serilog;
 
 namespace OpticEMS.ViewModels
 {
@@ -42,6 +44,8 @@ namespace OpticEMS.ViewModels
             ChamberSettingsViewModel chamberSettingsViewModel,
             PasswordDialogViewModel passwordDialogViewModel)
         {
+            Serilog.Log.Information("MainViewModel: Starting MainViewModel components initialization...");
+
             _windowService = windowService;
             _timeService = timeService;
             _settingsProvider = settingsProvider;
@@ -53,35 +57,66 @@ namespace OpticEMS.ViewModels
             _chamberSettingsViewModel = chamberSettingsViewModel;
             _passwordDialogViewModel = passwordDialogViewModel;
 
-            _timeService.TimeChanged += OnTimeChanged;
-            _timeService.Start(_cancellationToken.Token);
-
-            CurrentViewModel = _processViewModel;
-        }
-
-        [RelayCommand]
-        private void ShowSygnal() => CurrentViewModel = _processViewModel;
-
-        [RelayCommand]
-        private void ShowSettings()
-        {
-            if (_dialogService.AskPassword())
+            try
             {
-                CurrentViewModel = _settingsViewModel;
+                _timeService.TimeChanged += OnTimeChanged;
+                _timeService.Start(_cancellationToken.Token);
+
+                CurrentViewModel = _processViewModel;
+
+                Serilog.Log.Information("MainViewModel: Successfully initialized and started.");
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Fatal(ex, "MainViewModel: Critical failure during startup");
             }
         }
 
         [RelayCommand]
-        private void ShowChamberSettings() => CurrentViewModel = _chamberSettingsViewModel;
+        private void ShowSygnal()
+        {
+            Serilog.Log.Debug("MainViewModel: Switching to Process View");
+            CurrentViewModel = _processViewModel;
+        }
 
         [RelayCommand]
-        private void ShowRecipe() => CurrentViewModel = _recipeViewModel;
+        private void ShowSettings()
+        {
+            Serilog.Log.Information("MainViewModel: Requesting access to Settings (Password required)");
+            if (_dialogService.AskPassword())
+            {
+                Serilog.Log.Information("MainViewModel: Password accepted. Accessing Settings View");
+                CurrentViewModel = _settingsViewModel;
+            }
+            else
+            {
+                Serilog.Log.Warning("MainViewModel: Access to Settings denied (Incorrect password or cancelled)");
+            }
+        }
+
+        [RelayCommand]
+        private void ShowChamberSettings()
+        {
+            Serilog.Log.Information("MainViewModel: Switching to ChamberSettingsView");
+            CurrentViewModel = _chamberSettingsViewModel;
+        }
+
+        [RelayCommand]
+        private void ShowRecipe()
+        {
+            Serilog.Log.Information("MainViewModel: Switching to RecipeView");
+            CurrentViewModel = _recipeViewModel;
+        }
 
         [RelayCommand]
         private void MoveWindow() => _windowService.Move();
 
         [RelayCommand]
-        private void CloseWindow() => _windowService.Close();
+        private void CloseWindow()
+        {
+            Serilog.Log.Information("User requested to close the application window");
+            _windowService.Close();
+        }
 
         [RelayCommand]
         private void MaximizeWindow() => _windowService.MaximizeOrRestore();
@@ -96,6 +131,7 @@ namespace OpticEMS.ViewModels
 
         partial void OnCurrentViewModelChanged(object value)
         {
+            Serilog.Log.Debug("MainViewModel: Current View changed to {ViewModelType}", value?.GetType().Name);
             OnPropertyChanged(nameof(IsProcessSelected));
             OnPropertyChanged(nameof(IsRecipeSelected));
             OnPropertyChanged(nameof(IsSettingsSelected));

@@ -7,7 +7,7 @@
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="ChamberSettings">
-    
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -29,7 +29,7 @@
                                     Margin="0,0,0,20" 
                                     Background="#1E1E1E"
                                     Width="500">
-                                
+
                                 <Border.Effect>
                                     <DropShadowEffect Color="Black" 
                                                       Direction="315" 
@@ -45,8 +45,13 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0"
-                                                Orientation="Vertical"
-                                                Margin="0,0,0,12">
+                                                Orientation="Vertical">
+
+                                        <TextBlock Text="{Binding ChannelId, StringFormat='Chamber #{0}'}" 
+                                                   Foreground="White" 
+                                                   FontSize="14" 
+                                                   FontWeight="Bold" 
+                                                   Margin="0,0,0,10"/>
 
                                         <TextBlock Text="Select Spectrometer Device:"
                                                    Foreground="#AAAAAA"
@@ -55,44 +60,55 @@
 
                                         <StackPanel Orientation="Horizontal"
                                                     HorizontalAlignment="Left"
-                                                    Margin="0,0,0,8">
+                                                    Margin="0,0,0,12">
 
                                             <ComboBox ItemsSource="{Binding AvailableSpectrometers}"
                                                       SelectedItem="{Binding SelectedSpectrometer}"
                                                       Style="{StaticResource ComboBoxStyle}"
                                                       Height="35"
-                                                      Width="180"/>
+                                                      Width="300"
+                                                      Margin="0,0,10,0"/>
 
-                                            <ComboBox ItemsSource="{Binding SpectrometerTypes}"
+                                            <ComboBox ItemsSource="{Binding DataContext.SpectrometerTypes, RelativeSource={RelativeSource AncestorType=Page}}"
                                                       SelectedItem="{Binding SelectedSpectrometerType}"
                                                       Style="{StaticResource ComboBoxStyle}"
-                                                      Height="35"
-                                                      Width="120"/>
+                                                      Width="120"
+                                                      Height="35"/>
                                         </StackPanel>
 
-                                        <TextBlock Text="{Binding CalibrationCoefficients}"
-                                                   Foreground="#CCCCCC"
-                                                   FontSize="12"
+                                        <StackPanel Margin="0,0,0,12">
+                                            <TextBlock Text="Calibration coefficients:"
+                                                       Foreground="#AAAAAA"
+                                                       FontFamily="Segoe UI Semibold"/>
+                                            <TextBlock Text="{Binding CalibrationCoefficientsString}"
+                                                       Foreground="#CCCCCC"
+                                                       FontSize="12"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+
+                                        <TextBlock Text="Wavelength range (Trim):"
+                                                   Foreground="#AAAAAA"
+                                                   FontFamily="Segoe UI Semibold"
                                                    Margin="0,0,0,8"/>
 
                                         <StackPanel Orientation="Horizontal"
                                                     HorizontalAlignment="Left">
 
-                                            <TextBox Text="{Binding WavelengthStart}"
+                                            <TextBox Text="{Binding TrimLeft, UpdateSourceTrigger=PropertyChanged}"
                                                      Style="{StaticResource TextBoxStyle}"
-                                                     Width="80"
-                                                     Height="30"
-                                                     HorizontalContentAlignment="Center"/>
+                                                     Width="150" Height="30"
+                                                     HorizontalContentAlignment="Center"
+                                                     Margin="0,0,10,0"/>
 
                                             <TextBlock Text="–"
                                                        Foreground="#888888"
                                                        VerticalAlignment="Center"/>
 
-                                            <TextBox Text="{Binding WavelengthEnd}"
+                                            <TextBox Text="{Binding TrimRight, UpdateSourceTrigger=PropertyChanged}"
                                                      Style="{StaticResource TextBoxStyle}"
-                                                     Width="80"
-                                                     Height="30"
-                                                     HorizontalContentAlignment="Center"/>
+                                                     Width="150" Height="30"
+                                                     HorizontalContentAlignment="Center"
+                                                     Margin="10,0,0,0"/>
                                         </StackPanel>
                                     </StackPanel>
 
@@ -137,14 +153,14 @@
                 </ItemsControl>
 
                 <StackPanel HorizontalAlignment="Center"
-                            Orientation="Horizontal">
+                            Orientation="Horizontal"
+                            Margin="0,20,0,40">
 
                     <Button Content="Add chamber" 
                             Command="{Binding AddChamberCommand}" 
                             Style="{StaticResource ActionButtonStyle}"
-                            Width="150" 
-                            Height="40" 
-                            Margin="0 20 10 0"
+                            Width="150" Height="40" 
+                            Margin="0,0,10,0"
                             Foreground="White"
                             Background="#222120"
                             FontWeight="Bold"/>
@@ -152,13 +168,10 @@
                     <Button Content="Save settings" 
                             Command="{Binding SaveSettingsCommand}"
                             Style="{StaticResource ActionButtonStyle}"
-                            Width="150" 
-                            Height="40" 
-                            Margin="0 20 0 0" 
+                            Width="150" Height="40" 
                             Foreground="White"
                             Background="DarkSlateGray"
                             FontWeight="Bold"/>
-                    
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

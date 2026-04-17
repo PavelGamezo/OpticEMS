@@ -3,11 +3,10 @@ using CommunityToolkit.Mvvm.Input;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices.Devices.Avantes;
 using OpticEMS.Devices.Devices.Solar;
-using OpticEMS.MVVM.ViewModels.SettingsViewModels;
+using OpticEMS.MVVM.Models;
 using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Settings;
 using OpticEMS.Services.Spectrometers;
-using OpticEMS.MVVM.Models;
 using System.Collections.ObjectModel;
 
 namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
@@ -21,7 +20,11 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 
         public ObservableCollection<ChannelModel> ChannelSettings { get; } = new();
 
-        public ChamberSettingsViewModel(ISpectrometerService spectrometerService,
+        public IEnumerable<SpectrometerType> SpectrometerTypes { get; } =
+            Enum.GetValues(typeof(SpectrometerType)).Cast<SpectrometerType>();
+
+        public ChamberSettingsViewModel(
+            ISpectrometerService spectrometerService,
             IDialogService dialogService)
         {
             _spectrometerService = spectrometerService;
@@ -68,7 +71,20 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                     {
                         ChannelId = dev.ChannelId,
                         AvailableSpectrometers = new List<string>(allSpecs),
-                        SelectedSpectrometer = !string.IsNullOrEmpty(dev.Name) ? dev.Name : "VIRTUAL-SPEC-001"
+                        SelectedSpectrometer = !string.IsNullOrEmpty(dev.Name) ? dev.Name : "VIRTUAL-SPEC-001",
+
+                        SelectedSpectrometerType = dev.DeviceType switch
+                        {
+                            DeviceType.Solar => SpectrometerType.Solar,
+                            DeviceType.Avantes => SpectrometerType.Avantes,
+                            DeviceType.VirtualSpec => SpectrometerType.VirtualSpec,
+                            _ => SpectrometerType.VirtualSpec
+                        },
+
+                        CalibrationCoefficientsString = $"{dev.CoefA}, {dev.CoefB}, {dev.CoefC}, {dev.CoefD}",
+
+                        TrimLeft = dev.TrimLeft,
+                        TrimRight = dev.TrimRight
                     });
                 }
             }
@@ -97,17 +113,24 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                     channelId++;
                     var serial = item.SelectedSpectrometer ?? "VIRTUAL-SPEC-001";
 
-                    item.DeviceType = SpectrometerTypeDetector.Detect(serial);
+                    item.DeviceType = item.SelectedSpectrometerType switch
+                    {
+                        SpectrometerType.Solar => DeviceType.Solar,
+                        SpectrometerType.Avantes => DeviceType.Avantes,
+                        SpectrometerType.VirtualSpec => DeviceType.VirtualSpec,
+                        _ => DeviceType.VirtualSpec
+                    };
 
                     DeviceInfo device;
 
-                    if (item.SelectedSpectrometer == "VIRTUAL-SPEC-001")
+                    if (item.SelectedSpectrometer == "VIRTUAL-SPEC-001" ||
+                        item.SelectedSpectrometerType == SpectrometerType.VirtualSpec)
                     {
                         device = new DeviceInfo(
                             "VIRTUAL-SPEC-001",
                             2048,0,channelId,
                             DeviceType.VirtualSpec,
-                            10,
+                            0,
                             0,
                             -1.029096988621741E-08,
                             -5.332134891649228E-06,

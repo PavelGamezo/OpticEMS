@@ -5,15 +5,26 @@ namespace OpticEMS.MVVM.Models
 {
     public partial class ChannelModel : ObservableObject
     {
-        [ObservableProperty] 
-        private int _channelId;
+        public int ChannelId { get; set; }
 
-        [ObservableProperty] 
-        private string? _selectedSpectrometer;
+        public List<string> AvailableSpectrometers { get; set; }
+
+        [ObservableProperty]
+        private string selectedSpectrometer;
+
+        [ObservableProperty]
+        private SpectrometerType selectedSpectrometerType;
+
+        [ObservableProperty]
+        private string calibrationCoefficientsString;
+
+        [ObservableProperty]
+        private double _trimLeft;
+
+        [ObservableProperty]
+        private double _trimRight;
 
         [ObservableProperty]
         private DeviceType deviceType = DeviceType.Unknown;
-
-        public List<string> AvailableSpectrometers { get; set; } = new();
     }
 }
