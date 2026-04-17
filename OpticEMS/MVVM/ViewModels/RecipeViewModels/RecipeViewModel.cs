@@ -37,6 +37,9 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         private string _selectedAutocalibrationText = "No";
 
         [ObservableProperty]
+        private string _selectedPCAText = "No";
+
+        [ObservableProperty]
         private ObservableCollection<WavelengthMonitorItem> _wavelengthItems = new();
 
         public Action<RecipeModel>? ApplyRecipeRequested { get; set; }

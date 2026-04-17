@@ -8,7 +8,9 @@
 
         IReadOnlyList<DeviceInfo> GetAll();
 
-        DeviceInfo? GetByChannelId(int deviceId);
+        DeviceInfo? GetByChannelId(int channelId);
+
+        double[] GetChannelCalibrationCoefficients(int channelId);
 
         void Upsert(DeviceInfo deviceInfo);
 

@@ -45,7 +45,7 @@
         <StackPanel Grid.Column="0" 
                     Background="#1e1d1d">
             
-            <Button Content="Chamber settings" 
+            <Button Content="Chambers" 
                     Command="{Binding ShowChamberSettingsCommand}"
                     Style="{StaticResource ActionButtonStyle}"
                     Height="40"
@@ -55,7 +55,7 @@
                     FontWeight="Bold"
                     Margin="0"/>
 
-            <Button Content="Spectrometer Calibration" 
+            <Button Content="Calibration" 
                     Command="{Binding ShowCalibrationSettingsCommand}"
                     Style="{StaticResource ActionButtonStyle}"
                     Height="40"

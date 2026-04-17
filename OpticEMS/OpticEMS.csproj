@@ -46,6 +46,7 @@
     <ProjectReference Include="..\OpticEMS.Devices\OpticEMS.Devices.csproj" />
     <ProjectReference Include="..\OpticEMS.License\OpticEMS.License.csproj" />
     <ProjectReference Include="..\OpticEMS.Notifications\OpticEMS.Notifications.csproj" />
+    <ProjectReference Include="..\OpticEMS.Processing\OpticEMS.Processing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

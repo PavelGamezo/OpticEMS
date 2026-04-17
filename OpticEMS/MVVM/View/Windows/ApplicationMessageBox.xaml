@@ -9,7 +9,7 @@
         WindowStyle="None"
         AllowsTransparency="True" 
         Background="Transparent"
-        Opacity="0"
+        Opacity="1"
         ResizeMode="NoResize"
         Title="ApplicationMessageBox" Height="180" Width="350">
     

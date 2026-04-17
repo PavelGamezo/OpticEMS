@@ -44,19 +44,56 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <StackPanel Grid.Column="0">
+                                    <StackPanel Grid.Column="0"
+                                                Orientation="Vertical"
+                                                Margin="0,0,0,12">
 
-                                        <TextBlock Text="Select Spectrometer Device:" 
-                                                   Foreground="#AAAAAA" 
+                                        <TextBlock Text="Select Spectrometer Device:"
+                                                   Foreground="#AAAAAA"
                                                    FontSize="12"
                                                    Margin="0,0,0,8"/>
 
-                                        <ComboBox ItemsSource="{Binding AvailableSpectrometers}" 
-                                                  SelectedItem="{Binding SelectedSpectrometer}" 
-                                                  Style="{StaticResource ComboBoxStyle}"
-                                                  Height="35"
-                                                  Width="300"
-                                                  HorizontalAlignment="Left"/>
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Left"
+                                                    Margin="0,0,0,8">
+
+                                            <ComboBox ItemsSource="{Binding AvailableSpectrometers}"
+                                                      SelectedItem="{Binding SelectedSpectrometer}"
+                                                      Style="{StaticResource ComboBoxStyle}"
+                                                      Height="35"
+                                                      Width="180"/>
+
+                                            <ComboBox ItemsSource="{Binding SpectrometerTypes}"
+                                                      SelectedItem="{Binding SelectedSpectrometerType}"
+                                                      Style="{StaticResource ComboBoxStyle}"
+                                                      Height="35"
+                                                      Width="120"/>
+                                        </StackPanel>
+
+                                        <TextBlock Text="{Binding CalibrationCoefficients}"
+                                                   Foreground="#CCCCCC"
+                                                   FontSize="12"
+                                                   Margin="0,0,0,8"/>
+
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Left">
+
+                                            <TextBox Text="{Binding WavelengthStart}"
+                                                     Style="{StaticResource TextBoxStyle}"
+                                                     Width="80"
+                                                     Height="30"
+                                                     HorizontalContentAlignment="Center"/>
+
+                                            <TextBlock Text="–"
+                                                       Foreground="#888888"
+                                                       VerticalAlignment="Center"/>
+
+                                            <TextBox Text="{Binding WavelengthEnd}"
+                                                     Style="{StaticResource TextBoxStyle}"
+                                                     Width="80"
+                                                     Height="30"
+                                                     HorizontalContentAlignment="Center"/>
+                                        </StackPanel>
                                     </StackPanel>
 
                                     <Button Grid.Column="1"
@@ -65,6 +102,7 @@
                                             VerticalAlignment="Top"
                                             Cursor="Hand"
                                             ToolTip="Delete this chamber">
+                                        
                                         <Button.Style>
                                             <Style TargetType="Button">
                                                 <Setter Property="Background" Value="Transparent"/>

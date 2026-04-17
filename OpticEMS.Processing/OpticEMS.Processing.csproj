@@ -7,11 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MathNet.Numerics" Version="6.0.0-beta2" />
     <PackageReference Include="Stateless" Version="5.20.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\OpticEMS\OpticEMS.csproj" />
   </ItemGroup>
 
 </Project>

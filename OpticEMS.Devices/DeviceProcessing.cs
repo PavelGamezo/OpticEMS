@@ -27,6 +27,8 @@ namespace OpticEMS.Devices
 
         public uint[] Intensities { get; set; }
 
+        public Device Device => _device;
+
         public DeviceProcessing(int channelId, ISettingsProvider configProvider)
         {
             ChannelId = channelId;

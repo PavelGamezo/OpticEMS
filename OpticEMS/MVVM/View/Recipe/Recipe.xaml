@@ -288,6 +288,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <Border Grid.Row="0" 
@@ -1498,6 +1499,194 @@
                                     </StackPanel>
                                 </Grid>
                                 
+                            </Grid>
+
+                        </Border>
+                        <Border Grid.Row="6"
+        CornerRadius="5"
+        Padding="15,10,15,0">
+
+                            <Grid>
+
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" 
+                                           Text="PCA Parameters" 
+                                           FontSize="12" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           Margin="0,0,0,5"/>
+
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" 
+                                                Margin="0,0,10,0">
+
+                                        <StackPanel Orientation="Horizontal">
+
+                                            <TextBlock Text="PCA Enabled" 
+                                                       FontSize="11" 
+                                                       Foreground="#999999"/>
+
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
+
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
+
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="200">
+
+                                                            <TextBlock Text="Enable Over-etch Phase" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="Toggle to allow additional etching after the primary Endpoint is detected." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+
+                                        </StackPanel>
+
+                                        <ComboBox Background="#3E3E40"
+                                                  BorderThickness="0"
+                                                  Foreground="White"
+                                                  Padding="8"
+                                                  Margin="0,5,0,0"
+                                                  ItemsSource="{Binding YesNoOptions}"
+                                                  SelectedItem="{Binding SelectedPCAText}"
+                                                  Style="{StaticResource ComboBoxStyle}"
+                                                  Height="32"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1">
+
+                                        <StackPanel Orientation="Horizontal">
+
+                                            <TextBlock Text="PCA Components Number" 
+                                                       FontSize="11" 
+                                                       Foreground="#999999"/>
+
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
+
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
+
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="200">
+
+                                                            <TextBlock Text="Over-etch Duration (ms)" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="The precise amount of extra time the process continues to ensure complete removal of the layer." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+
+                                        </StackPanel>
+                                        <Grid Margin="0,5,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBox Grid.Column="0" 
+                                                     Text="{Binding SelectedRecipe.PCAComponents}" 
+                                                     Background="#3E3E40"
+                                                     BorderThickness="0"
+                                                     Foreground="White"
+                                                     Padding="8"/>
+
+                                            <Border Grid.Column="1" 
+                                                    Background="#3E3E40"
+                                                    CornerRadius="0,3,3,0"
+                                                    Padding="8,8">
+
+                                                <TextBlock Text="ms" 
+                                                           Foreground="White"/>
+
+                                            </Border>
+
+                                        </Grid>
+
+                                    </StackPanel>
+                                </Grid>
+
                             </Grid>
 
                         </Border>

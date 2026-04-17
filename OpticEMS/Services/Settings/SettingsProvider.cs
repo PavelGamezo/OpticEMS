@@ -106,5 +106,24 @@ namespace OpticEMS.Services.Settings
                 _devices.Add(deviceInfo);
             }
         }
+
+        public double[] GetChannelCalibrationCoefficients(int channelId)
+        {
+            var deviceInfo = GetByChannelId(channelId);
+            double[] calibrationCoefficients = new double[] { 0, 0, 0, 0 };
+
+            if (deviceInfo != null)
+            {
+                calibrationCoefficients = new double[]
+                {
+                    deviceInfo.CoefA,
+                    deviceInfo.CoefB,
+                    deviceInfo.CoefC,
+                    deviceInfo.CoefD,
+                };
+            }
+
+            return calibrationCoefficients;
+        }
     }
 }

@@ -127,6 +127,13 @@
                         HorizontalAlignment="Stretch"
                         Width="40"/>
 
+                <TextBlock Style="{StaticResource ParameterLabelStyle}"
+                           Text="{Binding PcaStatus}"
+                           FontSize="12"
+                           FontWeight="Bold"
+                           Foreground="White"
+                           Background="Black"/>
+
             </StackPanel>
 
             <ContentControl Grid.Row="1" 

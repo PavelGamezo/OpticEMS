@@ -34,6 +34,10 @@ namespace OpticEMS.MVVM.Models
 
         public int OverEtchValue { get; set; }
 
+        public bool PCAEnabled { get; set; }
+
+        public int PCAComponents { get; set; } = 5;
+
         public DateTime CreatedAt { get; set; }
 
         public DateTime LastModifiedAt { get; set; }

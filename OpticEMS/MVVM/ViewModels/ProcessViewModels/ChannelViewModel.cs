@@ -5,17 +5,20 @@ using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
 using OpticEMS.MVVM.Models;
-using OpticEMS.MVVM.View.Windows;
+using OpticEMS.MVVM.ViewModels.ProcessViewModels;
 using OpticEMS.Notifications.Messages;
+using OpticEMS.Processing.PCA;
 using OpticEMS.Services.Calibration;
 using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Etching;
 using OpticEMS.Services.Export;
 using OpticEMS.Services.Files;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
+using XAct;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {
@@ -30,6 +33,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private readonly ISettingsProvider _configureProvider;
         private readonly IExportManager _exportManager;
         private readonly ICalibrationService _calibrationService;
+        private readonly PcaSpectrumAnalyzer _analyzer;
+        private readonly DeviceProcessing _deviceProcessing;
 
         #endregion
 
@@ -44,12 +49,11 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private readonly Stopwatch _stopwatch = new();
         private DateTime _startTime;
         private DateTime _endTime;
-        private ApplicationMessageBox? _activeDialog;
-        private double[] _calibrationCoefficients = Array.Empty<double>();
-        private DeviceProcessing? _deviceProcessing;
         private long _lastUiUpdateMs = 0;
         private int[] _wavelengthsIndices = Array.Empty<int>();
-        public uint[] _currentIntensities = Array.Empty<uint>();
+        public uint[] _currentIntensities = Array.Empty<uint>(); 
+        private List<uint[]> _fullSpectrumHistory = new List<uint[]>();
+        private const int MaxHistorySize = 150;
         private bool _isDemoMode = false;
 
         #endregion
@@ -59,11 +63,11 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         [ObservableProperty] 
         private string _processStatus = "Waiting start";
 
-        [ObservableProperty] 
-        private RecipeModel? _recipe;
+        [ObservableProperty]
+        private string _pcaStatus = "None";
 
         [ObservableProperty] 
-        private bool _endpointReached;
+        private RecipeModel? _recipe;
 
         #endregion
 
@@ -110,9 +114,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _deviceProcessing = new DeviceProcessing(
                 ChannelId,
                 _configureProvider);
+            _analyzer = new PcaSpectrumAnalyzer();
 
             RegisterMessages();
-            LoadCalibration();
 
             SpectrumChartViewModel = new SpectrumChartViewModel();
             ProcessChartViewModel = new ProcessChartViewModel();
@@ -347,24 +351,72 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             periodicStopwatch.Start();
 
             long targetNextTickMs = 0;
-            int interval = Recipe.DetectionWindowTime;
-            var overEtchStarted = false;
+            int interval = Recipe?.DetectionWindowTime ?? 100;
             var monitoringStarted = false;
-            var delayStarted = false;
+            var overEtchStarted = false;
+
+            string modelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Models", $"{Recipe.Name}.pca");
+            bool usePca = Recipe.PCAEnabled;
 
             while (!cancellationToken.IsCancellationRequested)
             {
                 targetNextTickMs += interval;
 
-                if (!_isPaused && _isRunning)
+                if (!_isPaused && _isRunning && Recipe != null)
                 {
+                    if (Recipe.PCAEnabled)
+                    {
+                        if (File.Exists(modelPath))
+                        {
+                            try 
+                            { 
+                                _analyzer.LoadModel(modelPath); 
+                            } 
+                            catch 
+                            {
+                                /* Ошибка загрузки */ 
+                            }
+                        }
+                        if (!_analyzer.IsTrained && _exportData.Count >= 100)
+                        {
+                            var trainingData = _fullSpectrumHistory
+                                .TakeLast(100);
+
+                            _analyzer.TryAutoTrain(trainingData, modelPath);
+                            PcaStatus = "Training";
+                        }
+
+                        if (_analyzer.IsTrained)
+                        {
+                            try
+                            {
+                                var pcaResult = _analyzer.Analyze(_fullSpectrumHistory.Last());
+
+                                PcaStatus = pcaResult.IsAnomaly
+                                    ? $"PCA ANOMALY → ${pcaResult.Message}"
+                                    : $"PCA Normal | T²={pcaResult.T2:F5}";
+                            }
+                            catch 
+                            {
+                                PcaStatus = "Error";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        PcaStatus = "PCA disabled";
+                    }
+
                     var result = _endpointService.Update(_currentIntensities);
 
-                    ProcessStatus = result.Status;
+                    if (result.Status != ProcessStatus)
+                    {
+                        ProcessStatus = result.Status;
+                    }
 
                     if (Application.Current?.Dispatcher is Dispatcher dispatcher)
                     {
-                        _ = dispatcher.InvokeAsync(() =>
+                        await dispatcher.InvokeAsync(() =>
                         {
                             RecordDataForExport(_currentIntensities);
                             ProcessChartViewModel.UpdateTopPlot(_stopwatch.Elapsed, _currentIntensities);
@@ -412,6 +464,10 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 {
                     await Task.Delay((int)sleepTime, cancellationToken);
                 }
+                else if (sleepTime < -50)
+                {
+                    targetNextTickMs = currentMs;
+                }
             }
         }
 
@@ -446,15 +502,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             });
         }
 
-        private void LoadCalibration()
-        {
-            var device = _configureProvider.GetByChannelId(ChannelId);
-
-            _calibrationCoefficients = device != null
-                ? new[] { device.CoefA, device.CoefB, device.CoefC, device.CoefD }
-                : new[] { 0.0, 0.0, 0.0, 0.0 };
-        }
-
         public void ApplyRecipe(RecipeModel recipe)
         {
             try
@@ -476,6 +523,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 UpdateInternalIndexes();
                 _currentIntensities = new uint[Recipe.Wavelengths.Count];
                 _isIndicesCorrected = false;
+                _analyzer.NComponents = Recipe.PCAComponents;
 
                 _dialogService.ShowInformation($"Recipe '{Recipe.Name}' for channel {Recipe.Channel} applied successfully.");
             }
@@ -515,6 +563,13 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             if (intensities == null || intensities.Length == 0)
             {
                 return;
+            }
+
+            _fullSpectrumHistory.Add((uint[])intensities.Clone());
+
+            if (_fullSpectrumHistory.Count > MaxHistorySize)
+            {
+                _fullSpectrumHistory.RemoveAt(0);
             }
 
             long currentMs = DateTimeOffset.Now.ToUnixTimeMilliseconds();
@@ -599,9 +654,17 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         {
             Recipe.Wavelengths.Clear();
 
+            var calibrationCoefficients = new double[]
+            {
+                _deviceProcessing.Device.DeviceInfo.CoefA,
+                _deviceProcessing.Device.DeviceInfo.CoefB,
+                _deviceProcessing.Device.DeviceInfo.CoefC,
+                _deviceProcessing.Device.DeviceInfo.CoefD,
+            };
+
             foreach (var wavelengthIndex in _wavelengthsIndices)
             {
-                var wavelength = _wavelengthMapper.FindWavelengthByPixel((uint)wavelengthIndex, _calibrationCoefficients);
+                var wavelength = _wavelengthMapper.FindWavelengthByPixel((uint)wavelengthIndex, calibrationCoefficients);
 
                 double roundedWavelength = Math.Round(wavelength, 2);
 
