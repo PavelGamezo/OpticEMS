@@ -377,7 +377,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                         PcaStatus = "PCA disabled";
                     }
 
-                    var result = _endpointService.Update(_currentIntensities);
+                    var result = _endpointService.Update();
 
                     if (result.Status != ProcessStatus)
                     {
@@ -615,9 +615,12 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             for (int i = 0; i < _wavelengthsIndices.Length; i++)
             {
                 int idx = _wavelengthsIndices[i];
-                _currentIntensities[i] = (idx >= 0 && idx < intensities.Length)
-                    ? intensities[idx]
-                    : 0;
+                _currentIntensities[i] = (idx >= 0 && idx < intensities.Length) ? intensities[idx] : 0;
+            }
+
+            if (_isRunning && !_isPaused)
+            {
+                _endpointService.PushIntensities(_currentIntensities);
             }
         }
 
@@ -639,9 +642,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             for (int i = 0; i < _wavelengthsIndices.Length; i++)
             {
                 int idx = _wavelengthsIndices[i];
-                _currentIntensities[i] = (idx >= 0 && idx < intensities.Length)
-                    ? intensities[idx]
-                    : 0;
+                _currentIntensities[i] = (idx >= 0 && idx < intensities.Length) ? intensities[idx] : 0;
             }
 
             SaveUpdatedWavelengths();

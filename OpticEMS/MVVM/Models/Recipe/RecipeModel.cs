@@ -28,6 +28,8 @@ namespace OpticEMS.MVVM.Models.Recipe
 
         public int WindowOutCount { get; set; } = 1;
 
+        public int StableThresholdPercent { get; set; } = 1;
+
         public int MaxEndpointTime { get; set; }
 
         public bool AutocalibrationEnabled { get; set; }

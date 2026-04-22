@@ -1092,6 +1092,7 @@
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
                                     <StackPanel Grid.Row="0" 
@@ -1258,7 +1259,7 @@
 
                                     <StackPanel Grid.Row="1" 
                                                 Grid.Column="0" 
-                                                Margin="0,0,10,0">
+                                                Margin="0,0,10,15">
 
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
 
@@ -1396,6 +1397,100 @@
                                                  Padding="8"
                                                  Margin="0,5,0,0"/>
 
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="2" 
+                                                Grid.Column="0" 
+                                                Margin="0,0,10,15">
+
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                                            <TextBlock Text="Stable Threshold Percent" 
+                                                       FontSize="11" 
+                                                       Foreground="#999999"/>
+
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
+
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
+
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="220">
+
+                                                            <TextBlock Text="Stable Threshold (%)" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="Defines how much the average signal may change between frames while still being considered stable. Lower values require a more stable plasma before endpoint monitoring begins."
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"
+                                                                       Margin="0,5,0,0"/>
+
+                                                            <TextBlock Text="Recommended:"
+                                                                       Foreground="#AAAAAA"
+                                                                       FontSize="11"
+                                                                       Margin="0,10,0,0"/>
+
+                                                            <TextBlock Text="• 1–3%: very stable plasma" 
+                                                                       Foreground="#888888"
+                                                                       FontSize="11"/>
+
+                                                            <TextBlock Text="• 5–10%: typical processes" 
+                                                                       Foreground="#888888"
+                                                                       FontSize="11"/>
+
+                                                            <TextBlock Text="• 10–20%: noisy or unstable chambers" 
+                                                                       Foreground="#888888"
+                                                                       FontSize="11"/>
+
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+                                        </StackPanel>
+
+                                        <TextBox Text="{Binding SelectedRecipe.StableThresholdPercent}" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"
+                                                 Margin="0,5,0,0"/>
+
+                                        <TextBlock Text="%" 
+                                                   FontSize="10" 
+                                                   Foreground="#999999"
+                                                   Margin="0,2,0,0"/>
                                     </StackPanel>
 
                                 </Grid>

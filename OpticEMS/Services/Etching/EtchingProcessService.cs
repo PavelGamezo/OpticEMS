@@ -6,17 +6,25 @@ namespace OpticEMS.Services.Etching
 {
     public class EtchingProcessService : IEtchingProcessService
     {
-        private RecipeModel? _recipe; 
+        private RecipeModel? _recipe;
         private readonly Stopwatch _processTimer = new();
 
         private double[] _baselineSums = Array.Empty<double>();
-        private int _baselineSamplesCount;
         private double[] _finalBaselines = Array.Empty<double>();
+        private int _baselineSamplesCount;
+
+        private bool _inStableWindow;
+        private bool _isOverEtching;
 
         private int _inConfirmCount;
         private int _outConfirmCount;
-        private bool _inStableWindow;
-        private bool _isOverEtching;
+
+        private double[] _prevIntensities = Array.Empty<double>();
+        private bool _hasPrevAvg;
+
+        private readonly List<uint[]> _buffer = new();
+        private uint[] _lastAveraged = Array.Empty<uint>();
+
         private double _overEtchStartTime;
         private double _detectedAtMs;
         private double _finishedAtMs;
@@ -24,19 +32,22 @@ namespace OpticEMS.Services.Etching
         private string _currentStatus = "Ready";
 
         public double DetectedAtSeconds => _detectedAtMs / 1000.0;
-
         public double TotalDurationSeconds => _finishedAtMs / 1000.0;
-
         public double OverEtchDurationSeconds => (_finishedAtMs - _detectedAtMs) / 1000.0;
 
-        public EndpointResult Update(uint[] currentIntensities)
+        public void PushIntensities(uint[] currentIntensities)
+        {
+            _buffer.Add((uint[])currentIntensities.Clone());
+        }
+
+        public EndpointResult Update()
         {
             if (_recipe == null)
             {
                 return new EndpointResult(false, "No Recipe", false);
             }
 
-            if (!_processTimer.IsRunning)
+            if (!_processTimer.IsRunning) 
             {
                 return new EndpointResult(false, "Paused", false);
             }
@@ -51,113 +62,157 @@ namespace OpticEMS.Services.Etching
 
             if (_isOverEtching)
             {
-                double timeInOverEtch = elapsedMs - _overEtchStartTime;
+                double overEtchTime = elapsedMs - _overEtchStartTime;
 
-                if (timeInOverEtch >= _recipe.OverEtchValue)
+                if (overEtchTime >= _recipe.OverEtchValue)
                 {
                     _finishedAtMs = _overEtchStartTime + _recipe.OverEtchValue;
-
                     return new EndpointResult(true, "Process Finished", false);
                 }
 
-                double remaining = _recipe.OverEtchValue - timeInOverEtch;
-
+                double remaining = _recipe.OverEtchValue - overEtchTime;
                 _currentStatus = $"Over-etching: {remaining / 1000.0:F1}s";
                 return new EndpointResult(false, _currentStatus, false);
             }
 
+            var currentIntensities = GetAveragedFrame();
+
             if (elapsedMs <= _recipe.InitialDelay)
             {
                 for (int i = 0; i < currentIntensities.Length; i++)
-                {
-                    if (i < _baselineSums.Length) _baselineSums[i] += currentIntensities[i];
-                }
+                    _baselineSums[i] += currentIntensities[i];
+
                 _baselineSamplesCount++;
 
                 _currentStatus = "On going initial delay";
                 return new EndpointResult(false, _currentStatus, false);
             }
 
+            // Finalize baseline
             if (_baselineSamplesCount > 0)
             {
                 for (int i = 0; i < _baselineSums.Length; i++)
                 {
-                    _finalBaselines[i] = _baselineSums[i] / _baselineSamplesCount;
+                    double avg = _baselineSums[i] / _baselineSamplesCount;
+                    _finalBaselines[i] = avg == 0 ? currentIntensities[i] : avg;
                 }
                 _baselineSamplesCount = 0;
             }
 
-            bool isSignalChanged = CheckIfSignalChanged(currentIntensities);
-
+            // Window-IN (stabilization)
             if (!_inStableWindow)
             {
-                _inConfirmCount = !isSignalChanged ? _inConfirmCount + 1 : 0;
+                if (!_hasPrevAvg)
+                {
+                    _prevIntensities = currentIntensities.Select(v => (double)v).ToArray();
+                    _hasPrevAvg = true;
+                    return new EndpointResult(false, "Stabilizing...", false);
+                }
+
+                double sumDelta = 0;
+                int count = currentIntensities.Length;
+
+                for (int i = 0; i < count; i++)
+                {
+                    double prev = _prevIntensities[i];
+                    double curr = currentIntensities[i];
+
+                    if (prev == 0)
+                        continue;
+
+                    double delta = Math.Abs(curr - prev) / prev * 100.0;
+                    sumDelta += delta;
+                }
+
+                double avgDelta = sumDelta / count;
+
+                if (avgDelta < _recipe.StableThresholdPercent)
+                {
+                    _inConfirmCount++;
+                }
+                else
+                {
+                    _inConfirmCount = 0;
+                    _prevIntensities = currentIntensities.Select(v => (double)v).ToArray();
+                }
 
                 if (_inConfirmCount >= _recipe.WindowInCount)
-                {
                     _inStableWindow = true;
-                }
-                _currentStatus = "Monitoring...";
+
+                return new EndpointResult(false, "Stabilizing...", false);
             }
-            else
+
+            // Window-OUT (endpoint detection)
+            bool changed = CheckIfSignalChanged(currentIntensities);
+
+            _outConfirmCount = changed ? _outConfirmCount + 1 : 0;
+
+            if (_outConfirmCount >= _recipe.WindowOutCount)
             {
-                _outConfirmCount = isSignalChanged ? _outConfirmCount + 1 : 0;
+                _detectedAtMs = elapsedMs;
 
-                if (_outConfirmCount >= _recipe.WindowOutCount)
+                if (_recipe.OverEtchEnabled && _recipe.OverEtchValue > 0)
                 {
-                    _detectedAtMs = elapsedMs;
-
-                    if (_recipe.OverEtchEnabled && _recipe.OverEtchValue > 0)
-                    {
-                        _isOverEtching = true;
-                        _overEtchStartTime = elapsedMs;
-                        _currentStatus = "Over-etching...";
-                        return new EndpointResult(false, _currentStatus, false);
-                    }
-
-                    _finishedAtMs = elapsedMs;
-                    return new EndpointResult(true, "Endpoint Detected", false);
+                    _isOverEtching = true;
+                    _overEtchStartTime = elapsedMs;
+                    return new EndpointResult(false, "Over-etching...", false);
                 }
-                _currentStatus = "Monitoring...";
+
+                _finishedAtMs = elapsedMs;
+                return new EndpointResult(true, "Endpoint Detected", false);
             }
 
+            _currentStatus = "Monitoring...";
             return new EndpointResult(false, _currentStatus, false);
+        }
+
+        private uint[] GetAveragedFrame()
+        {
+            if (_buffer.Count == 0)
+            {
+                return _lastAveraged.Length > 0 ? _lastAveraged : new uint[_finalBaselines.Length];
+            }
+
+            int length = _buffer[0].Length;
+            double[] sum = new double[length];
+
+            foreach (var frame in _buffer)
+            {
+                for (int i = 0; i < length; i++)
+                {
+                    sum[i] += frame[i];
+                }
+            }
+
+            uint[] avg = new uint[length];
+            for (int i = 0; i < length; i++)
+            {
+                avg[i] = (uint)(sum[i] / _buffer.Count);
+            }
+
+            _buffer.Clear();
+            _lastAveraged = avg;
+
+            return avg;
         }
 
         private bool CheckIfSignalChanged(uint[] currentIntensities)
         {
-            bool anyChange = false;
-
             for (int i = 0; i < _finalBaselines.Length; i++)
             {
-                if (i >= currentIntensities.Length)
-                {
-                    break;
-                }
-
-                if (_recipe.DetectionWindowHighs[i] == 0)
-                {
-                    continue;
-                }
-
                 double baseline = _finalBaselines[i];
-                if (baseline == 0)
+                if (baseline <= 0)
                 {
-                    continue;
+                    baseline = currentIntensities[i];
                 }
 
                 double deltaPercent = Math.Abs(currentIntensities[i] - baseline) / baseline * 100.0;
+
                 if (deltaPercent >= _recipe.DetectionWindowHighs[i])
-                {
-                    anyChange = true;
-                }
-                else
-                {
-                    return false;
-                }
+                    return true;
             }
 
-            return anyChange;
+            return false;
         }
 
         public void Start(RecipeModel recipe, uint[] startIntensities)
@@ -165,24 +220,31 @@ namespace OpticEMS.Services.Etching
             _recipe = recipe;
             _processTimer.Restart();
 
-            _inConfirmCount = 0;
-            _outConfirmCount = 0;
+            int count = startIntensities.Length;
+
+            _baselineSums = new double[count];
+            _finalBaselines = new double[count];
+            _baselineSamplesCount = 0;
+
             _inStableWindow = false;
             _isOverEtching = false;
-            _overEtchStartTime = 0;
+
+            _inConfirmCount = 0;
+            _outConfirmCount = 0;
+
+            _hasPrevAvg = false; 
+            _prevIntensities = new double[count];
+
             _detectedAtMs = 0;
             _finishedAtMs = 0;
 
-            int count = startIntensities.Length;
-            _baselineSums = new double[count];
-            _baselineSamplesCount = 0;
-            _finalBaselines = new double[count];
+            _buffer.Clear();
+            _lastAveraged = Array.Empty<uint>();
 
             _currentStatus = "On going initial delay";
         }
 
         public void Pause() => _processTimer.Stop();
-
         public void Resume() => _processTimer.Start();
 
         public void Stop()

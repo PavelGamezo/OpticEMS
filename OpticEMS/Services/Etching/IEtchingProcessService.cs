@@ -19,6 +19,8 @@ namespace OpticEMS.Services.Etching
 
         void Stop();
 
-        EndpointResult Update(uint[] currentIntensities);
+        EndpointResult Update();
+
+        void PushIntensities(uint[] currentIntensities);
     }
 }
