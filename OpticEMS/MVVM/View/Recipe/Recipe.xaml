@@ -1070,6 +1070,7 @@
                         <Border Grid.Row="4"
                                 CornerRadius="5"
                                 Padding="15,10,15,0">
+                            
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -1087,9 +1088,9 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
@@ -1167,9 +1168,96 @@
                                                    Foreground="#999999"
                                                    Margin="0,2,0,0"/>
                                     </StackPanel>
-                                    
+
                                     <StackPanel Grid.Row="0" 
                                                 Grid.Column="1" 
+                                                Margin="0,0,0,15">
+
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                                            <TextBlock Text="Scans Numbers" 
+                                                       FontSize="11" 
+                                                       Foreground="#999999"/>
+
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
+
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
+
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="200">
+
+                                                            <TextBlock Text="Scans to Average (ScansNum)" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                       Height="108"
+                                                                       Width="192"
+                                                                       Stretch="Uniform" 
+                                                                       Margin="0,5"
+                                                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="The number of individual spectra to be acquired and averaged by the device hardware before sending the data to the application." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"
+                                                                       Margin="0,0,0,8"/>
+
+                                                            <TextBlock Text="• Higher values: Significantly reduces signal noise (better SNR) but increases the total cycle time." 
+                                                                       Foreground="#AAAAAA" 
+                                                                       FontSize="10" 
+                                                                       TextWrapping="Wrap"
+                                                                       Margin="0,0,0,3"/>
+
+                                                            <TextBlock Text="• Lower values: Provides faster updates for high-speed process monitoring." 
+                                                                       Foreground="#AAAAAA" 
+                                                                       FontSize="10" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+                                        </StackPanel>
+
+                                        <TextBox Text="{Binding SelectedRecipe.ScansNum}" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"
+                                                 Margin="0,5,0,0"/>
+
+                                        <TextBlock Text="ms" 
+                                                   FontSize="10" 
+                                                   Foreground="#999999"
+                                                   Margin="0,2,0,0"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" 
+                                                Grid.Column="0" 
                                                 Margin="0,0,10,0">
 
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -1240,8 +1328,8 @@
 
                                     </StackPanel>
 
-                                    <StackPanel Grid.Row="0" 
-                                                Grid.Column="2">
+                                    <StackPanel Grid.Row="1" 
+                                                Grid.Column="1">
 
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
 

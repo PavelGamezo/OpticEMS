@@ -11,11 +11,16 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
     public partial class SpectrumChartViewModel : ObservableObject
     {
         [ObservableProperty]
-        private ViewResolvingPlotModel _plotModel = SetUpModel();
+        private ViewResolvingPlotModel _plotModel;
 
         public event Action OnWavelengthMoved;
 
-        public static ViewResolvingPlotModel SetUpModel()
+        public SpectrumChartViewModel(int trimLeft, int trimRight)
+        {
+            PlotModel = SetUpModel(trimLeft, trimRight);
+        }
+
+        public static ViewResolvingPlotModel SetUpModel(int trimLeft, int trimRight)
         {
             var plotModel = new ViewResolvingPlotModel()
             {
@@ -35,7 +40,11 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 AxislineColor = OxyColor.FromRgb(70, 70, 70),
                 TickStyle = TickStyle.None,
                 MajorGridlineColor = OxyColor.FromRgb(50, 51, 56),
-                MajorGridlineStyle = LineStyle.Solid
+                MajorGridlineStyle = LineStyle.Solid,
+                Minimum = trimLeft,
+                Maximum = trimRight,
+                AbsoluteMinimum = trimLeft,
+                AbsoluteMaximum = trimRight
             });
 
             plotModel.Axes.Add(new LinearAxis

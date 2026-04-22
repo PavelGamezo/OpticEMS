@@ -20,7 +20,9 @@ namespace OpticEMS.MVVM.Models
 
         public int DetectionWindowTime { get; set; }
 
-        public float ExposureMs { get; set; } = 5;
+        public float ExposureMs { get; set; } = 1;
+
+        public int ScansNum { get; set; } = 1;
 
         public int WindowInCount { get; set; } = 1;
 

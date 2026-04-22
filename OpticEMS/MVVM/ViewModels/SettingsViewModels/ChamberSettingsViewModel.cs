@@ -130,8 +130,8 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                             "VIRTUAL-SPEC-001",
                             2048,0,channelId,
                             DeviceType.VirtualSpec,
-                            0,
-                            0,
+                            (int)item.TrimLeft,
+                            (int)item.TrimRight,
                             -1.029096988621741E-08,
                             -5.332134891649228E-06,
                             0.3790476108105803,
@@ -144,6 +144,8 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                     {
                         var av = new Avantes();
                         device = av.DeviceInfo;
+                        device.TrimLeft = (int)item.TrimLeft;
+                        device.TrimRight = (int)item.TrimRight;
                         device.DeviceType = DeviceType.Avantes;
                         device.ChannelId = channelId;
 

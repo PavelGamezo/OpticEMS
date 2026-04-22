@@ -5,7 +5,6 @@ using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
 using OpticEMS.MVVM.Models;
-using OpticEMS.MVVM.ViewModels.ProcessViewModels;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Processing.PCA;
 using OpticEMS.Services.Calibration;
@@ -54,7 +53,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         public uint[] _currentIntensities = Array.Empty<uint>(); 
         private List<uint[]> _fullSpectrumHistory = new List<uint[]>();
         private const int MaxHistorySize = 150;
-        private bool _isDemoMode = false;
+        private bool _isDemoMode = false; 
+        private bool _isMonitoringAreaActive;
+        private bool _isOverEtchAreaActive;
 
         #endregion
 
@@ -118,7 +119,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
             RegisterMessages();
 
-            SpectrumChartViewModel = new SpectrumChartViewModel();
+            SpectrumChartViewModel = new SpectrumChartViewModel(
+                _deviceProcessing.Device.DeviceInfo.TrimLeft,
+                _deviceProcessing.Device.DeviceInfo.TrimRight);
             ProcessChartViewModel = new ProcessChartViewModel();
             SpectralLinesCatalogViewModel = new SpectralLinesCatalogViewModel(
                 ChannelId, spectralLineRepository, dialogService);
@@ -145,7 +148,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         #endregion
 
         #region relayCommands
-
+        
         [RelayCommand]
         private async Task StartProcessAsync()
         {
@@ -223,6 +226,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _isRunning = false;
             _isPaused = false;
             _isIndicesCorrected = false;
+            _isMonitoringAreaActive = false;
+            _isOverEtchAreaActive = false;
             _stopwatch.Stop();
             _endpointService.Stop();
             _cancellationTokenStart.Cancel();
@@ -352,8 +357,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
             long targetNextTickMs = 0;
             int interval = Recipe?.DetectionWindowTime ?? 100;
-            var monitoringStarted = false;
-            var overEtchStarted = false;
 
             string modelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Models", $"{Recipe.Name}.pca");
             bool usePca = Recipe.PCAEnabled;
@@ -364,43 +367,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 if (!_isPaused && _isRunning && Recipe != null)
                 {
-                    if (Recipe.PCAEnabled)
+                    if (usePca)
                     {
-                        if (File.Exists(modelPath))
-                        {
-                            try 
-                            { 
-                                _analyzer.LoadModel(modelPath); 
-                            } 
-                            catch 
-                            {
-                                /* Ошибка загрузки */ 
-                            }
-                        }
-                        if (!_analyzer.IsTrained && _exportData.Count >= 100)
-                        {
-                            var trainingData = _fullSpectrumHistory
-                                .TakeLast(100);
-
-                            _analyzer.TryAutoTrain(trainingData, modelPath);
-                            PcaStatus = "Training";
-                        }
-
-                        if (_analyzer.IsTrained)
-                        {
-                            try
-                            {
-                                var pcaResult = _analyzer.Analyze(_fullSpectrumHistory.Last());
-
-                                PcaStatus = pcaResult.IsAnomaly
-                                    ? $"PCA ANOMALY → ${pcaResult.Message}"
-                                    : $"PCA Normal | T²={pcaResult.T2:F5}";
-                            }
-                            catch 
-                            {
-                                PcaStatus = "Error";
-                            }
-                        }
+                        RunPcaAnalysis(modelPath);
                     }
                     else
                     {
@@ -414,41 +383,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                         ProcessStatus = result.Status;
                     }
 
-                    if (Application.Current?.Dispatcher is Dispatcher dispatcher)
-                    {
-                        await dispatcher.InvokeAsync(() =>
-                        {
-                            RecordDataForExport(_currentIntensities);
-                            ProcessChartViewModel.UpdateTopPlot(_stopwatch.Elapsed, _currentIntensities);
-
-                            if (result.Status.Contains("Monitoring"))
-                            {
-                                if (!monitoringStarted)
-                                {
-                                    ProcessChartViewModel.MarkEndpointMonitoring(_stopwatch.Elapsed);
-                                    ProcessChartViewModel.StartEndpointMonitoringArea(_stopwatch.Elapsed);
-                                    monitoringStarted = true;
-                                }
-                                else
-                                {
-                                    ProcessChartViewModel.UpdateMonitoringArea(_stopwatch.Elapsed);
-                                }
-                            }
-                            else if (result.Status.Contains("Over") || result.Status.Contains("Endpoint Detected"))
-                            {
-                                if (!overEtchStarted)
-                                {
-                                    ProcessChartViewModel.MarkEndpoint(_stopwatch.Elapsed);
-                                    ProcessChartViewModel.StartOverEtchArea(_stopwatch.Elapsed);
-                                    overEtchStarted = true;
-                                }
-                                else
-                                {
-                                    ProcessChartViewModel.UpdateOverEtchArea(_stopwatch.Elapsed);
-                                }
-                            }
-                        }, DispatcherPriority.Render);
-                    }
+                    await UpdateChartAreasAsync(result);
 
                     if (result.IsDetected)
                     {
@@ -502,6 +437,84 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             });
         }
 
+        private async Task UpdateChartAreasAsync(EndpointResult result)
+        {
+            if (Application.Current?.Dispatcher is Dispatcher dispatcher)
+            {
+                await dispatcher.InvokeAsync(() =>
+                {
+                    RecordDataForExport(_currentIntensities);
+                    ProcessChartViewModel.UpdateTopPlot(_stopwatch.Elapsed, _currentIntensities);
+
+                    if (result.Status.Contains("Monitoring"))
+                    {
+                        if (!_isMonitoringAreaActive)
+                        {
+                            ProcessChartViewModel.MarkEndpointMonitoring(_stopwatch.Elapsed);
+                            ProcessChartViewModel.StartEndpointMonitoringArea(_stopwatch.Elapsed);
+                            _isMonitoringAreaActive = true;
+                        }
+                        else
+                        {
+                            ProcessChartViewModel.UpdateMonitoringArea(_stopwatch.Elapsed);
+                        }
+                    }
+                    else if (result.Status.Contains("Over") || result.Status.Contains("Endpoint Detected"))
+                    {
+                        if (!_isOverEtchAreaActive)
+                        {
+                            ProcessChartViewModel.MarkEndpoint(_stopwatch.Elapsed);
+                            ProcessChartViewModel.StartOverEtchArea(_stopwatch.Elapsed);
+                            _isOverEtchAreaActive = true;
+                        }
+                        else
+                        {
+                            ProcessChartViewModel.UpdateOverEtchArea(_stopwatch.Elapsed);
+                        }
+                    }
+                }, DispatcherPriority.Render);
+            }
+        }
+
+        private void RunPcaAnalysis(string modelPath)
+        {
+            if (File.Exists(modelPath))
+            {
+                try
+                {
+                    _analyzer.LoadModel(modelPath);
+                }
+                catch
+                {
+                    /* Ошибка загрузки */
+                }
+            }
+            if (!_analyzer.IsTrained && _exportData.Count >= 100)
+            {
+                var trainingData = _fullSpectrumHistory
+                    .TakeLast(100);
+
+                _analyzer.TryAutoTrain(trainingData, modelPath);
+                PcaStatus = "Training";
+            }
+
+            if (_analyzer.IsTrained)
+            {
+                try
+                {
+                    var pcaResult = _analyzer.Analyze(_fullSpectrumHistory.Last());
+
+                    PcaStatus = pcaResult.IsAnomaly
+                        ? $"PCA ANOMALY → ${pcaResult.Message}"
+                        : $"PCA Normal | T²={pcaResult.T2:F5}";
+                }
+                catch
+                {
+                    PcaStatus = "Error";
+                }
+            }
+        }
+
         public void ApplyRecipe(RecipeModel recipe)
         {
             try
@@ -514,6 +527,13 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 }
 
                 Recipe = recipe;
+
+                _cancellationToken.Cancel();
+                _cancellationToken = new CancellationTokenSource();
+                Task.Run(() =>
+                {
+                    _deviceProcessing.StartContinueScan(recipe.ExposureMs, recipe.ScansNum, _cancellationToken.Token);
+                });
 
                 Task.Run(() =>
                 {
