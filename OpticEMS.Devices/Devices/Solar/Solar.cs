@@ -70,7 +70,7 @@ namespace OpticEMS.Devices.Devices.Solar
                         var p1 = new SolarCCD.TCCDUSBExtendParams();
                         SolarCCD.CCD_GetExtendParameters(_deviceId, ref p1);
                         var p = p1.nNumPixelsH * p1.nNumPixelsV;
-                        Devices = new DeviceInfo(n1, p, _deviceId, 0, DeviceType.Solar, 0, p - 1, 0, 0, 0, 0, 0);
+                        Devices = new DeviceInfo(n1, p, _deviceId, 0, DeviceType.Solar, 0, 0, 0, 0, 0, 0, 0);
                         break;
                     }
                 }

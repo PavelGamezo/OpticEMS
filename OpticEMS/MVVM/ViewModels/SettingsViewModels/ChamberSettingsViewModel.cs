@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using OpticEMS.Common.Enums;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices.Devices.Avantes;
 using OpticEMS.Devices.Devices.Solar;
@@ -155,6 +156,8 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                     {
                         var solar = new Solar(serial);
                         device = solar.DeviceInfo;
+                        device.TrimLeft = (int)item.TrimLeft;
+                        device.TrimRight = (int)item.TrimRight;
                         device.DeviceType = DeviceType.Solar;
                         device.ChannelId = channelId;
 

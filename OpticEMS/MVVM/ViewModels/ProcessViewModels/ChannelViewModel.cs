@@ -5,6 +5,7 @@ using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
 using OpticEMS.MVVM.Models;
+using OpticEMS.MVVM.Models.Recipe;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Processing.PCA;
 using OpticEMS.Services.Calibration;

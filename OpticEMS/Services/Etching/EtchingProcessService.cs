@@ -1,4 +1,5 @@
 ﻿using OpticEMS.MVVM.Models;
+using OpticEMS.MVVM.Models.Recipe;
 using System.Diagnostics;
 
 namespace OpticEMS.Services.Etching

@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using OpticEMS.Common.Enums;
 using OpticEMS.Contracts.Services.Settings;
 
 namespace OpticEMS.MVVM.Models

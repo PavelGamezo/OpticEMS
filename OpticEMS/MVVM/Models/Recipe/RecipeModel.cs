@@ -1,6 +1,6 @@
 ﻿using System.Windows.Media;
 
-namespace OpticEMS.MVVM.Models
+namespace OpticEMS.MVVM.Models.Recipe
 {
     public class RecipeModel
     {

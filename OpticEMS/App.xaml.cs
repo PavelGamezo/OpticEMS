@@ -9,7 +9,7 @@ using OpticEMS.Data.Services;
 using OpticEMS.Factories.Channels;
 using OpticEMS.License.Common;
 using OpticEMS.License.Handlers;
-using OpticEMS.MVVM.Models;
+using OpticEMS.MVVM.Models.Recipe;
 using OpticEMS.MVVM.View.Activation;
 using OpticEMS.MVVM.View.Windows;
 using OpticEMS.MVVM.ViewModels;

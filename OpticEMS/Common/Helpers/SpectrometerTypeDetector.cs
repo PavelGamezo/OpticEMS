@@ -2,7 +2,7 @@
 using System.Reflection.Metadata;
 using static OpticEMS.Devices.Devices.Avantes.AvantesCCD;
 
-namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
+namespace OpticEMS.Common.Helpers
 {
     public static class SpectrometerTypeDetector
     {

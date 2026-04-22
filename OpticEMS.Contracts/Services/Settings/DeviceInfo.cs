@@ -9,7 +9,7 @@ namespace OpticEMS.Contracts.Services.Settings
         private double _coefC;
         private double _coefD;
 
-        public DeviceInfo(string name, int pixelNum, int deviceId, int channelId, DeviceType deviceType, int trimLeft, int trimRiht, double coefA,
+        public DeviceInfo(string name, int pixelNum, int deviceId, int channelId, DeviceType deviceType, int trimLeft, int trimRight, double coefA,
             double coefB, double coefC, double coefD, ushort smoothPixelCount)
         {
             Name = name;
@@ -17,7 +17,7 @@ namespace OpticEMS.Contracts.Services.Settings
             DeviceId = deviceId;
             ChannelId = channelId;
             TrimLeft = trimLeft;
-            TrimRight = trimRiht;
+            TrimRight = trimRight;
             CoefA = coefA;
             CoefB = coefB;
             CoefC = coefC;

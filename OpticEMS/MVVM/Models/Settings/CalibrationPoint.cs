@@ -1,4 +1,4 @@
-﻿namespace OpticEMS.MVVM.Models
+﻿namespace OpticEMS.MVVM.Models.Settings
 {
     public class CalibrationPoint
     {

@@ -1,16 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using OpticEMS.MVVM.Models.Settings;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Services.Calibration;
 using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Settings;
 using OpticEMS.Services.Spectrometers;
-using OpticEMS.MVVM.ViewModels.SettingsViewModels;
-using OxyPlot;
-using OpticEMS.MVVM.Models;
 using System.Collections.ObjectModel;
-using System.Windows.Media;
 
 namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 {

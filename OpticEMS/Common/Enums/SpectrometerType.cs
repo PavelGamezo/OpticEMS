@@ -1,4 +1,4 @@
-﻿namespace OpticEMS.MVVM.Models
+﻿namespace OpticEMS.Common.Enums
 {
     public enum SpectrometerType
     {

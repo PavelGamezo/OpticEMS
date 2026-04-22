@@ -3,10 +3,10 @@ using OpticEMS.Factories.Channels;
 using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Settings;
 using OpticEMS.Services.Spectrometers;
-using OpticEMS.MVVM.Models;
 using System.Collections.ObjectModel;
 using OpticEMS.MVVM.ViewModels.RecipeViewModels;
 using OpticEMS.Contracts.Services.Settings;
+using OpticEMS.MVVM.Models.Recipe;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {

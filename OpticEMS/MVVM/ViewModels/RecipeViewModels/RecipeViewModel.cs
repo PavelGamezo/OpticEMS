@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Media;
+using OpticEMS.MVVM.Models.Recipe;
 
 namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 {

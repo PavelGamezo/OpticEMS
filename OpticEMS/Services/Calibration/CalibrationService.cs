@@ -1,5 +1,5 @@
 ﻿using MathNet.Numerics;
-using OpticEMS.MVVM.Models;
+using OpticEMS.MVVM.Models.Settings;
 
 namespace OpticEMS.Services.Calibration
 {
