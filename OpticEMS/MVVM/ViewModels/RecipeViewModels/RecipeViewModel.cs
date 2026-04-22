@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Media;
 using OpticEMS.MVVM.Models.Recipe;
+using Serilog;
 
 namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 {
@@ -61,41 +62,58 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         public RecipeViewModel(IRecipeFileManager recipeFileManager,
             IDialogService dialogService)
         {
-            _recipeFileManager = recipeFileManager;
-            _dialogService = dialogService;
-
-            _ = LoadFilesAsync();
+            try
+            {
+                _recipeFileManager = recipeFileManager;
+                _dialogService = dialogService;
+                _ = LoadFilesAsync();
+            }
+            catch (Exception exception)
+            {
+                Log.Fatal(exception, "RecipeViewModel: Critical failure during startup.");
+            }
         }
 
         [RelayCommand(CanExecute = nameof(HasSelectedRecipe))]
-        private void ApplySelectedRecipe() 
+        private void ApplySelectedRecipe()
         {
+            Log.Information("RecipeViewMode: Applying selected recipe requested.");
             ApplyRecipeRequested?.Invoke(SelectedRecipe);
         }
 
         [RelayCommand] 
         private async Task NewRecipe() 
         {
-            if (SelectedRecipe is null)
+            try
             {
-                SelectedRecipe = new RecipeModel();
-            }
-
-            var name = _dialogService.ShowRenameQuestion("NewRecipe");
-
-            if (!string.IsNullOrEmpty(name))
-            {
-                var newRecipe = new RecipeModel
+                if (SelectedRecipe is null)
                 {
-                    Name = name,
-                    CreatedAt = DateTime.Now,
-                    LastModifiedAt = DateTime.Now,
-                };
+                    SelectedRecipe = new RecipeModel();
+                    Log.Information("RecipeViewMode: Created new empty recipe file.");
+                }
 
-                SelectedRecipe = newRecipe;
+                var name = _dialogService.ShowRenameQuestion("NewRecipe");
 
-                await _recipeFileManager.SaveRecipe(newRecipe);
-                await LoadFilesAsync();
+                if (!string.IsNullOrEmpty(name))
+                {
+                    var newRecipe = new RecipeModel
+                    {
+                        Name = name,
+                        CreatedAt = DateTime.Now,
+                        LastModifiedAt = DateTime.Now,
+                    };
+
+                    Log.Information("RecipeViewMode: Created new recipe file.");
+
+                    SelectedRecipe = newRecipe;
+
+                    await _recipeFileManager.SaveRecipe(newRecipe);
+                    await LoadFilesAsync();
+                }
+            }
+            catch (Exception exception)
+            {
+                Log.Fatal("RecipeViewModel: Critical failure during recipe saving.");
             }
         }
 
@@ -109,12 +127,14 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                 if (confirmed == true)
                 {
                     _recipeFileManager.DeleteRecipe(SelectedRecipe.Name);
+                    Log.Information("RecipeViewModel: Recipe deleted successfully.");
 
                     await LoadFilesAsync();
                 }
             }
             catch (Exception exception) 
             {
+                Log.Fatal(exception, "RecipeViewModel: Error during recipe deleting.");
                 _dialogService.ShowError(exception.Message);
             }
         }
@@ -132,6 +152,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                     SelectedRecipe.Name = newName;
                     SelectedRecipe.LastModifiedAt = DateTime.Now;
 
+                    Log.Information("RecipeViewModel: Recipe renamed successfully.");
                     await _recipeFileManager.RenameRecipe(oldName, SelectedRecipe);
 
                     await LoadFilesAsync();
@@ -139,6 +160,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             }
             catch (Exception exception)
             {
+                Log.Fatal(exception, "RecipeViewModel: Fatal error during recipe renaming");
                 _dialogService.ShowError(exception.Message);
             }
         }
@@ -168,18 +190,23 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                 SelectedRecipe.LastModifiedAt = DateTime.Now;
                 await _recipeFileManager.SaveRecipe(SelectedRecipe);
 
+                Log.Information("RecipeViewModel: Recipe saved successfully.");
                 _dialogService.ShowInformation("Recipe saved successfully.");
                 await LoadFilesAsync();
             }
             catch (Exception exception)
             {
+                Log.Information(exception, "RecipeViewModel: Fatal error during recipe saving");
                 _dialogService.ShowError(exception.Message);
             }
         }
 
         private void SyncToModel()
         {
-            if (SelectedRecipe == null) return;
+            if (SelectedRecipe == null)
+            {
+                return;
+            }
 
             SelectedRecipe.Wavelengths = WavelengthItems.Select(x => x.Wavelength).ToList();
             SelectedRecipe.WavelengthColors = WavelengthItems.Select(x => x.Color).ToList();
@@ -216,7 +243,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         }
 
         private async Task LoadFilesAsync(string? nameToSelect = null) 
-        { 
+        {
             var files = await _recipeFileManager.LoadRecipeFiles();
 
             var selectedName = nameToSelect ?? SelectedRecipe?.Name;
@@ -263,6 +290,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                 SelectedOverEtchText = value.OverEtchEnabled ? "Yes" : "No";
                 SelectedAutocalibrationText = value.AutocalibrationEnabled ? "Yes" : "No";
             }
+            Log.Information("RecipeViewModel: Recipe changed");
         }
 
         partial void OnSearchTextChanged(string value)

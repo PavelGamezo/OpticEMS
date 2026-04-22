@@ -44,8 +44,6 @@ namespace OpticEMS.ViewModels
             ChamberSettingsViewModel chamberSettingsViewModel,
             PasswordDialogViewModel passwordDialogViewModel)
         {
-            Serilog.Log.Information("MainViewModel: Starting MainViewModel components initialization...");
-
             _windowService = windowService;
             _timeService = timeService;
             _settingsProvider = settingsProvider;

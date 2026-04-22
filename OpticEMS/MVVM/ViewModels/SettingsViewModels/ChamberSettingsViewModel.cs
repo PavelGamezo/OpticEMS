@@ -8,6 +8,7 @@ using OpticEMS.MVVM.Models;
 using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Settings;
 using OpticEMS.Services.Spectrometers;
+using Serilog;
 using System.Collections.ObjectModel;
 
 namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
@@ -28,24 +29,39 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
             ISpectrometerService spectrometerService,
             IDialogService dialogService)
         {
-            _spectrometerService = spectrometerService;
-            _dialogService = dialogService;
+            try
+            {
+                _spectrometerService = spectrometerService;
+                _dialogService = dialogService;
 
-            GetSetupSettings();
+                GetSetupSettings();
+            }
+            catch (Exception exception)
+            {
+                Log.Fatal(exception, "ChamberSettingsViewModel: Fatal error during initialization...");
+            }
         }
 
         private List<string> GetAvailableSpectrometers()
         {
-            if (_cachedAvailableSpectrometers != null) return _cachedAvailableSpectrometers;
+            if (_cachedAvailableSpectrometers != null)
+            {
+                return _cachedAvailableSpectrometers;
+            }
 
             var specs = new List<string>();
 
             int count = _spectrometerService.GetConnectedSpectrometersCount();
 
+            Log.Information("Spectrometer service reported {count} connected devices.", count);
+
             for (int i = 0; i < count; i++)
             {
                 var serial = _spectrometerService.GetSerialNumber(i);
-                if (!string.IsNullOrEmpty(serial)) specs.Add(serial);
+                if (!string.IsNullOrEmpty(serial))
+                {
+                    specs.Add(serial);
+                }
             }
 
             if (!specs.Any(s => s.Contains("VIRTUAL")))
@@ -168,11 +184,13 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                 AppSettings.Default.Devices = devices;
                 AppSettings.Default.Save();
 
+                Log.Warning("AppSettings for {count} channels saved successfully.", channelId + 1);
                 _dialogService.ShowInformation("Settings saved successfully.");
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                _dialogService.ShowError($"Failed to save settings: {ex.Message}");
+                Log.Fatal(exception, "Unexpected error during settings saving...");
+                _dialogService.ShowError($"Failed to save settings: {exception.Message}");
             }
         }
 

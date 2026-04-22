@@ -3,13 +3,26 @@ using OpticEMS.Common.Helpers;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
+using Serilog;
 
 namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 {
     public partial class CalibrationSettingsChartViewModel : ObservableObject
     {
         [ObservableProperty]
-        private ViewResolvingPlotModel _plotModel = SetUpModel();
+        private ViewResolvingPlotModel _plotModel;
+
+        public CalibrationSettingsChartViewModel()
+        {
+            try
+            {
+                _plotModel = SetUpModel();
+            }
+            catch (Exception exception)
+            {
+                Log.Fatal(exception, "Fatal error during calibration chart initialization...");
+            }
+        }
 
         private static ViewResolvingPlotModel SetUpModel()
         {
@@ -96,28 +109,35 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 
         public void ResetPlotSeries() 
         {
-            PlotModel.Series.Clear();
-
-            PlotModel.Series.Add(new LineSeries
+            try
             {
-                Title = "Spectrum",
-                Color = OxyColor.FromRgb(52, 152, 219),
-                StrokeThickness = 2,
-                YAxisKey = "intensityAxis"
-            });
+                PlotModel.Series.Clear();
 
-            PlotModel.Series.Add(new LineSeries
+                PlotModel.Series.Add(new LineSeries
+                {
+                    Title = "Spectrum",
+                    Color = OxyColor.FromRgb(52, 152, 219),
+                    StrokeThickness = 2,
+                    YAxisKey = "intensityAxis"
+                });
+
+                PlotModel.Series.Add(new LineSeries
+                {
+                    Title = "Calibration graph",
+                    Color = OxyColor.FromRgb(46, 204, 113),
+                    StrokeThickness = 2,
+                    LineStyle = LineStyle.Solid,
+                    IsVisible = false,
+                    YAxisKey = "intensityAxis",
+                    XAxisKey = "wavelengthAxis"
+                });
+
+                PlotModel.InvalidatePlot(true);
+            }
+            catch (Exception exception)
             {
-                Title = "Calibration graph",
-                Color = OxyColor.FromRgb(46, 204, 113),
-                StrokeThickness = 2,
-                LineStyle = LineStyle.Solid,
-                IsVisible = false,
-                YAxisKey = "intensityAxis",
-                XAxisKey = "wavelengthAxis"
-            });
-
-            PlotModel.InvalidatePlot(true);
+                Log.Fatal(exception, "Fatal error while ResetPlotSeries requested...");
+            }
         }
 
         public void ResetPlotAxes() => PlotModel.ResetAllAxes();
@@ -126,52 +146,67 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
         {
             if (data == null)
             {
+                Log.Information("CalibrationSettingsChartViewModel: Received null data.");
                 return;
             }
 
-            var lineSeries = PlotModel.Series.FirstOrDefault() as LineSeries;
-
-            if (lineSeries == null)
+            try
             {
-                lineSeries = new LineSeries
+                var lineSeries = PlotModel.Series.FirstOrDefault() as LineSeries;
+
+                if (lineSeries == null)
                 {
-                    Title = "Spectrum",
-                    Color = OxyColors.LightBlue
-                };
+                    lineSeries = new LineSeries
+                    {
+                        Title = "Spectrum",
+                        Color = OxyColors.LightBlue
+                    };
 
-                PlotModel.Series.Add(lineSeries);
+                    PlotModel.Series.Add(lineSeries);
+                }
+
+                lineSeries.Points.Clear();
+
+                for (int i = 0; i < data.Length; i++)
+                {
+                    lineSeries.Points.Add(new DataPoint(i, data[i]));
+                }
+
+                PlotModel.InvalidatePlot(true);
             }
-
-            lineSeries.Points.Clear();
-
-            for (int i = 0; i < data.Length; i++)
+            catch (Exception exception)
             {
-                lineSeries.Points.Add(new DataPoint(i, data[i]));
+                Log.Fatal(exception, "Unexpected error during calibration chart updating...");
             }
-
-            PlotModel.InvalidatePlot(true);
         }
 
         public void UpdateInterpolationPlot(uint[] currentSpectrumData, double[] wavelengths)
         {
-            var calibrationSeries = PlotModel.Series
+            try
+            {
+                var calibrationSeries = PlotModel.Series
                 .OfType<LineSeries>()
                 .FirstOrDefault(s => s.Title == "Calibration graph");
 
-            if (calibrationSeries == null)
-            {
-                return;
+                if (calibrationSeries == null)
+                {
+                    return;
+                }
+
+                calibrationSeries.Points.Clear();
+
+                for (uint i = 0; i < currentSpectrumData.Length; i++)
+                {
+                    calibrationSeries.Points.Add(new DataPoint(wavelengths[i], currentSpectrumData[i]));
+                }
+
+                calibrationSeries.IsVisible = true;
+                PlotModel.InvalidatePlot(true);
             }
-
-            calibrationSeries.Points.Clear();
-
-            for (uint i = 0; i < currentSpectrumData.Length; i++)
+            catch (Exception exception)
             {
-                calibrationSeries.Points.Add(new DataPoint(wavelengths[i], currentSpectrumData[i]));
+                Log.Fatal(exception, "Unexpected error during interpolation chart updating...");
             }
-
-            calibrationSeries.IsVisible = true;
-            PlotModel.InvalidatePlot(true);
         }
     }
 }

@@ -7,6 +7,7 @@ using OpticEMS.Services.Calibration;
 using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Settings;
 using OpticEMS.Services.Spectrometers;
+using Serilog;
 using System.Collections.ObjectModel;
 
 namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
@@ -53,70 +54,74 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
             IDialogService dialogService,
             ISpectrometerService spectrometerService)
         {
-            _calibrationService = calibrationService;
-            _wavelengthMapper = wavelengthMapper;
-            _dialogService = dialogService;
-            _spectrometerService = spectrometerService;
+            try
+            {
+                _calibrationService = calibrationService;
+                _wavelengthMapper = wavelengthMapper;
+                _dialogService = dialogService;
+                _spectrometerService = spectrometerService;
 
-            CalibrationSettingsChartViewModel = new CalibrationSettingsChartViewModel();
-            GetSetupSettings();
-            RegisterMessages();
+                CalibrationSettingsChartViewModel = new CalibrationSettingsChartViewModel();
+                GetSetupSettings();
+                RegisterMessages();
 
-            CalibrationPoints.CollectionChanged += (s, e) => CalculateCalibrationCommand.NotifyCanExecuteChanged();
+                CalibrationPoints.CollectionChanged += (s, e) => CalculateCalibrationCommand.NotifyCanExecuteChanged();
 
-            RefreshChannels();
+                RefreshChannels();
+            }
+            catch (Exception exception)
+            {
+                Log.Fatal(exception, "CalibrationSettingsViewModel: Fatal error during calibration settings initialization...");
+            }
         }
 
         [RelayCommand(CanExecute = nameof(CanInterpolate))]
         private void Interpolation()
-         {
-            if (_currentSpectrumData == null || CalibrationCoefficients.Count < 4)
+        {
+            try
             {
-                _dialogService.ShowInformation("No spectrum data or insufficient calibration coefficients. " +
-                    "Please capture a spectrum and calculate calibration first.");
+                if (_currentSpectrumData == null || CalibrationCoefficients.Count < 4)
+                {
+                    _dialogService.ShowInformation("No spectrum data or insufficient calibration coefficients. " +
+                        "Please capture a spectrum and calculate calibration first.");
+                }
+
+                var deviceInfo = AppSettings.Default.Devices.FirstOrDefault(device => device.ChannelId == SelectedChannel);
+
+                if (deviceInfo is null)
+                {
+                    Log.Warning("Interpolation failed: Device info for Channel {ChannelId} not found in AppSettings.",
+                        SelectedChannel);
+                    _dialogService.ShowError("Chamber device configuration not found!");
+
+                    return;
+                }
+
+                var coefficients = new double[]
+                {
+                    deviceInfo.CoefA,
+                    deviceInfo.CoefB,
+                    deviceInfo.CoefC,
+                    deviceInfo.CoefD
+                };
+
+                var wavelengths = _wavelengthMapper.ConvertPixelsToWavelengths(_currentSpectrumData, coefficients);
+
+                CalibrationSettingsChartViewModel.UpdateInterpolationPlot(_currentSpectrumData, wavelengths);
             }
-
-            var deviceInfo = AppSettings.Default.Devices.FirstOrDefault(device => device.ChannelId == SelectedChannel);
-
-            var coefficients = new double[] 
+            catch (Exception exception)
             {
-                deviceInfo.CoefA,
-                deviceInfo.CoefB, 
-                deviceInfo.CoefC, 
-                deviceInfo.CoefD 
-            };
-
-            var wavelengths = _wavelengthMapper.ConvertPixelsToWavelengths(_currentSpectrumData, coefficients);
-
-            CalibrationSettingsChartViewModel.UpdateInterpolationPlot(_currentSpectrumData, wavelengths);
+                Log.Fatal(exception, "Unexpected error during interpolation process.");
+                _dialogService.ShowError($"Interpolation error: {exception.Message}");
+            }
         }
 
         [RelayCommand(CanExecute = nameof(CanCalculate))]
         private void CalculateCalibration()
         {
-            var coefficients = _calibrationService.CalculateCoefficients(CalibrationPoints);
-
-            CalibrationCoefficients.Clear();
-
-            foreach (var coefficient in coefficients)
+            try
             {
-                CalibrationCoefficients.Add(coefficient);
-            }
-
-            var devices = AppSettings.Default.Devices;
-
-            var deviceInfo = devices.FirstOrDefault(device => device.ChannelId == SelectedChannel);
-
-            if (deviceInfo != null)
-            {
-                deviceInfo.CoefA = coefficients[3];
-                deviceInfo.CoefB = coefficients[2];
-                deviceInfo.CoefC = coefficients[1];
-                deviceInfo.CoefD = coefficients[0];
-
-                AppSettings.Default.Devices = devices;
-
-                AppSettings.Default.Save();
+                var coefficients = _calibrationService.CalculateCoefficients(CalibrationPoints);
 
                 CalibrationCoefficients.Clear();
 
@@ -124,9 +129,43 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                 {
                     CalibrationCoefficients.Add(coefficient);
                 }
-            }
 
-            Interpolation();
+                var devices = AppSettings.Default.Devices;
+
+                var deviceInfo = devices.FirstOrDefault(device => device.ChannelId == SelectedChannel);
+
+                if (deviceInfo != null)
+                {
+                    deviceInfo.CoefA = coefficients[3];
+                    deviceInfo.CoefB = coefficients[2];
+                    deviceInfo.CoefC = coefficients[1];
+                    deviceInfo.CoefD = coefficients[0];
+
+                    AppSettings.Default.Devices = devices;
+
+                    AppSettings.Default.Save();
+
+                    Log.Warning("Calibration settings saved successfully for channel {ChannelId}.", SelectedChannel);
+
+                    CalibrationCoefficients.Clear();
+
+                    foreach (var coefficient in coefficients)
+                    {
+                        CalibrationCoefficients.Add(coefficient);
+                    }
+                }
+                else
+                {
+                    Log.Warning("Device info not found. Coefficients updated in memory but not saved to AppSettings.");
+                }
+
+                Interpolation();
+            }
+            catch (Exception exception)
+            {
+                Log.Fatal(exception, "Critical error during calibration calculation.");
+                _dialogService.ShowError($"Calculation error: {exception.Message}");
+            }
         }
 
         [RelayCommand]
@@ -157,9 +196,18 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
         [RelayCommand]
         private async Task CaptureSpectrumAsync()
         {
-            CalibrationSettingsChartViewModel.ResetPlotAxes();
+            try
+            {
+                CalibrationSettingsChartViewModel.ResetPlotAxes();
 
-            _spectrometerService.RequestSingleScan(SelectedChannel);
+                Log.Warning("Single scan for calibration requested...");
+
+                _spectrometerService.RequestSingleScan(SelectedChannel);
+            }
+            catch (Exception exception)
+            {
+                Log.Fatal(exception, "Unexpected error during calibration scanning.");
+            }
         }
 
         private void RegisterMessages()
@@ -190,7 +238,9 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
             }
 
             if (AvailableChannels.Any())
+            {
                 SelectedChannel = AvailableChannels.First();
+            }
         }
 
         private bool CanCalculate() => CalibrationPoints.Count >= 4;
@@ -222,6 +272,11 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                 CalibrationCoefficients.Add(deviceConfig.CoefC);
                 CalibrationCoefficients.Add(deviceConfig.CoefD);
             }
+            else
+            {
+                Log.Warning("No device configuration found for Channel {ChannelId}. Calibration coefficients reset to zero.",
+                    SelectedChannel);
+            }
 
             OnPropertyChanged(nameof(CalibrationStatus));
             OnPropertyChanged(nameof(StatusColor));
@@ -239,6 +294,10 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                 {
                     AvailableChannels.Add(device.ChannelId);
                 }
+            }
+            else 
+            {
+                Log.Warning("No devices found in AppSettings. Available channels list is empty.");
             }
 
             if (AvailableChannels.Any())

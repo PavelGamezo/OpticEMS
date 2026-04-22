@@ -14,23 +14,43 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
         private readonly ActivationViewModel _activationViewModel;
 
         [RelayCommand]
-        private void ShowCalibrationSettings() => CurrentViewModel = _calibrationSettingsViewModel;
+        private void ShowCalibrationSettings()
+        {
+            Serilog.Log.Warning("SettingsViewModel: User requested to show calibration settings");
+            CurrentViewModel = _calibrationSettingsViewModel;
+        }
 
         [RelayCommand]
-        private void ShowChamberSettings() => CurrentViewModel = _chamberSettingsViewModel;
+        private void ShowChamberSettings()
+        {
+            Serilog.Log.Warning("SettingsViewModel: User requested to show chamber settings");
+            CurrentViewModel = _chamberSettingsViewModel;
+        }
 
         [RelayCommand]
-        private void ShowLicense() => CurrentViewModel = _activationViewModel;
+        private void ShowLicense()
+        {
+            Serilog.Log.Warning("SettingsViewModel: User requested to show license");
+            CurrentViewModel = _activationViewModel;
+        }
 
-        public SettingsViewModel(ChamberSettingsViewModel chamberSettingsViewModel,
+        public SettingsViewModel(
+            ChamberSettingsViewModel chamberSettingsViewModel,
             CalibrationSettingsViewModel calibrationSettingsViewModel,
             ActivationViewModel activationViewModel)
         {
-            _calibrationSettingsViewModel = calibrationSettingsViewModel;
-            _chamberSettingsViewModel = chamberSettingsViewModel;
-            _activationViewModel = activationViewModel;
+            try
+            {
+                _calibrationSettingsViewModel = calibrationSettingsViewModel;
+                _chamberSettingsViewModel = chamberSettingsViewModel;
+                _activationViewModel = activationViewModel;
 
-            CurrentViewModel = _calibrationSettingsViewModel;
+                CurrentViewModel = _calibrationSettingsViewModel;
+            }
+            catch (Exception exception)
+            {
+                Serilog.Log.Fatal(exception, "SettingsViewModel: Critical failure during startup...");
+            }
         }
     }
 }
