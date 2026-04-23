@@ -446,33 +446,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 {
                     RecordDataForExport(_currentIntensities);
                     ProcessChartViewModel.UpdateTopPlot(_stopwatch.Elapsed, _currentIntensities);
-
-                    if (result.Status.Contains("Monitoring"))
-                    {
-                        if (!_isMonitoringAreaActive)
-                        {
-                            ProcessChartViewModel.MarkEndpointMonitoring(_stopwatch.Elapsed);
-                            ProcessChartViewModel.StartEndpointMonitoringArea(_stopwatch.Elapsed);
-                            _isMonitoringAreaActive = true;
-                        }
-                        else
-                        {
-                            ProcessChartViewModel.UpdateMonitoringArea(_stopwatch.Elapsed);
-                        }
-                    }
-                    else if (result.Status.Contains("Over") || result.Status.Contains("Endpoint Detected"))
-                    {
-                        if (!_isOverEtchAreaActive)
-                        {
-                            ProcessChartViewModel.MarkEndpoint(_stopwatch.Elapsed);
-                            ProcessChartViewModel.StartOverEtchArea(_stopwatch.Elapsed);
-                            _isOverEtchAreaActive = true;
-                        }
-                        else
-                        {
-                            ProcessChartViewModel.UpdateOverEtchArea(_stopwatch.Elapsed);
-                        }
-                    }
+                    ProcessChartViewModel.StartAnnotationArea(result.Status, _stopwatch);
                 }, DispatcherPriority.Render);
             }
         }

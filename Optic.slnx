@@ -9,6 +9,7 @@
   <Project Path="OpticEMS.Devices/OpticEMS.Devices.csproj" Id="6d1e6ae3-9c2a-4ea9-87cf-24c20f62ccfa" />
   <Project Path="OpticEMS.License/OpticEMS.License.csproj" Id="9f4a3c70-70d7-4ba5-8bc2-f3db526b1b3c" />
   <Project Path="OpticEMS.Notifications/OpticEMS.Notifications.csproj" Id="07ec5935-bee1-4281-9ef3-1aadf4e3e18c" />
+  <Project Path="OpticEMS.Orchestrator/OpticEMS.Orchestrator.csproj" Id="417c2568-281e-4d84-b778-81f0a8a2befd" />
   <Project Path="OpticEMS.Processing/OpticEMS.Processing.csproj" Id="1c4150d6-9e7d-47a9-8ea0-56249ef83ba6" />
   <Project Path="OpticEMS/OpticEMS.csproj" Id="162e9700-f815-4a6f-beb7-e50dc3d4d941" />
 </Solution>

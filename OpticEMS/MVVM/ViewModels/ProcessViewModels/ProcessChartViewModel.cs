@@ -4,6 +4,7 @@ using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
+using System.Diagnostics;
 using System.Windows.Media;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
@@ -11,6 +12,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
     public partial class ProcessChartViewModel : ObservableObject
     {
         private readonly DateTime _epoch = new DateTime(2000, 1, 1);
+        private bool _isMonitoringAreaActive;
+        private bool _isOverEtchAreaActive;
         private RectangleAnnotation? _activeOverEtchArea;
         private RectangleAnnotation? _activeMonitoringArea;
         private RectangleAnnotation? _activeDelayArea;
@@ -97,7 +100,37 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             PlotModel.InvalidatePlot(true);
         }
 
-        public void StartOverEtchArea(TimeSpan startTime)
+        public void StartAnnotationArea(string status, Stopwatch stopwatch)
+        {
+            if (status.Contains("Monitoring"))
+            {
+                if (!_isMonitoringAreaActive)
+                {
+                    MarkEndpointMonitoring(stopwatch.Elapsed);
+                    StartEndpointMonitoringArea(stopwatch.Elapsed);
+                    _isMonitoringAreaActive = true;
+                }
+                else
+                {
+                    UpdateMonitoringArea(stopwatch.Elapsed);
+                }
+            }
+            else if (status.Contains("Over") || status.Contains("Endpoint Detected"))
+            {
+                if (!_isOverEtchAreaActive)
+                {
+                    MarkEndpoint(stopwatch.Elapsed);
+                    StartOverEtchArea(stopwatch.Elapsed);
+                    _isOverEtchAreaActive = true;
+                }
+                else
+                {
+                    UpdateOverEtchArea(stopwatch.Elapsed);
+                }
+            }
+        }
+
+        private void StartOverEtchArea(TimeSpan startTime)
         {
             double xValue = DateTimeAxis.ToDouble(_epoch.Add(startTime));
 
@@ -118,7 +151,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             PlotModel.InvalidatePlot(false);
         }
 
-        public void UpdateOverEtchArea(TimeSpan currentTime)
+        private void UpdateOverEtchArea(TimeSpan currentTime)
         {
             double xValue = DateTimeAxis.ToDouble(_epoch.Add(currentTime));
 
@@ -129,7 +162,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
-        public void MarkEndpoint(TimeSpan elapsedTime, string label = "Endpoint")
+        private void MarkEndpoint(TimeSpan elapsedTime, string label = "Endpoint")
         {
             double xValue = DateTimeAxis.ToDouble(_epoch.Add(elapsedTime));
 
@@ -150,7 +183,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             PlotModel.InvalidatePlot(false);
         }
 
-        public void MarkEndpointMonitoring(TimeSpan elapsedTime, string label = "Monitoring")
+        private void MarkEndpointMonitoring(TimeSpan elapsedTime, string label = "Monitoring")
         {
             double xValue = DateTimeAxis.ToDouble(_epoch.Add(elapsedTime));
 
@@ -171,7 +204,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             PlotModel.InvalidatePlot(false);
         }
 
-        public void StartEndpointMonitoringArea(TimeSpan startTime)
+        private void StartEndpointMonitoringArea(TimeSpan startTime)
         {
             double xValue = DateTimeAxis.ToDouble(_epoch.Add(startTime));
 
@@ -192,7 +225,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             PlotModel.InvalidatePlot(false);
         }
 
-        public void UpdateMonitoringArea(TimeSpan currentTime)
+        private void UpdateMonitoringArea(TimeSpan currentTime)
         {
             double xValue = DateTimeAxis.ToDouble(_epoch.Add(currentTime));
 
@@ -203,7 +236,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
-        public void MarkInitialDelay(TimeSpan elapsedTime, string label = "InitialDelay")
+        private void MarkInitialDelay(TimeSpan elapsedTime, string label = "InitialDelay")
         {
             double xValue = DateTimeAxis.ToDouble(_epoch.Add(elapsedTime));
 
@@ -224,7 +257,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             PlotModel.InvalidatePlot(false);
         }
 
-        public void StartInitialDelayArea(TimeSpan startTime)
+        private void StartInitialDelayArea(TimeSpan startTime)
         {
             double xValue = DateTimeAxis.ToDouble(_epoch.Add(startTime));
 
@@ -245,7 +278,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             PlotModel.InvalidatePlot(false);
         }
 
-        public void UpdateInitialDelayArea(TimeSpan currentTime)
+        private void UpdateInitialDelayArea(TimeSpan currentTime)
         {
             double xValue = DateTimeAxis.ToDouble(_epoch.Add(currentTime));
 
