@@ -1,12 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using OpticEMS.Contracts.Services.Dialog;
+using OpticEMS.Contracts.Services.Recipe;
+using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Factories.Channels;
-using OpticEMS.Services.Dialogs;
-using OpticEMS.Services.Settings;
+using OpticEMS.MVVM.ViewModels.RecipeViewModels;
 using OpticEMS.Services.Spectrometers;
 using System.Collections.ObjectModel;
-using OpticEMS.MVVM.ViewModels.RecipeViewModels;
-using OpticEMS.Contracts.Services.Settings;
-using OpticEMS.MVVM.Models.Recipe;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {
@@ -44,7 +43,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _recipeViewModel.ApplyRecipeRequested = OnApplyRecipeRequested;
         }
 
-        private void OnApplyRecipeRequested(RecipeModel recipe)
+        private void OnApplyRecipeRequested(Recipe recipe)
         {
             var targetChannel = Channels.FirstOrDefault(c => c.ChannelId == recipe.Channel - 1); 
 

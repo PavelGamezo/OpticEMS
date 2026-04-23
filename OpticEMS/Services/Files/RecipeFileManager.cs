@@ -1,4 +1,4 @@
-﻿using OpticEMS.MVVM.Models.Recipe;
+﻿using OpticEMS.Contracts.Services.Recipe;
 using System.IO;
 using System.Text.Json;
 
@@ -25,14 +25,14 @@ namespace OpticEMS.Services.Files
             File.Delete(filePath);
         }
 
-        public async Task<List<RecipeModel>> LoadRecipeFiles()
+        public async Task<List<Recipe>> LoadRecipeFiles()
         {
             if (!Directory.Exists(folderPath))
             {
                 Directory.CreateDirectory(folderPath);
             }
 
-            var recipes = new List<RecipeModel>();
+            var recipes = new List<Recipe>();
             var options = new JsonSerializerOptions()
             {
                 WriteIndented = true
@@ -44,7 +44,7 @@ namespace OpticEMS.Services.Files
                 {
                     try
                     {
-                        var recipe = await JsonSerializer.DeserializeAsync<RecipeModel>(createStream);
+                        var recipe = await JsonSerializer.DeserializeAsync<Recipe>(createStream);
 
                         recipes.Add(recipe);
                     }
@@ -52,7 +52,7 @@ namespace OpticEMS.Services.Files
                     {
                         var fileName = Path.GetFileNameWithoutExtension(file);
 
-                        recipes.Add(new RecipeModel()
+                        recipes.Add(new Recipe()
                         {
                             Name = fileName
                         });
@@ -63,7 +63,7 @@ namespace OpticEMS.Services.Files
             return recipes;
         }
 
-        public async Task RenameRecipe(string oldName, RecipeModel recipe)
+        public async Task RenameRecipe(string oldName, Recipe recipe)
         {
             var oldPath = Path.Combine(folderPath, oldName + ".json");
             var newPath = Path.Combine(folderPath, recipe.Name + ".json");
@@ -81,7 +81,7 @@ namespace OpticEMS.Services.Files
             File.Move(oldPath, newPath);
         }
 
-        public async Task SaveRecipe(RecipeModel recipe)
+        public async Task SaveRecipe(Recipe recipe)
         {
             if (!Directory.Exists(folderPath))
             {

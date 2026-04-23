@@ -1,11 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpticEMS.Common.Enums;
+using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices.Devices.Avantes;
 using OpticEMS.Devices.Devices.Solar;
 using OpticEMS.MVVM.Models;
-using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Settings;
 using OpticEMS.Services.Spectrometers;
 using Serilog;

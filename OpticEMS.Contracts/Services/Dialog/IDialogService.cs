@@ -1,4 +1,4 @@
-﻿namespace OpticEMS.Services.Dialogs
+﻿namespace OpticEMS.Contracts.Services.Dialog
 {
     public interface IDialogService
     {

@@ -1,4 +1,4 @@
-﻿namespace OpticEMS.Services.Calibration
+﻿namespace OpticEMS.Contracts.Services.Mapper
 {
     public interface IWavelengthMapper
     {

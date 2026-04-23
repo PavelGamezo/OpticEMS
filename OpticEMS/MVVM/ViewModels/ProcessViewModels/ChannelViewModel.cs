@@ -1,16 +1,19 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using OpticEMS.Contracts.Services.Calibration;
 using OpticEMS.Contracts.Services.Database;
+using OpticEMS.Contracts.Services.Dialog;
+using OpticEMS.Contracts.Services.Etching;
+using OpticEMS.Contracts.Services.Export;
+using OpticEMS.Contracts.Services.Mapper;
+using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
-using OpticEMS.MVVM.Models;
-using OpticEMS.MVVM.Models.Recipe;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Processing.PCA;
 using OpticEMS.Services.Calibration;
 using OpticEMS.Services.Dialogs;
-using OpticEMS.Services.Etching;
 using OpticEMS.Services.Export;
 using OpticEMS.Services.Files;
 using System.Diagnostics;
@@ -54,9 +57,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         public uint[] _currentIntensities = Array.Empty<uint>(); 
         private List<uint[]> _fullSpectrumHistory = new List<uint[]>();
         private const int MaxHistorySize = 150;
-        private bool _isDemoMode = false; 
-        private bool _isMonitoringAreaActive;
-        private bool _isOverEtchAreaActive;
+        private bool _isDemoMode = false;
 
         #endregion
 
@@ -69,7 +70,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private string _pcaStatus = "None";
 
         [ObservableProperty] 
-        private RecipeModel? _recipe;
+        private Recipe? _recipe;
 
         #endregion
 
@@ -185,7 +186,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
             _ = Task.Run(() => RunProcessLoopAsync(_cancellationTokenStart.Token));
 
-            _endpointService.Start(Recipe, _currentIntensities);
+            _endpointService.Start((Recipe)Recipe, _currentIntensities);
         }
 
         [RelayCommand]
@@ -227,8 +228,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _isRunning = false;
             _isPaused = false;
             _isIndicesCorrected = false;
-            _isMonitoringAreaActive = false;
-            _isOverEtchAreaActive = false;
             _stopwatch.Stop();
             _endpointService.Stop();
             _cancellationTokenStart.Cancel();
@@ -272,7 +271,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     var overEtchEndTime = overEtchStartTime.AddSeconds(overEtchDurationSeconds);
 
                     _exportManager.ExportAsTextFormat(dialog.FileName, _startTime, _endTime, overEtchStartTime, overEtchEndTime,
-                        Recipe.Name, ChannelName, Recipe.Wavelengths, _exportData);
+                        (string)Recipe.Name, ChannelName, (List<double>)Recipe.Wavelengths, _exportData);
 
                     _dialogService.ShowInformation("Data exported successfully.");
                 }
@@ -303,7 +302,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     var overEtchEndTime = overEtchStartTime.AddSeconds(overEtchDurationSeconds);
 
                     _exportManager.ExportAsXLS(dialog.FileName, _startTime, _endTime, overEtchStartTime, overEtchEndTime,
-                        Recipe.Name, ChannelName, Recipe.Wavelengths, _exportData);
+                        (string)Recipe.Name, ChannelName, (List<double>)Recipe.Wavelengths, _exportData);
 
                     _dialogService.ShowInformation("Data exported successfully.");
                 }
@@ -336,7 +335,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     var overEtchEndTime = overEtchStartTime.AddSeconds(overEtchDurationSeconds);
 
                     _exportManager.ExportAsTextFormat(dialog.FileName, _startTime, _endTime, overEtchStartTime, overEtchEndTime,
-                        Recipe.Name, ChannelName, Recipe.Wavelengths, _exportData);
+                        (string)Recipe.Name, ChannelName, (List<double>)Recipe.Wavelengths, _exportData);
 
                     _dialogService.ShowInformation("Data exported successfully");
                 }
@@ -413,7 +412,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             double overEtchTime = _endpointService.OverEtchDurationSeconds;
             double totalTime = _endpointService.TotalDurationSeconds;
 
+            _isRunning = false;
             _endpointService.Stop();
+            _endTime = DateTime.Now;
 
             string report = forced
                 ? $"Process at channel {ChannelName} forced to stop at {totalTime:F2}s (Max Time reached)."
@@ -490,7 +491,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
-        public void ApplyRecipe(RecipeModel recipe)
+        public void ApplyRecipe(Recipe recipe)
         {
             try
             {
@@ -510,10 +511,10 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     _deviceProcessing.StartContinueScan(recipe.ExposureMs, recipe.ScansNum, _cancellationToken.Token);
                 });
 
-                Task.Run(() =>
+                Task.Run((Action)(() =>
                 {
-                    SpectrumChartViewModel.UpdateAnnotations(Recipe.Wavelengths, Recipe.WavelengthColors);
-                });
+                    SpectrumChartViewModel.UpdateAnnotations((IList<double>)Recipe.Wavelengths, (IReadOnlyList<Color>)Recipe.WavelengthColors);
+                }));
 
                 UpdateInternalIndexes();
                 _currentIntensities = new uint[Recipe.Wavelengths.Count];
@@ -620,7 +621,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
 
             SaveUpdatedWavelengths();
-            SpectrumChartViewModel.UpdateAnnotations(Recipe.Wavelengths, Recipe.WavelengthColors);
+            SpectrumChartViewModel.UpdateAnnotations((IList<double>)Recipe.Wavelengths, (IReadOnlyList<Color>)Recipe.WavelengthColors);
         }
 
         private void UpdateInternalIndexes()
@@ -667,7 +668,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 Recipe.Wavelengths.Add(roundedWavelength);
             }
 
-            _recipeFileManager.SaveRecipe(Recipe);
+            _recipeFileManager.SaveRecipe((Recipe)Recipe);
         }
 
         private void UpdateSpectrumAnnotations(double wavelength, Color color)
@@ -683,8 +684,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 if (Recipe != null)
                 {
-                    wavelengths.AddRange(Recipe.Wavelengths);
-                    colors.AddRange(Recipe.WavelengthColors);
+                    wavelengths.AddRange((IEnumerable<double>)Recipe.Wavelengths);
+                    colors.AddRange((IEnumerable<Color>)Recipe.WavelengthColors);
                 }
 
                 SpectrumChartViewModel.UpdateAnnotations(wavelengths, colors);

@@ -1,14 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using OpticEMS.Contracts.Services.Dialog;
+using OpticEMS.Contracts.Services.Recipe;
+using OpticEMS.MVVM.Models;
 using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Files;
-using OpticEMS.MVVM.Models;
+using Serilog;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Media;
-using OpticEMS.MVVM.Models.Recipe;
-using Serilog;
 
 namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 {
@@ -21,10 +22,10 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         private Color _currentWavelengthColor;
 
         [ObservableProperty]
-        private RecipeModel? _selectedRecipe;
+        private Recipe? _selectedRecipe;
 
         [ObservableProperty]
-        private ObservableCollection<RecipeModel> _recipeFiles = new();
+        private ObservableCollection<Recipe> _recipeFiles = new();
 
         [ObservableProperty]
         private int _recipeCount;
@@ -44,7 +45,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         [ObservableProperty]
         private ObservableCollection<WavelengthMonitorItem> _wavelengthItems = new();
 
-        public Action<RecipeModel>? ApplyRecipeRequested { get; set; }
+        public Action<Recipe>? ApplyRecipeRequested { get; set; }
 
         public ICollectionView RecipesView { get; private set; }
 
@@ -88,7 +89,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             {
                 if (SelectedRecipe is null)
                 {
-                    SelectedRecipe = new RecipeModel();
+                    SelectedRecipe = new Recipe();
                     Log.Information("RecipeViewMode: Created new empty recipe file.");
                 }
 
@@ -96,7 +97,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
                 if (!string.IsNullOrEmpty(name))
                 {
-                    var newRecipe = new RecipeModel
+                    var newRecipe = new Recipe
                     {
                         Name = name,
                         CreatedAt = DateTime.Now,
@@ -248,7 +249,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
             var selectedName = nameToSelect ?? SelectedRecipe?.Name;
 
-            RecipeFiles = new ObservableCollection<RecipeModel>(files);
+            RecipeFiles = new ObservableCollection<Recipe>(files);
 
             RecipesView = CollectionViewSource.GetDefaultView(RecipeFiles);
             RecipesView.Filter = obj =>
@@ -258,7 +259,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                     return true;
                 }
 
-                if (obj is RecipeModel recipe)
+                if (obj is Recipe recipe)
                 {
                     return recipe.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
                 }
@@ -269,7 +270,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             SelectedRecipe = RecipeFiles.FirstOrDefault(recipe => recipe.Name == selectedName) 
                 ?? RecipeFiles.FirstOrDefault();
 
-            RecipeCount = RecipesView.Cast<RecipeModel>().Count();
+            RecipeCount = RecipesView.Cast<Recipe>().Count();
 
             OnPropertyChanged(nameof(RecipesView));
         }
@@ -279,7 +280,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             SyncToModel();
         }
 
-        partial void OnSelectedRecipeChanged(RecipeModel? value)
+        partial void OnSelectedRecipeChanged(Recipe? value)
         {
             if (value != null)
             {

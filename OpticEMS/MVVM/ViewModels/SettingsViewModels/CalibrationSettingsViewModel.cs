@@ -1,10 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using OpticEMS.MVVM.Models.Settings;
+using OpticEMS.Contracts.Services.Calibration;
+using OpticEMS.Contracts.Services.Dialog;
+using OpticEMS.Contracts.Services.Mapper;
 using OpticEMS.Notifications.Messages;
-using OpticEMS.Services.Calibration;
-using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Settings;
 using OpticEMS.Services.Spectrometers;
 using Serilog;
@@ -173,7 +173,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
         {
             if (CalibrationWavelength > 0 && CalibrationPixel >= 0)
             {
-                var point = new CalibrationPoint(CalibrationPixel, CalibrationWavelength);
+                var point = new Contracts.Services.Calibration.CalibrationPoint(CalibrationPixel, CalibrationWavelength);
                 CalibrationPoints.Add(point);
 
                 CalibrationPixel = 0;
@@ -182,7 +182,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
         }
 
         [RelayCommand]
-        private void RemovePoint(CalibrationPoint point)
+        private void RemovePoint(Contracts.Services.Calibration.CalibrationPoint point)
         {
             if (point != null)
             {

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using OpticEMS.Common.Enums;
+using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.MVVM.View.Windows;
 using OpticEMS.MVVM.ViewModels;
 using System.Windows;

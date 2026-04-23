@@ -1,6 +1,4 @@
-﻿using OpticEMS.MVVM.Models.Settings;
-
-namespace OpticEMS.Services.Calibration
+﻿namespace OpticEMS.Contracts.Services.Calibration
 {
     public interface ICalibrationService
     {

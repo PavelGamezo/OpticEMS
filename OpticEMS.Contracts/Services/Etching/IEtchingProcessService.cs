@@ -1,7 +1,6 @@
-﻿using OpticEMS.MVVM.Models;
-using OpticEMS.MVVM.Models.Recipe;
+﻿using OpticEMS.Contracts.Services.Recipe;
 
-namespace OpticEMS.Services.Etching
+namespace OpticEMS.Contracts.Services.Etching
 {
     public interface IEtchingProcessService
     {
@@ -11,7 +10,7 @@ namespace OpticEMS.Services.Etching
 
         double TotalDurationSeconds { get; }
 
-        void Start(RecipeModel recipe, uint[] startIntensities);
+        void Start(Recipe.Recipe recipe, uint[] startIntensities);
 
         void Pause();
 

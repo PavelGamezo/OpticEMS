@@ -1,4 +1,4 @@
-﻿namespace OpticEMS.Services.Export
+﻿namespace OpticEMS.Contracts.Services.Export
 {
     public class TimePoint
     {

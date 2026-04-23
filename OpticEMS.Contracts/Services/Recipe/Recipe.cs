@@ -1,8 +1,8 @@
 ﻿using System.Windows.Media;
 
-namespace OpticEMS.MVVM.Models.Recipe
+namespace OpticEMS.Contracts.Services.Recipe
 {
-    public class RecipeModel
+    public class Recipe
     {
         public string Name { get; set; } = string.Empty;
 

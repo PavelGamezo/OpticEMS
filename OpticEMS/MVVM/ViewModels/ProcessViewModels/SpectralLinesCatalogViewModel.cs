@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using OpticEMS.Contracts.Services.Database;
+using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.MVVM.Models.Process;
-using OpticEMS.Services.Dialogs;
 using System.Collections.ObjectModel;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels

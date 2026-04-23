@@ -1,5 +1,6 @@
 ﻿using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
+using OpticEMS.Contracts.Services.Export;
 using System.IO;
 using System.Text;
 

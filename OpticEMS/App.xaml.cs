@@ -1,7 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using OpticEMS.Contracts.Services.Calibration;
 using OpticEMS.Contracts.Services.Database;
+using OpticEMS.Contracts.Services.Dialog;
+using OpticEMS.Contracts.Services.Etching;
+using OpticEMS.Contracts.Services.Mapper;
+using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Data.Database.Context;
 using OpticEMS.Data.Repositories;
@@ -9,7 +13,6 @@ using OpticEMS.Data.Services;
 using OpticEMS.Factories.Channels;
 using OpticEMS.License.Common;
 using OpticEMS.License.Handlers;
-using OpticEMS.MVVM.Models.Recipe;
 using OpticEMS.MVVM.View.Activation;
 using OpticEMS.MVVM.View.Windows;
 using OpticEMS.MVVM.ViewModels;
@@ -50,7 +53,7 @@ namespace OpticEMS
 
         private void ConfigureServices(IServiceCollection services)
         {
-            services.AddScoped<RecipeModel>();
+            services.AddScoped<Recipe>();
 
             // Services
             services.AddSingleton<ISettingsProvider, OpticEMS.Services.Settings.SettingsProvider>(); // Singleton

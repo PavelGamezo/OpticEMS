@@ -85,6 +85,7 @@
 
   <ItemGroup>
     <Folder Include="Common\Themes\" />
+    <Folder Include="MVVM\Models\Recipe\" />
   </ItemGroup>
 
   <ItemGroup>

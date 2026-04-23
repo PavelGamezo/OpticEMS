@@ -1,12 +1,12 @@
-﻿using OpticEMS.MVVM.Models;
-using OpticEMS.MVVM.Models.Recipe;
+﻿using OpticEMS.Contracts.Services.Etching;
+using OpticEMS.Contracts.Services.Recipe;
 using System.Diagnostics;
 
 namespace OpticEMS.Services.Etching
 {
     public class EtchingProcessService : IEtchingProcessService
     {
-        private RecipeModel? _recipe;
+        private Recipe? _recipe;
         private readonly Stopwatch _processTimer = new();
 
         private double[] _baselineSums = Array.Empty<double>();
@@ -215,7 +215,7 @@ namespace OpticEMS.Services.Etching
             return false;
         }
 
-        public void Start(RecipeModel recipe, uint[] startIntensities)
+        public void Start(Recipe recipe, uint[] startIntensities)
         {
             _recipe = recipe;
             _processTimer.Restart();
