@@ -3,8 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.MVVM.Models;
-using OpticEMS.Services.Dialogs;
-using OpticEMS.Services.Files;
 using Serilog;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -40,7 +38,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         private string _selectedAutocalibrationText = "No";
 
         [ObservableProperty]
-        private string _selectedPCAText = "No";
+        private string _selectedPcaText = "No";
 
         [ObservableProperty]
         private ObservableCollection<WavelengthMonitorItem> _wavelengthItems = new();
@@ -290,6 +288,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
                 SelectedOverEtchText = value.OverEtchEnabled ? "Yes" : "No";
                 SelectedAutocalibrationText = value.AutocalibrationEnabled ? "Yes" : "No";
+                SelectedPcaText = value.PcaEnabled ? "Yes" : "No";
             }
             Log.Information("RecipeViewModel: Recipe changed");
         }

@@ -30,13 +30,14 @@ namespace OpticEMS.Orchestrator
         private const int MaxHistorySize = 150;
         private bool _isDemoMode = false;
 
-        private readonly DeviceProcessing _deviceProcessing;
         private readonly IEtchingProcessService _endpointService;
         private readonly ICalibrationService _calibrationService;
         private readonly IWavelengthMapper _wavelengthMapper;
         private readonly IRecipeFileManager _recipeFileManager;
         private readonly ISettingsProvider _configureProvider;
-        private readonly PcaSpectrumAnalyzer _analyzer;
+
+        private readonly DeviceProcessing _deviceProcessing;
+        private PcaAnalysisHandler _analysisHandler;
 
         public EtchingOrchestrator(
             int channelId,
@@ -46,7 +47,7 @@ namespace OpticEMS.Orchestrator
             IWavelengthMapper wavelengthMapper,
             IRecipeFileManager recipeFileManager,
             ISettingsProvider configureProvider,
-            PcaSpectrumAnalyzer analyzer)
+            PcaAnalysisHandler analysisHandler)
         {
             ChannelId = channelId;
 
@@ -56,7 +57,7 @@ namespace OpticEMS.Orchestrator
             _wavelengthMapper = wavelengthMapper;
             _recipeFileManager = recipeFileManager;
             _configureProvider = configureProvider;
-            _analyzer = analyzer;
+            _analysisHandler = analysisHandler;
 
             RegisterMessages();
         }
@@ -102,7 +103,11 @@ namespace OpticEMS.Orchestrator
             UpdateInternalIndexes();
             _currentIntensities = new uint[Recipe.Wavelengths.Count];
             _isIndicesCorrected = false;
-            _analyzer.NComponents = Recipe.PCAComponents;
+            _analysisHandler = new PcaAnalysisHandler(
+                new PcaSpectrumAnalyzer(),
+                recipe.Name,
+                recipe.PcaMinTrainingSize,
+                recipe.PcaComponents);
                 
             // And then use IDialogService for user notification in ChannelViewModel
         }
@@ -161,7 +166,7 @@ namespace OpticEMS.Orchestrator
                 _endpointService.Resume();
             }
 
-            if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec)
+            if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec) 
             {
                 _deviceProcessing?.NotifyVirtualProcessPaused();
             }
@@ -205,7 +210,7 @@ namespace OpticEMS.Orchestrator
             int interval = Recipe?.DetectionWindowTime ?? 100;
 
             string modelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Models", $"{Recipe.Name}.pca");
-            bool usePca = Recipe.PCAEnabled;
+            bool usePca = Recipe.PcaEnabled;
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -215,7 +220,8 @@ namespace OpticEMS.Orchestrator
                 {
                     if (usePca)
                     {
-                        RunPcaAnalysis(modelPath);
+                        var pcaResult = await _analysisHandler.ProcessAsync(_fullSpectrumHistory.LastOrDefault());
+                        PcaStatus = pcaResult.Message;
                     }
                     else
                     {
@@ -293,45 +299,6 @@ namespace OpticEMS.Orchestrator
             //});
             // AND DONT FORGET ABOUT StopProcessAsync()!!!!!!
             WeakReferenceMessenger.Default.Send(new ProcessFinishedMessage(ChannelId, report, forced));
-        }
-
-        private void RunPcaAnalysis(string modelPath)
-        {
-            if (File.Exists(modelPath))
-            {
-                try
-                {
-                    _analyzer.LoadModel(modelPath);
-                }
-                catch
-                {
-                    /* Ошибка загрузки */
-                }
-            }
-            if (!_analyzer.IsTrained && _exportData.Count >= 100)
-            {
-                var trainingData = _fullSpectrumHistory
-                    .TakeLast(100);
-
-                _analyzer.TryAutoTrain(trainingData, modelPath);
-                PcaStatus = "Training";
-            }
-
-            if (_analyzer.IsTrained)
-            {
-                try
-                {
-                    var pcaResult = _analyzer.Analyze(_fullSpectrumHistory.Last());
-
-                    PcaStatus = pcaResult.IsAnomaly
-                        ? $"PCA ANOMALY → ${pcaResult.Message}"
-                        : $"PCA Normal | T²={pcaResult.T2:F5}";
-                }
-                catch
-                {
-                    PcaStatus = "Error";
-                }
-            }
         }
 
         private void RegisterMessages()

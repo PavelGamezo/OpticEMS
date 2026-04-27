@@ -9,11 +9,11 @@
         /// <summary>
         /// The main method for working in real time. 
         /// Takes the raw data from the spectrometer(an array of intensities) and turns it 
-        /// into a single number(Score) that describes the state of the process at that particular moment.
+        /// into a single AnomalyResult that describes the state of the process at that particular moment.
         /// </summary>
         /// <param name="intensities"></param>
         /// <returns></returns>
-        public abstract double Predict(uint[] intensities);
+        public abstract Result Analyze(uint[] intensities);
 
         /// <summary>
         /// Method for training (accepts a collection of spectra)

@@ -22,7 +22,10 @@ namespace OpticEMS.Services.Etching
         private double[] _prevIntensities = Array.Empty<double>();
         private bool _hasPrevAvg;
 
-        private readonly List<uint[]> _buffer = new();
+        private readonly object _swapLock = new();
+
+        private List<uint[]> _writeBuffer = new();
+        private List<uint[]> _readBuffer = new();
         private uint[] _lastAveraged = Array.Empty<uint>();
 
         private double _overEtchStartTime;
@@ -37,7 +40,10 @@ namespace OpticEMS.Services.Etching
 
         public void PushIntensities(uint[] currentIntensities)
         {
-            _buffer.Add((uint[])currentIntensities.Clone());
+            lock (_swapLock)
+            {
+                _writeBuffer.Add((uint[])currentIntensities.Clone());
+            }
         }
 
         public EndpointResult Update()
@@ -168,31 +174,31 @@ namespace OpticEMS.Services.Etching
 
         private uint[] GetAveragedFrame()
         {
-            if (_buffer.Count == 0)
+            lock (_swapLock)
             {
-                return _lastAveraged.Length > 0 ? _lastAveraged : new uint[_finalBaselines.Length];
+                var tmp = _readBuffer;
+                _readBuffer = _writeBuffer;
+                _writeBuffer = tmp;
+                _writeBuffer.Clear();
             }
 
-            int length = _buffer[0].Length;
+            if (_readBuffer.Count == 0)
+                return _lastAveraged.Length > 0 ? _lastAveraged : new uint[_finalBaselines.Length];
+
+            int length = _readBuffer[0].Length;
             double[] sum = new double[length];
 
-            foreach (var frame in _buffer)
+            foreach (var frame in _readBuffer)
             {
                 for (int i = 0; i < length; i++)
-                {
                     sum[i] += frame[i];
-                }
             }
 
             uint[] avg = new uint[length];
             for (int i = 0; i < length; i++)
-            {
-                avg[i] = (uint)(sum[i] / _buffer.Count);
-            }
+                avg[i] = (uint)(sum[i] / _readBuffer.Count);
 
-            _buffer.Clear();
             _lastAveraged = avg;
-
             return avg;
         }
 
@@ -209,7 +215,9 @@ namespace OpticEMS.Services.Etching
                 double deltaPercent = Math.Abs(currentIntensities[i] - baseline) / baseline * 100.0;
 
                 if (deltaPercent >= _recipe.DetectionWindowHighs[i])
+                {
                     return true;
+                }
             }
 
             return false;
@@ -238,7 +246,8 @@ namespace OpticEMS.Services.Etching
             _detectedAtMs = 0;
             _finishedAtMs = 0;
 
-            _buffer.Clear();
+            _readBuffer.Clear();
+            _writeBuffer.Clear();
             _lastAveraged = Array.Empty<uint>();
 
             _currentStatus = "On going initial delay";

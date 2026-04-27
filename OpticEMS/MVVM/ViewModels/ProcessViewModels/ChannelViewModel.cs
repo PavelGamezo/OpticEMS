@@ -12,16 +12,12 @@ using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Processing.PCA;
-using OpticEMS.Services.Calibration;
-using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Export;
-using OpticEMS.Services.Files;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
-using XAct;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {
@@ -36,8 +32,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private readonly ISettingsProvider _configureProvider;
         private readonly IExportManager _exportManager;
         private readonly ICalibrationService _calibrationService;
-        private readonly PcaSpectrumAnalyzer _analyzer;
         private readonly DeviceProcessing _deviceProcessing;
+        private PcaAnalysisHandler _pcaHandler;
 
         #endregion
 
@@ -58,6 +54,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private List<uint[]> _fullSpectrumHistory = new List<uint[]>();
         private const int MaxHistorySize = 150;
         private bool _isDemoMode = false;
+        private bool _isPcaBusy = false;
+        private bool _modelLoaded = false;
+        private DateTime _lastPcaAnalysisTime = DateTime.MinValue;
 
         #endregion
 
@@ -117,7 +116,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _deviceProcessing = new DeviceProcessing(
                 ChannelId,
                 _configureProvider);
-            _analyzer = new PcaSpectrumAnalyzer();
 
             RegisterMessages();
 
@@ -128,7 +126,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             SpectralLinesCatalogViewModel = new SpectralLinesCatalogViewModel(
                 ChannelId, spectralLineRepository, dialogService);
             ChannelDetailsViewModel = new ChannelDetailsViewModel(this);
-
 
             SpectrumChartViewModel.OnWavelengthMoved += () =>
             {
@@ -181,12 +178,13 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _stopwatch.Restart();
             _startTime = DateTime.Now;
             _exportData.Clear();
+            _fullSpectrumHistory.Clear();
 
             ProcessChartViewModel.SetUpModel(Recipe.Wavelengths, Recipe.WavelengthColors);
 
             _ = Task.Run(() => RunProcessLoopAsync(_cancellationTokenStart.Token));
 
-            _endpointService.Start((Recipe)Recipe, _currentIntensities);
+            _endpointService.Start(Recipe, _currentIntensities);
         }
 
         [RelayCommand]
@@ -346,6 +344,53 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
+        [RelayCommand]
+        private async Task ExecuteAnalizingTrain()
+        {
+            if (_isRunning)
+            {
+                _dialogService.ShowError("Stop the process before training PCA.");
+                return;
+            }
+
+            if (Recipe is null)
+            {
+                _dialogService.ShowError("Recipe is not selected.");
+                return;
+            }
+
+            if (_pcaHandler == null)
+            {
+                _dialogService.ShowError("PCA handler is not initialized.");
+                return;
+            }
+
+            _isPcaBusy = true;
+            PcaStatus = "Training PCA...";
+
+            try
+            {
+                var spectra = _fullSpectrumHistory
+                    .Select(s => s.ToArray())
+                    .ToArray();
+
+                var result = await Task.Run(() => _pcaHandler.TryAutoTrain(spectra));
+
+                PcaStatus = result.IsAnomaly
+                    ? _pcaHandler.Status
+                    : $"PCA Error | {result.Message}";
+            }
+            catch (Exception ex)
+            {
+                PcaStatus = "PCA Error";
+                _dialogService.ShowError(ex.Message);
+            }
+            finally
+            {
+                _isPcaBusy = false;
+            }
+        }
+
         #endregion
 
         #region methods
@@ -358,8 +403,11 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             long targetNextTickMs = 0;
             int interval = Recipe?.DetectionWindowTime ?? 100;
 
-            string modelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Models", $"{Recipe.Name}.pca");
-            bool usePca = Recipe.PCAEnabled;
+            string modelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                "Models", 
+                $"{Recipe.Name}.pca");
+
+            bool usePca = Recipe.PcaEnabled;
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -369,25 +417,26 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 {
                     if (usePca)
                     {
-                        RunPcaAnalysis(modelPath);
+                        await _pcaHandler.ProcessAsync(_fullSpectrumHistory.LastOrDefault());
+                        PcaStatus = _pcaHandler.Status;
                     }
                     else
                     {
                         PcaStatus = "PCA disabled";
                     }
 
-                    var result = _endpointService.Update();
+                    var endpointResult = _endpointService.Update();
 
-                    if (result.Status != ProcessStatus)
+                    if (endpointResult.Status != ProcessStatus)
                     {
-                        ProcessStatus = result.Status;
+                        ProcessStatus = endpointResult.Status;
                     }
 
-                    await UpdateChartAreasAsync(result);
+                    await UpdateChartAreasAsync(endpointResult);
 
-                    if (result.IsDetected)
+                    if (endpointResult.IsDetected)
                     {
-                        FinishProcess(result.IsForced);
+                        FinishProcess(endpointResult.IsForced);
                         break;
                     }
                 }
@@ -412,7 +461,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             double overEtchTime = _endpointService.OverEtchDurationSeconds;
             double totalTime = _endpointService.TotalDurationSeconds;
 
-            _isRunning = false;
             _endpointService.Stop();
             _endTime = DateTime.Now;
 
@@ -438,7 +486,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 }
             });
         }
-
+        
         private async Task UpdateChartAreasAsync(EndpointResult result)
         {
             if (Application.Current?.Dispatcher is Dispatcher dispatcher)
@@ -449,45 +497,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     ProcessChartViewModel.UpdateTopPlot(_stopwatch.Elapsed, _currentIntensities);
                     ProcessChartViewModel.StartAnnotationArea(result.Status, _stopwatch);
                 }, DispatcherPriority.Render);
-            }
-        }
-
-        private void RunPcaAnalysis(string modelPath)
-        {
-            if (File.Exists(modelPath))
-            {
-                try
-                {
-                    _analyzer.LoadModel(modelPath);
-                }
-                catch
-                {
-                    /* Ошибка загрузки */
-                }
-            }
-            if (!_analyzer.IsTrained && _exportData.Count >= 100)
-            {
-                var trainingData = _fullSpectrumHistory
-                    .TakeLast(100);
-
-                _analyzer.TryAutoTrain(trainingData, modelPath);
-                PcaStatus = "Training";
-            }
-
-            if (_analyzer.IsTrained)
-            {
-                try
-                {
-                    var pcaResult = _analyzer.Analyze(_fullSpectrumHistory.Last());
-
-                    PcaStatus = pcaResult.IsAnomaly
-                        ? $"PCA ANOMALY → ${pcaResult.Message}"
-                        : $"PCA Normal | T²={pcaResult.T2:F5}";
-                }
-                catch
-                {
-                    PcaStatus = "Error";
-                }
             }
         }
 
@@ -504,8 +513,15 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 Recipe = recipe;
 
+                _pcaHandler = new PcaAnalysisHandler(
+                    new PcaSpectrumAnalyzer(),
+                    Recipe.Name,
+                    Recipe.PcaComponents,
+                    Recipe.PcaMinTrainingSize);
+
                 _cancellationToken.Cancel();
                 _cancellationToken = new CancellationTokenSource();
+
                 Task.Run(() =>
                 {
                     _deviceProcessing.StartContinueScan(recipe.ExposureMs, recipe.ScansNum, _cancellationToken.Token);
@@ -513,14 +529,13 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 Task.Run((Action)(() =>
                 {
-                    SpectrumChartViewModel.UpdateAnnotations((IList<double>)Recipe.Wavelengths, (IReadOnlyList<Color>)Recipe.WavelengthColors);
+                    SpectrumChartViewModel.UpdateAnnotations(Recipe.Wavelengths, Recipe.WavelengthColors);
                 }));
 
                 UpdateInternalIndexes();
                 _currentIntensities = new uint[Recipe.Wavelengths.Count];
                 _isIndicesCorrected = false;
-                _analyzer.NComponents = Recipe.PCAComponents;
-
+                
                 _dialogService.ShowInformation($"Recipe '{Recipe.Name}' for channel {Recipe.Channel} applied successfully.");
             }
             catch (Exception ex)
@@ -561,13 +576,25 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 return;
             }
 
-            _fullSpectrumHistory.Add((uint[])intensities.Clone());
+            CreateSpectrumSnapshot(intensities);
+            UpdateSpectrumChart(intensities, wavelengths);
+        }
 
-            if (_fullSpectrumHistory.Count > MaxHistorySize)
+        private void CreateSpectrumSnapshot(uint[] intensities)
+        {
+            var elapsed = (DateTime.Now - _lastPcaAnalysisTime).TotalMilliseconds;
+
+            if (_isRunning && !_isPaused && elapsed >= 1000)
             {
-                _fullSpectrumHistory.RemoveAt(0);
-            }
+                _fullSpectrumHistory.Add(intensities.ToArray());
+                _pcaHandler?.PushForTraining(intensities);
 
+                _lastPcaAnalysisTime = DateTime.Now;
+            }
+        }
+
+        private void UpdateSpectrumChart(uint[] intensities, double[] wavelengths)
+        {
             long currentMs = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             if (currentMs - _lastUiUpdateMs > 33)
             {

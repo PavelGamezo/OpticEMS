@@ -38,9 +38,11 @@ namespace OpticEMS.Contracts.Services.Recipe
 
         public int OverEtchValue { get; set; }
 
-        public bool PCAEnabled { get; set; }
+        public bool PcaEnabled { get; set; }
 
-        public int PCAComponents { get; set; } = 5;
+        public int PcaComponents { get; set; } = 5;
+
+        public int PcaMinTrainingSize { get; set; } = 150;
 
         public DateTime CreatedAt { get; set; }
 

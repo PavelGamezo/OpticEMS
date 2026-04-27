@@ -23,7 +23,7 @@ namespace OpticEMS.Processing.PCA
 
         public bool TryAutoTrain(IEnumerable<uint[]> spectra, string modelPath)
         {
-            if (IsTrained || spectra.Count() < 30)
+            if (IsTrained)
             {
                 return false;
             }
@@ -35,40 +35,32 @@ namespace OpticEMS.Processing.PCA
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
         }
 
-        public override double Predict(uint[] intensities)
-        {
-            var result = Analyze(intensities);
-            return result.Q;
-        }
-
         /// <summary>
         /// Main PCA analize method for spectrum process
         /// </summary>
-        public PcaAnomalyResult Analyze(uint[] intensities)
+        public override Result Analyze(uint[] intensities)
         {
             if (!IsTrained || _mean.Count == 0)
             {
-                return new PcaAnomalyResult { IsAnomaly = false, Message = "PCA model is not trained" };
+                return new Result(false, "PCA model is not trained");
             }
 
             if (intensities.Length != _mean.Count)
             {
-                return new PcaAnomalyResult { IsAnomaly = false, Message = "Spectrum length mismatch" };
+                return new Result (false, "Spectrum length mismatch");
             }
 
             if (_loadings.RowCount != intensities.Length)
             {
-                return new PcaAnomalyResult
-                {
-                    IsAnomaly = false,
-                    Message = $"Dimension mismatch: loadings rows={_loadings.RowCount}, spectrum={intensities.Length}"
-                };
+                return new Result(
+                    false, 
+                    $"Dimension mismatch: loadings rows={_loadings.RowCount}, spectrum={intensities.Length}");
             }
             
             var xCentered = Vector<double>.Build.Dense(intensities.Length);
@@ -89,17 +81,9 @@ namespace OpticEMS.Processing.PCA
             var q = residual.PointwisePower(2).Sum();
 
             bool isAnomaly = t2 > _t2Limit || q > _qLimit;
+            var message = $"T²={t2:F15} | Q={q:F5}";
 
-            return new PcaAnomalyResult
-            {
-                IsAnomaly = isAnomaly,
-                T2 = t2,
-                Q = q,
-                T2Limit = _t2Limit,
-                QLimit = _qLimit,
-                Residual = residual.ToArray(),
-                Message = $"T²={t2:F15} | Q={q:F5}"
-            };
+            return new Result(isAnomaly, message);
         }
 
         public override void Train(IEnumerable<uint[]> trainingData)
@@ -137,7 +121,6 @@ namespace OpticEMS.Processing.PCA
             {
                 var t = row * _loadings;
 
-                // Защита: добавляем малую константу 1e-9, чтобы не делить на 0
                 var t2 = t.PointwiseDivide(_eigenvalues + 1e-9).PointwisePower(2).Sum();
 
                 var recon = t * _loadings.Transpose();
@@ -147,26 +130,30 @@ namespace OpticEMS.Processing.PCA
                 qValues.Add(q);
             }
 
-            // Сортируем для нахождения перцентиля
             var sortedT2 = t2Values.OrderBy(x => x).ToList();
             var sortedQ = qValues.OrderBy(x => x).ToList();
 
             int index = (int)Math.Max(1, t2Values.Count * confidence);
 
-            // Применяем коэффициенты запаса (Safety Factors)
-            // 2.0 для T2 и 3.0 для Q — это хорошие стартовые значения для плазмы
             _t2Limit = sortedT2.ElementAtOrDefault(index - 1) * 2.0;
             _qLimit = sortedQ.ElementAtOrDefault(index - 1) * 3.0;
 
-            // "Floor" для лимитов: если при обучении был идеально ровный сигнал, 
-            // лимиты не должны быть микроскопическими
-            if (_t2Limit < 1e-5) _t2Limit = 0.1;
-            if (_qLimit < 1.0) _qLimit = 100.0; // Зависит от среднего шума твоего датчика
+            if (_t2Limit < 1e-5)
+            {
+                _t2Limit = 0.1;
+            }
+            if (_qLimit < 1.0)
+            {
+                _qLimit = 100.0;
+            }
         }
 
         public override void SaveModel(string filePath)
         {
-            if (!IsTrained) throw new InvalidOperationException("Model is not trained");
+            if (!IsTrained)
+            {
+                throw new InvalidOperationException("Model is not trained");
+            }
 
             var modelData = new PcaModel
             {

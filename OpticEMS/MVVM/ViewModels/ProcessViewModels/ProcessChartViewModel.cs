@@ -23,6 +23,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         public void SetUpModel(List<double> targetWavelengths, List<Color> wavelengthColors)
         {
+            _isMonitoringAreaActive = false;
+            _isOverEtchAreaActive = false;
+
             PlotModel = new ViewResolvingPlotModel
             {
                 PlotMargins = new OxyThickness(60, 40, 40, 40),
