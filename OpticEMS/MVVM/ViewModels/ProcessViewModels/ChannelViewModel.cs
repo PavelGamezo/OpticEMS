@@ -11,52 +11,19 @@ using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
 using OpticEMS.Notifications.Messages;
-using OpticEMS.Processing.PCA;
-using OpticEMS.Services.Export;
-using System.Diagnostics;
-using System.IO;
+using OpticEMS.Orchestrator;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {
-    public partial class ChannelViewModel : ObservableObject, IDisposable
+    public partial class ChannelViewModel : ObservableObject
     {
         #region services
 
-        private readonly IWavelengthMapper _wavelengthMapper;
-        private readonly IRecipeFileManager _recipeFileManager;
         private readonly IDialogService _dialogService;
-        private readonly IEtchingProcessService _endpointService;
-        private readonly ISettingsProvider _configureProvider;
-        private readonly IExportManager _exportManager;
-        private readonly ICalibrationService _calibrationService;
-        private readonly DeviceProcessing _deviceProcessing;
-        private PcaAnalysisHandler _pcaHandler;
-
-        #endregion
-
-        #region fields
-
-        private readonly List<TimePoint> _exportData = new();
-        private CancellationTokenSource _cancellationToken = new();
-        private CancellationTokenSource _cancellationTokenStart = new();
-        private bool _isRunning;
-        private bool _isPaused;
-        private bool _isIndicesCorrected;
-        private readonly Stopwatch _stopwatch = new();
-        private DateTime _startTime;
-        private DateTime _endTime;
-        private long _lastUiUpdateMs = 0;
-        private int[] _wavelengthsIndices = Array.Empty<int>();
-        public uint[] _currentIntensities = Array.Empty<uint>(); 
-        private List<uint[]> _fullSpectrumHistory = new List<uint[]>();
-        private const int MaxHistorySize = 150;
-        private bool _isDemoMode = false;
-        private bool _isPcaBusy = false;
-        private bool _modelLoaded = false;
-        private DateTime _lastPcaAnalysisTime = DateTime.MinValue;
+        private readonly EtchingOrchestrator _orchestrator;
 
         #endregion
 
@@ -70,6 +37,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         [ObservableProperty] 
         private Recipe? _recipe;
+
+        [ObservableProperty]
+        private bool _canExport;
 
         #endregion
 
@@ -95,48 +65,43 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         #region ctor
 
-        public ChannelViewModel(int id, IWavelengthMapper wavelengthMapper, IDialogService dialogService,
-            IEtchingProcessService endpointService, ISettingsProvider configureProvider, IExportManager exportManager,
-            IRecipeFileManager recipeFileManager, ICalibrationService calibrationService, ISpectralLineRepository spectralLineRepository) 
+        public ChannelViewModel(int id,
+            IWavelengthMapper wavelengthMapper,
+            IDialogService dialogService,
+            IEtchingProcessService endpointService,
+            ISettingsProvider configureProvider, 
+            IExportManager exportManager,
+            IRecipeFileManager recipeFileManager,
+            ICalibrationService calibrationService,
+            ISpectralLineRepository spectralLineRepository)
         {
-            _wavelengthMapper = wavelengthMapper;
             _dialogService = dialogService;
-            _endpointService = endpointService;
-            _configureProvider = configureProvider;
-            _exportManager = exportManager;
-            _recipeFileManager = recipeFileManager;
-            _calibrationService = calibrationService;
-
-            _cancellationToken = new CancellationTokenSource();
-            _cancellationTokenStart = new CancellationTokenSource();
+            _orchestrator = new EtchingOrchestrator(
+                id,
+                endpointService,
+                calibrationService, 
+                wavelengthMapper,
+                recipeFileManager, 
+                configureProvider, 
+                exportManager);
 
             ChannelId = id;
             ChannelName = $"Chamber {id + 1}";
 
-            _deviceProcessing = new DeviceProcessing(
-                ChannelId,
-                _configureProvider);
-
-            RegisterMessages();
-
             SpectrumChartViewModel = new SpectrumChartViewModel(
-                _deviceProcessing.Device.DeviceInfo.TrimLeft,
-                _deviceProcessing.Device.DeviceInfo.TrimRight);
+                _orchestrator.Device.Device.DeviceInfo.TrimLeft,
+                _orchestrator.Device.Device.DeviceInfo.TrimRight);
             ProcessChartViewModel = new ProcessChartViewModel();
             SpectralLinesCatalogViewModel = new SpectralLinesCatalogViewModel(
                 ChannelId, spectralLineRepository, dialogService);
             ChannelDetailsViewModel = new ChannelDetailsViewModel(this);
 
+            RegisterMessages();
+
             SpectrumChartViewModel.OnWavelengthMoved += () =>
             {
-                UpdateInternalIndexes();
-                SaveUpdatedWavelengths();
+                _orchestrator.UpdateWavelengthManually();
             };
-
-            Task.Run(() =>
-            {
-                _deviceProcessing.StartContinueScan(1, 1, _cancellationToken.Token);
-            });
         }
 
         public ChannelViewModel()
@@ -146,418 +111,69 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         #endregion
 
-        #region relayCommands
-        
-        [RelayCommand]
-        private async Task StartProcessAsync()
-        {
-            if (Recipe is null)
-            {
-                _dialogService.ShowInformation("Please select a recipe before starting the process.");
-
-                return;
-            }
-
-            if (_isRunning)
-            {
-                _dialogService.ShowInformation("Process is already running.");
-
-                return;
-            }
-
-            if (_configureProvider.GetByChannelId(ChannelId).DeviceType == DeviceType.VirtualSpec)
-            {
-                _deviceProcessing.NotifyVirtualProcessStarted();
-            }
-
-            _cancellationTokenStart.Cancel();
-            _cancellationTokenStart = new CancellationTokenSource();
-
-            _isRunning = true;
-            _isPaused = false;
-            _stopwatch.Restart();
-            _startTime = DateTime.Now;
-            _exportData.Clear();
-            _fullSpectrumHistory.Clear();
-
-            ProcessChartViewModel.SetUpModel(Recipe.Wavelengths, Recipe.WavelengthColors);
-
-            _ = Task.Run(() => RunProcessLoopAsync(_cancellationTokenStart.Token));
-
-            _endpointService.Start(Recipe, _currentIntensities);
-        }
-
-        [RelayCommand]
-        private void PauseProcess()
-        {
-            if (!_isRunning)
-            {
-                return;
-            }
-
-            _isPaused = !_isPaused;
-
-            if (_isPaused)
-            {
-                _stopwatch.Stop();
-                _endpointService.Pause();
-                ProcessStatus = "Paused";
-            }
-            else
-            {
-                _stopwatch.Start();
-                _endpointService.Resume();
-            }
-
-            if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec) 
-            {
-                _deviceProcessing?.NotifyVirtualProcessPaused();
-            }
-        }
-
-        [RelayCommand]
-        public async Task StopProcessAsync()
-        {
-            if (!_isRunning)
-            {
-                return;
-            }
-
-            _isRunning = false;
-            _isPaused = false;
-            _isIndicesCorrected = false;
-            _stopwatch.Stop();
-            _endpointService.Stop();
-            _cancellationTokenStart.Cancel();
-
-            if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec)
-            {
-                _deviceProcessing?.NotifyVirtualProcessStopped();
-
-                if (_isDemoMode)
-                {
-                    await Task.Delay(5000);
-
-                    StartProcessAsync();
-                }
-            }
-        }
-
-        [RelayCommand]
-        public async Task ToggleDemoMode()
-        {
-            _isDemoMode = !_isDemoMode;
-        }
-
-        [RelayCommand(CanExecute = nameof(IsExportEnabled))]
-        public void ExportToCsv()
-        {
-            try
-            {
-                var dialog = new Microsoft.Win32.SaveFileDialog
-                {
-                    Filter = "CSV files (*.csv)|*.csv",
-                    FileName = $"Channel_{ChannelId + 1}_Data_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
-                };
-
-                if (dialog.ShowDialog() == true)
-                {
-                    double endpointTime = _endpointService.DetectedAtSeconds;
-                    double overEtchDurationSeconds = _endpointService.OverEtchDurationSeconds;
-
-                    var overEtchStartTime = _startTime.AddSeconds(endpointTime);
-                    var overEtchEndTime = overEtchStartTime.AddSeconds(overEtchDurationSeconds);
-
-                    _exportManager.ExportAsTextFormat(dialog.FileName, _startTime, _endTime, overEtchStartTime, overEtchEndTime,
-                        (string)Recipe.Name, ChannelName, (List<double>)Recipe.Wavelengths, _exportData);
-
-                    _dialogService.ShowInformation("Data exported successfully.");
-                }
-            }
-            catch (Exception exception)
-            {
-                _dialogService.ShowInformation(exception.Message);
-            }
-        }
-
-        [RelayCommand(CanExecute = nameof(IsExportEnabled))]
-        public void ExportToExcel()
-        {
-            try
-            {
-                var dialog = new Microsoft.Win32.SaveFileDialog
-                {
-                    Filter = "Excel files (*.xlsx)|*.xlsx",
-                    FileName = $"Channel_{ChannelId + 1}_Data_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
-                };
-
-                if (dialog.ShowDialog() == true)
-                {
-                    double endpointTime = _endpointService.DetectedAtSeconds;
-                    double overEtchDurationSeconds = _endpointService.OverEtchDurationSeconds;
-
-                    var overEtchStartTime = _startTime.AddSeconds(endpointTime);
-                    var overEtchEndTime = overEtchStartTime.AddSeconds(overEtchDurationSeconds);
-
-                    _exportManager.ExportAsXLS(dialog.FileName, _startTime, _endTime, overEtchStartTime, overEtchEndTime,
-                        (string)Recipe.Name, ChannelName, (List<double>)Recipe.Wavelengths, _exportData);
-
-                    _dialogService.ShowInformation("Data exported successfully.");
-                }
-            }
-            catch (Exception exception)
-            {
-                _dialogService.ShowError($"Failed to export data: {exception.Message}");
-            }
-        }
-
-
-        [RelayCommand(CanExecute = nameof(IsExportEnabled))]
-        public void ExportToTxt()
-        {
-
-            try
-            {
-                var dialog = new Microsoft.Win32.SaveFileDialog
-                {
-                    Filter = "Text files (*.txt)|*.txt",
-                    FileName = $"Channel_{ChannelId + 1}_Data_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
-                };
-
-                if (dialog.ShowDialog() == true)
-                {
-                    double endpointTime = _endpointService.DetectedAtSeconds;
-                    double overEtchDurationSeconds = _endpointService.OverEtchDurationSeconds;
-
-                    var overEtchStartTime = _startTime.AddSeconds(endpointTime);
-                    var overEtchEndTime = overEtchStartTime.AddSeconds(overEtchDurationSeconds);
-
-                    _exportManager.ExportAsTextFormat(dialog.FileName, _startTime, _endTime, overEtchStartTime, overEtchEndTime,
-                        (string)Recipe.Name, ChannelName, (List<double>)Recipe.Wavelengths, _exportData);
-
-                    _dialogService.ShowInformation("Data exported successfully");
-                }
-            }
-            catch (Exception exception)
-            {
-                _dialogService.ShowError($"Failed to export data: {exception.Message}");
-            }
-        }
-
-        [RelayCommand]
-        private async Task ExecuteAnalizingTrain()
-        {
-            if (_isRunning)
-            {
-                _dialogService.ShowError("Stop the process before training PCA.");
-                return;
-            }
-
-            if (Recipe is null)
-            {
-                _dialogService.ShowError("Recipe is not selected.");
-                return;
-            }
-
-            if (_pcaHandler == null)
-            {
-                _dialogService.ShowError("PCA handler is not initialized.");
-                return;
-            }
-
-            _isPcaBusy = true;
-            PcaStatus = "Training PCA...";
-
-            try
-            {
-                var spectra = _fullSpectrumHistory
-                    .Select(s => s.ToArray())
-                    .ToArray();
-
-                var result = await Task.Run(() => _pcaHandler.TryAutoTrain(spectra));
-
-                PcaStatus = result.IsAnomaly
-                    ? _pcaHandler.Status
-                    : $"PCA Error | {result.Message}";
-            }
-            catch (Exception ex)
-            {
-                PcaStatus = "PCA Error";
-                _dialogService.ShowError(ex.Message);
-            }
-            finally
-            {
-                _isPcaBusy = false;
-            }
-        }
-
-        #endregion
-
-        #region methods
-
-        private async Task RunProcessLoopAsync(CancellationToken cancellationToken)
-        {
-            var periodicStopwatch = Stopwatch.StartNew();
-            periodicStopwatch.Start();
-
-            long targetNextTickMs = 0;
-            int interval = Recipe?.DetectionWindowTime ?? 100;
-
-            string modelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                "Models", 
-                $"{Recipe.Name}.pca");
-
-            bool usePca = Recipe.PcaEnabled;
-
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                targetNextTickMs += interval;
-
-                if (!_isPaused && _isRunning && Recipe != null)
-                {
-                    if (usePca)
-                    {
-                        await _pcaHandler.ProcessAsync(_fullSpectrumHistory.LastOrDefault());
-                        PcaStatus = _pcaHandler.Status;
-                    }
-                    else
-                    {
-                        PcaStatus = "PCA disabled";
-                    }
-
-                    var endpointResult = _endpointService.Update();
-
-                    if (endpointResult.Status != ProcessStatus)
-                    {
-                        ProcessStatus = endpointResult.Status;
-                    }
-
-                    await UpdateChartAreasAsync(endpointResult);
-
-                    if (endpointResult.IsDetected)
-                    {
-                        FinishProcess(endpointResult.IsForced);
-                        break;
-                    }
-                }
-
-                long currentMs = periodicStopwatch.ElapsedMilliseconds;
-                long sleepTime = targetNextTickMs - currentMs;
-
-                if (sleepTime > 0)
-                {
-                    await Task.Delay((int)sleepTime, cancellationToken);
-                }
-                else if (sleepTime < -50)
-                {
-                    targetNextTickMs = currentMs;
-                }
-            }
-        }
-
-        private void FinishProcess(bool forced)
-        {
-            double endpointTime = _endpointService.DetectedAtSeconds;
-            double overEtchTime = _endpointService.OverEtchDurationSeconds;
-            double totalTime = _endpointService.TotalDurationSeconds;
-
-            _endpointService.Stop();
-            _endTime = DateTime.Now;
-
-            string report = forced
-                ? $"Process at channel {ChannelName} forced to stop at {totalTime:F2}s (Max Time reached)."
-                : $"Endpoint detected in channel \n{ChannelName} at: {endpointTime:F2} s\n" +
-                  $"Over-etch duration: {overEtchTime:F2} s\n" +
-                  $"Total process time: {totalTime:F2} s";
-
-            ProcessStatus = "Endpoint detected";
-
-            StopProcessAsync();
-
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                if (forced)
-                {
-                    _dialogService.ShowError(report);
-                }
-                else
-                {
-                    _dialogService.ShowInformationWithAutoClose(report);
-                }
-            });
-        }
-        
-        private async Task UpdateChartAreasAsync(EndpointResult result)
-        {
-            if (Application.Current?.Dispatcher is Dispatcher dispatcher)
-            {
-                await dispatcher.InvokeAsync(() =>
-                {
-                    RecordDataForExport(_currentIntensities);
-                    ProcessChartViewModel.UpdateTopPlot(_stopwatch.Elapsed, _currentIntensities);
-                    ProcessChartViewModel.StartAnnotationArea(result.Status, _stopwatch);
-                }, DispatcherPriority.Render);
-            }
-        }
-
-        public void ApplyRecipe(Recipe recipe)
-        {
-            try
-            {
-                if (_isRunning)
-                {
-                    _dialogService.ShowError("Cannot apply recipe while process is running. Please stop the process first.");
-
-                    return;
-                }
-
-                Recipe = recipe;
-
-                _pcaHandler = new PcaAnalysisHandler(
-                    new PcaSpectrumAnalyzer(),
-                    Recipe.Name,
-                    Recipe.PcaComponents,
-                    Recipe.PcaMinTrainingSize);
-
-                _cancellationToken.Cancel();
-                _cancellationToken = new CancellationTokenSource();
-
-                Task.Run(() =>
-                {
-                    _deviceProcessing.StartContinueScan(recipe.ExposureMs, recipe.ScansNum, _cancellationToken.Token);
-                });
-
-                Task.Run((Action)(() =>
-                {
-                    SpectrumChartViewModel.UpdateAnnotations(Recipe.Wavelengths, Recipe.WavelengthColors);
-                }));
-
-                UpdateInternalIndexes();
-                _currentIntensities = new uint[Recipe.Wavelengths.Count];
-                _isIndicesCorrected = false;
-                
-                _dialogService.ShowInformation($"Recipe '{Recipe.Name}' for channel {Recipe.Channel} applied successfully.");
-            }
-            catch (Exception ex)
-            {
-                _dialogService.ShowError($"Failed to apply recipe: {ex.Message}");
-            }
-        }
-
-        private bool IsExportEnabled() => _exportData.Count > 0 && !_isRunning;
+        #region command register
 
         private void RegisterMessages()
         {
-            WeakReferenceMessenger.Default.Register<SpectrumUpdatedMessage>(this, (recipient, message) =>
+            WeakReferenceMessenger.Default.Register<LiveSpectrumDataMessage>(this, (recipient, message) =>
             {
-                if (message.ChannelId != this.ChannelId)
+                if (message.ChannelId == ChannelId)
+                {
+                    SpectrumChartViewModel.UpdateChart(message.Wavelengths, message.Intensities);
+                }
+            });
+
+            WeakReferenceMessenger.Default.Register<ProcessFinishedMessage>(this, (recipient, message) =>
+            {
+                if (message.ChannelId == ChannelId)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (message.IsForsed)
+                        {
+                            _dialogService.ShowError(message.Report);
+                        }
+                        else
+                        {
+                            _dialogService.ShowInformationWithAutoClose(message.Report);
+                        }
+                    });
+                }
+            });
+
+            WeakReferenceMessenger.Default.Register<RecipeAppliedMessage>(this, (recipient, message) =>
+            {
+                if (message.ChannelId == this.ChannelId)
+                {
+                    Recipe = _orchestrator.Recipe;
+
+                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        SpectrumChartViewModel.UpdateAnnotations(message.Wavelengths, message.WavelengthColors);
+                    }, DispatcherPriority.Background);
+                }
+            });
+
+            WeakReferenceMessenger.Default.Register<SetUpProcessChartMessage>(this, (recipient, message) =>
+            {
+                if (message.ChannelId != ChannelId)
                 {
                     return;
                 }
 
-                HandleIncomingSpectrum(message.Intensities, message.Wavelengths);
+                ProcessChartViewModel.SetUpModel(message.Wavelengths, message.WavelengthColors);
+            });
 
-                UpdateInternalIntensities(message.Intensities, message.Wavelengths);
+            WeakReferenceMessenger.Default.Register<ProcessStepUpdateMessage>(this, (recipient, message) =>
+            {
+                if (message.ChannelId != ChannelId)
+                {
+                    return;
+                }
+
+                ProcessStatus = message.Status;
+                ProcessChartViewModel.UpdateTopPlot(TimeSpan.FromSeconds(message.CurrentTime), message.IntensitiesSnapshot);
+                ProcessChartViewModel.StartAnnotationArea(message.Status, TimeSpan.FromSeconds(message.CurrentTime));
             });
 
             WeakReferenceMessenger.Default.Register<SpectralLineSelectionMessage>(this, (recipient, message) =>
@@ -567,135 +183,179 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     UpdateSpectrumAnnotations(message.Wavelength, (Color)ColorConverter.ConvertFromString(message.ColorHex));
                 }
             });
-        }
 
-        private void HandleIncomingSpectrum(uint[] intensities, double[] wavelengths)
-        {
-            if (intensities == null || intensities.Length == 0)
+            WeakReferenceMessenger.Default.Register<ExportAvailabilityChangedMessage>(this, (recipient, message) =>
             {
-                return;
-            }
-
-            CreateSpectrumSnapshot(intensities);
-            UpdateSpectrumChart(intensities, wavelengths);
-        }
-
-        private void CreateSpectrumSnapshot(uint[] intensities)
-        {
-            var elapsed = (DateTime.Now - _lastPcaAnalysisTime).TotalMilliseconds;
-
-            if (_isRunning && !_isPaused && elapsed >= 1000)
-            {
-                _fullSpectrumHistory.Add(intensities.ToArray());
-                _pcaHandler?.PushForTraining(intensities);
-
-                _lastPcaAnalysisTime = DateTime.Now;
-            }
-        }
-
-        private void UpdateSpectrumChart(uint[] intensities, double[] wavelengths)
-        {
-            long currentMs = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            if (currentMs - _lastUiUpdateMs > 33)
-            {
-                _lastUiUpdateMs = currentMs;
-                Application.Current?.Dispatcher?.InvokeAsync(() =>
+                if (message.ChannelId == ChannelId)
                 {
-                    SpectrumChartViewModel.UpdateChart(wavelengths, intensities);
-                }, DispatcherPriority.Render);
+                    CanExport = message.CanExport;
+                }
+            });
+
+            WeakReferenceMessenger.Default.Register<PcaStatusMessage>(this, (recipient, message) =>
+            {
+                if (message.ChannelId == ChannelId)
+                {
+                    PcaStatus = message.Status;
+                }
+            });
+        }
+
+        #endregion
+
+        #region relayCommands
+
+        [RelayCommand]
+        private async Task StartProcessAsync()
+        {
+            try
+            {
+                _orchestrator.StartProcess();
+            }
+            catch (Exception exception)
+            {
+                _dialogService.ShowError(exception.Message);
             }
         }
 
-        private void UpdateInternalIntensities(uint[] intensities, double[] wavelengths)
+        [RelayCommand]
+        private void PauseProcess()
         {
-            if (!_isIndicesCorrected && _isRunning && intensities.Length > 0 && Recipe.AutocalibrationEnabled)
+            try
             {
-                CorrectIndices(intensities);
-                return;
+                _orchestrator.PauseProcess();
             }
-
-            for (int i = 0; i < _wavelengthsIndices.Length; i++)
+            catch (Exception exception)
             {
-                int idx = _wavelengthsIndices[i];
-                _currentIntensities[i] = (idx >= 0 && idx < intensities.Length) ? intensities[idx] : 0;
-            }
-
-            if (_isRunning && !_isPaused)
-            {
-                _endpointService.PushIntensities(_currentIntensities);
+                _dialogService.ShowError(exception.Message);
             }
         }
 
-        private void CorrectIndices(uint[] intensities)
+        [RelayCommand]
+        public async Task StopProcessAsync()
         {
-            if (_wavelengthsIndices.Length == 0)
+            try
             {
-                return;
+                await _orchestrator.StopProcessAsync();
             }
-
-            for (int i = 0; i < _wavelengthsIndices.Length; i++)
+            catch (Exception exception)
             {
-                _calibrationService.CorrectWavelengthIndices(intensities, ref _wavelengthsIndices[i]);
-            }
-
-            _isIndicesCorrected = true;
-
-            _currentIntensities = new uint[_wavelengthsIndices.Length];
-            for (int i = 0; i < _wavelengthsIndices.Length; i++)
-            {
-                int idx = _wavelengthsIndices[i];
-                _currentIntensities[i] = (idx >= 0 && idx < intensities.Length) ? intensities[idx] : 0;
-            }
-
-            SaveUpdatedWavelengths();
-            SpectrumChartViewModel.UpdateAnnotations((IList<double>)Recipe.Wavelengths, (IReadOnlyList<Color>)Recipe.WavelengthColors);
-        }
-
-        private void UpdateInternalIndexes()
-        {
-            var targets = Recipe.Wavelengths;
-            _wavelengthsIndices = new int[targets.Count];
-            var currentWavelengths = _deviceProcessing?.Wavelengths ?? Array.Empty<double>();
-
-            for (int i = 0; i < targets.Count; i++)
-            {
-                _wavelengthsIndices[i] = _wavelengthMapper.FindNearestIndex(currentWavelengths, targets[i]);
+                _dialogService.ShowError(exception.Message);
             }
         }
 
-        private void RecordDataForExport(uint[] currentIntensities)
+        // This will be unusefull
+        [RelayCommand]
+        public async Task ToggleDemoMode()
         {
-            var timePoint = new TimePoint
+            try
             {
-                TimeSeconds = _stopwatch.Elapsed.TotalSeconds,
-                Intensities = new List<uint>(currentIntensities)
+                _orchestrator.ToggleDemoMode();
+            }
+            catch (Exception exception)
+            {
+                _dialogService.ShowError(exception.Message);
+            }
+        }
+
+        [RelayCommand(CanExecute = nameof(CanExport))]
+        public void ExportToCsv()
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "CSV files (*.csv)|*.csv",
+                FileName = $"Channel_{ChannelId + 1}_Data_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
             };
 
-            _exportData.Add(timePoint);
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    _orchestrator.ExportToTxt(dialog.FileName, ChannelName);
+                    _dialogService.ShowInformation("Data exported successfully.");
+                }
+                catch (Exception exception)
+                {
+                    _dialogService.ShowError(exception.Message);
+                }
+            }
         }
 
-        private void SaveUpdatedWavelengths()
+        [RelayCommand(CanExecute = nameof(CanExport))]
+        public void ExportToExcel()
         {
-            Recipe.Wavelengths.Clear();
-
-            var calibrationCoefficients = new double[]
+            var dialog = new Microsoft.Win32.SaveFileDialog
             {
-                _deviceProcessing.Device.DeviceInfo.CoefA,
-                _deviceProcessing.Device.DeviceInfo.CoefB,
-                _deviceProcessing.Device.DeviceInfo.CoefC,
-                _deviceProcessing.Device.DeviceInfo.CoefD,
+                Filter = "Excel files (*.xlsx)|*.xlsx",
+                FileName = $"Channel_{ChannelId + 1}_Data_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
             };
 
-            foreach (var wavelengthIndex in _wavelengthsIndices)
+            if (dialog.ShowDialog() == true)
             {
-                var wavelength = _wavelengthMapper.FindWavelengthByPixel((uint)wavelengthIndex, calibrationCoefficients);
-
-                double roundedWavelength = Math.Round(wavelength, 2);
-
-                Recipe.Wavelengths.Add(roundedWavelength);
+                try
+                {
+                    _orchestrator.ExportToExcel(dialog.FileName, ChannelName);
+                    _dialogService.ShowInformation("Data exported successfully.");
+                }
+                catch (Exception exception)
+                {
+                    _dialogService.ShowError(exception.Message);
+                }
             }
+        }
 
-            _recipeFileManager.SaveRecipe((Recipe)Recipe);
+
+        [RelayCommand(CanExecute = nameof(CanExport))]
+        public void ExportToTxt()
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "Text files (*.txt)|*.txt",
+                FileName = $"Channel_{ChannelId + 1}_Data_{DateTime.Now:yyyyMMdd_HHmmss}.txt"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    _orchestrator.ExportToTxt(dialog.FileName, ChannelName);
+                    _dialogService.ShowInformation("Data exported successfully.");
+                }
+                catch (Exception exception)
+                {
+                    _dialogService.ShowError(exception.Message);
+                }
+            }
+        }
+
+        [RelayCommand]
+        private async Task ExecuteAnalizingTrain()
+        {
+            try
+            {
+                await _orchestrator.ExecuteAnalyzingTrainingAsync();
+            }
+            catch (Exception exception)
+            {
+                _dialogService.ShowError(exception.Message);
+            }
+        }
+
+        #endregion
+
+        #region methods
+        
+        public void ApplyRecipe(Recipe recipe)
+        {
+            try
+            {
+                _orchestrator.ApplyRecipe(recipe);
+                _dialogService.ShowInformation($"Recipe '{recipe.Name}' for channel {recipe.Channel} applied successfully.");
+            }
+            catch (Exception exception)
+            {
+                _dialogService.ShowError($"Failed to apply recipe: {exception.Message}");
+            }
         }
 
         private void UpdateSpectrumAnnotations(double wavelength, Color color)
@@ -717,17 +377,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 SpectrumChartViewModel.UpdateAnnotations(wavelengths, colors);
             }, DispatcherPriority.Render);
-        }
-
-        public void Dispose() 
-        {
-            _stopwatch.Stop();
-
-            _cancellationToken.Cancel();
-            _cancellationToken.Dispose();
-
-            _cancellationTokenStart.Cancel();
-            _cancellationTokenStart.Dispose();
         }
 
         #endregion

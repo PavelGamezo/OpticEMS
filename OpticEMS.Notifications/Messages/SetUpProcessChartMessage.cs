@@ -2,5 +2,5 @@
 
 namespace OpticEMS.Notifications.Messages
 {
-    public record SetUpProcessChartMessage(List<double> Wavelengths, List<Color> WavelengthColors);
+    public record SetUpProcessChartMessage(int ChannelId, List<double> Wavelengths, List<Color> WavelengthColors);
 }

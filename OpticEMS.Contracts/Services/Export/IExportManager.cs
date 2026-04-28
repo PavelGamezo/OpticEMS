@@ -1,6 +1,4 @@
-﻿using OpticEMS.Contracts.Services.Export;
-
-namespace OpticEMS.Services.Export
+﻿namespace OpticEMS.Contracts.Services.Export
 {
     public interface IExportManager
     {

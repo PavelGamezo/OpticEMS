@@ -4,5 +4,6 @@
     {
         public double TimeSeconds { get; set; }
 
-        public List<uint> Intensities { get; set; } = new();    }
+        public List<uint> Intensities { get; set; } = new();    
+    }
 }

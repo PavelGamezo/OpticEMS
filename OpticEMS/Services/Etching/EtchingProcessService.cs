@@ -7,7 +7,7 @@ namespace OpticEMS.Services.Etching
     public class EtchingProcessService : IEtchingProcessService
     {
         private Recipe? _recipe;
-        private readonly Stopwatch _processTimer = new();
+        //private readonly Stopwatch _processTimer = new();
 
         private double[] _baselineSums = Array.Empty<double>();
         private double[] _finalBaselines = Array.Empty<double>();
@@ -46,19 +46,19 @@ namespace OpticEMS.Services.Etching
             }
         }
 
-        public EndpointResult Update()
+        public EndpointResult Update(double elapsedMs)
         {
             if (_recipe == null)
             {
                 return new EndpointResult(false, "No Recipe", false);
             }
 
-            if (!_processTimer.IsRunning) 
-            {
-                return new EndpointResult(false, "Paused", false);
-            }
+            //if (!_processTimer.IsRunning) 
+            //{
+            //    return new EndpointResult(false, "Paused", false);
+            //}
 
-            double elapsedMs = _processTimer.Elapsed.TotalMilliseconds;
+            //double elapsedMs = _processTimer.Elapsed.TotalMilliseconds;
 
             if (elapsedMs >= _recipe.MaxEndpointTime)
             {
@@ -226,7 +226,7 @@ namespace OpticEMS.Services.Etching
         public void Start(Recipe recipe, uint[] startIntensities)
         {
             _recipe = recipe;
-            _processTimer.Restart();
+            //_processTimer.Restart();
 
             int count = startIntensities.Length;
 
@@ -253,12 +253,11 @@ namespace OpticEMS.Services.Etching
             _currentStatus = "On going initial delay";
         }
 
-        public void Pause() => _processTimer.Stop();
-        public void Resume() => _processTimer.Start();
+        //public void Pause() => _processTimer.Stop();
+        //public void Resume() => _processTimer.Start();
 
         public void Stop()
         {
-            _processTimer.Stop();
             _recipe = null;
             _inStableWindow = false;
             _currentStatus = "Stopped";

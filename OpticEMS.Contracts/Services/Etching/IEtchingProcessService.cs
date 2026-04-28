@@ -1,6 +1,4 @@
-﻿using OpticEMS.Contracts.Services.Recipe;
-
-namespace OpticEMS.Contracts.Services.Etching
+﻿namespace OpticEMS.Contracts.Services.Etching
 {
     public interface IEtchingProcessService
     {
@@ -12,13 +10,13 @@ namespace OpticEMS.Contracts.Services.Etching
 
         void Start(Recipe.Recipe recipe, uint[] startIntensities);
 
-        void Pause();
+        //void Pause();
 
-        void Resume();
+        //void Resume();
 
         void Stop();
 
-        EndpointResult Update();
+        EndpointResult Update(double elapsedMs);
 
         void PushIntensities(uint[] currentIntensities);
     }
