@@ -48,18 +48,17 @@ namespace OpticEMS.Processing.PCA
         {
             if (!IsTrained || _mean.Count == 0)
             {
-                return new Result(false, "PCA model is not trained");
+                return new PcaAnomalyResult(false, 0, 0, 0, 0, null, "PCA model is not trained");
             }
 
             if (intensities.Length != _mean.Count)
             {
-                return new Result (false, "Spectrum length mismatch");
+                return new PcaAnomalyResult(false, 0, 0, 0, 0, null, "Spectrum length mismatch");
             }
 
             if (_loadings.RowCount != intensities.Length)
             {
-                return new Result(
-                    false, 
+                return new PcaAnomalyResult(false, 0, 0, 0, 0, null,
                     $"Dimension mismatch: loadings rows={_loadings.RowCount}, spectrum={intensities.Length}");
             }
             
@@ -83,7 +82,7 @@ namespace OpticEMS.Processing.PCA
             bool isAnomaly = t2 > _t2Limit || q > _qLimit;
             var message = $"T²={t2:F15} | Q={q:F5}";
 
-            return new Result(isAnomaly, message);
+            return new PcaAnomalyResult(isAnomaly, t2, q, _t2Limit, _qLimit, residual.ToArray(), message);
         }
 
         public override void Train(IEnumerable<uint[]> trainingData)

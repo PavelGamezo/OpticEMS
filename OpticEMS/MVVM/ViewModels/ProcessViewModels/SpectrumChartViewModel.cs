@@ -13,11 +13,18 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         [ObservableProperty]
         private ViewResolvingPlotModel _plotModel;
 
+        private RectangleAnnotation _anomalyRegion;
+        private IReadOnlyList<double> _lastX;
+
         public event Action OnWavelengthMoved;
 
         public SpectrumChartViewModel(int trimLeft, int trimRight)
         {
             PlotModel = SetUpModel(trimLeft, trimRight);
+
+            _anomalyRegion = PlotModel.Annotations
+                .OfType<RectangleAnnotation>()
+                .First(a => a.Tag?.ToString() == "AnomalyRegion");
         }
 
         public static ViewResolvingPlotModel SetUpModel(int trimLeft, int trimRight)
@@ -74,24 +81,100 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
             plotModel.Series.Add(line);
 
+            var anomaly = new RectangleAnnotation
+            {
+                Tag = "AnomalyRegion",
+                Fill = OxyColor.FromArgb(40, 255, 80, 80),   // мягкий красный
+                Stroke = OxyColor.FromArgb(120, 255, 120, 120),
+                StrokeThickness = 1.5,
+                Layer = AnnotationLayer.AboveSeries,
+                MinimumX = 0,
+                MaximumX = 0,
+                MinimumY = 0,
+                MaximumY = 0
+            };
+
+            plotModel.Annotations.Add(anomaly);
+
             return plotModel;
         }
 
+        // --- СПЕКТР ---
         public void UpdateChart(IReadOnlyList<double> x, IReadOnlyList<uint> y)
         {
+            _lastX = x;
+
             if (PlotModel.Series[0] is not LineSeries line)
-            {
                 return;
-            }
 
             line.Points.Clear();
 
             for (var i = 0; i < x.Count; i++)
-            {
                 line.Points.Add(new DataPoint(x[i], y[i]));
-            }
 
             PlotModel.InvalidatePlot(true);
+        }
+
+        public void UpdateAnomaly(List<(int start, int end)> ranges)
+        {
+            lock (PlotModel.SyncRoot)
+            {
+                if (_lastX == null)
+                {
+                    return;
+                }
+
+                var old = PlotModel.Annotations
+                    .Where(a => a.Tag?.ToString() == "AnomalyRegion")
+                    .ToList();
+
+                foreach (var annotation in old)
+                {
+                    PlotModel.Annotations.Remove(annotation);
+                }
+
+                if (ranges == null || ranges.Count == 0)
+                {
+                    PlotModel.InvalidatePlot(false);
+
+                    return;
+                }
+
+                var yAxis = PlotModel.Axes[1];
+
+                foreach (var (start, end) in ranges)
+                {
+                    if (start < 0 || end < 0 || start >= _lastX.Count || end >= _lastX.Count)
+                    {
+                        continue;
+                    }
+
+                    int s = Math.Max(0, start - 15);
+                    int e = Math.Min(_lastX.Count - 1, end + 15);
+
+                    double startX = _lastX[s];
+                    double endX = _lastX[e];
+
+                    var region = new RectangleAnnotation
+                    {
+                        Tag = "AnomalyRegion",
+                        Fill = OxyColor.FromArgb(60, 255, 80, 80),
+                        Stroke = OxyColor.FromArgb(160, 255, 120, 120),
+                        StrokeThickness = 1.5,
+                        Layer = AnnotationLayer.AboveSeries,
+
+                        MinimumX = startX,
+                        MaximumX = endX,
+
+                        MinimumY = yAxis.ActualMinimum,
+                        MaximumY = yAxis.ActualMaximum
+                    };
+
+                    PlotModel.Annotations.Add(region);
+                }
+            }
+
+            PlotModel.InvalidatePlot(false);
         }
 
         public void UpdateAnnotations(
@@ -99,13 +182,11 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             IReadOnlyList<Color> wavelengthColors)
         {
             var toRemove = PlotModel.Annotations
-                .Where(annotations => annotations.Tag?.ToString() == "WavelengthMarker")
+                .Where(a => a.Tag?.ToString() == "WavelengthMarker")
                 .ToList();
 
             foreach (var old in toRemove)
-            {
                 PlotModel.Annotations.Remove(old);
-            }
 
             for (int i = 0; i < targetWavelengths.Count; i++)
             {
@@ -142,16 +223,13 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 annotation.MouseMove += (s, e) =>
                 {
                     double newX = annotation.InverseTransform(e.Position).X;
-
                     newX = Math.Round(newX, 1);
 
                     annotation.X = newX;
                     annotation.Text = $"{newX:F1}nm";
 
                     if (index < targetWavelengths.Count)
-                    {
                         targetWavelengths[index] = newX;
-                    }
 
                     PlotModel.InvalidatePlot(false);
                     e.Handled = true;
@@ -160,9 +238,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 annotation.MouseUp += (s, e) =>
                 {
                     annotation.StrokeThickness = 2;
-
                     OnWavelengthMoved?.Invoke();
-
                     PlotModel.InvalidatePlot(false);
                     e.Handled = true;
                 };

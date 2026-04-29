@@ -8,6 +8,7 @@ using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Processing.PCA;
+using System.Buffers;
 using System.Diagnostics;
 
 namespace OpticEMS.Orchestrator
@@ -25,12 +26,11 @@ namespace OpticEMS.Orchestrator
         private DateTime _endTime;
         private long _lastUiUpdateMs = 0;
         private int[] _wavelengthsIndices = Array.Empty<int>();
-        public uint[] _currentIntensities = Array.Empty<uint>();
-        private List<uint[]> _fullSpectrumHistory = new List<uint[]>();
+        public uint[] _currentIntensities = Array.Empty<uint>(); 
+        private readonly List<uint[]> _fullSpectrumHistory = new();
         private bool _isDemoMode = false;
         private bool _isPcaBusy = false;
         private DateTime _lastPcaAnalysisTime = DateTime.MinValue;
-        private long _frameIndex = 0;
 
         private readonly IEtchingProcessService _endpointService;
         private readonly ICalibrationService _calibrationService;
@@ -142,7 +142,6 @@ namespace OpticEMS.Orchestrator
             _cancellationTokenStart.Cancel();
             _cancellationTokenStart = new CancellationTokenSource();
 
-            _frameIndex = 0;
             _isRunning = true;
             _isPaused = false;
             _stopwatch.Restart();
@@ -240,7 +239,12 @@ namespace OpticEMS.Orchestrator
             try
             {
                 var spectra = _fullSpectrumHistory
-                    .Select(s => s.ToArray())
+                    .Select(s =>
+                    {
+                        var copy = ArrayPool<uint>.Shared.Rent(s.Length);
+                        Buffer.BlockCopy(s, 0, copy, 0, s.Length * sizeof(uint));
+                        return copy;
+                    })
                     .ToArray();
 
                 var result = await Task.Run(() => _pcaHandler.TryAutoTrain(spectra));
@@ -253,16 +257,21 @@ namespace OpticEMS.Orchestrator
             }
             finally
             {
+                foreach (var s in _fullSpectrumHistory)
+                {
+                    ArrayPool<uint>.Shared.Return(s);
+                }
+
+                _fullSpectrumHistory.Clear();
+
                 _isPcaBusy = false;
             }
         }
 
         private async Task RunProcessLoopAsync(CancellationToken cancellationToken)
         {
-            int intervalMs = Recipe?.DetectionWindowTime ?? 100;
-            double intervalSec = intervalMs / 1000.0;
+            const int intervalMs = 33;
 
-            long frameIndex = 0;
             long nextTick = Environment.TickCount64;
 
             while (!cancellationToken.IsCancellationRequested)
@@ -272,39 +281,69 @@ namespace OpticEMS.Orchestrator
 
                 if (sleep > 0)
                 {
-                    await Task.Delay((int)sleep, cancellationToken);
+                    try 
+                    { 
+                        await Task.Delay((int)sleep, cancellationToken); 
+                    }
+                    catch (OperationCanceledException) 
+                    { 
+                        break; 
+                    }
                 }
 
                 nextTick += intervalMs;
 
-                double currentTime = frameIndex * intervalSec;
-                double currentTimeMs = currentTime * 1000.0;
-                frameIndex++;
-
                 if (!_isPaused && _isRunning && Recipe != null)
                 {
-                    if (Recipe.PcaEnabled)
+                    double currentTimeMs = _stopwatch.Elapsed.TotalMilliseconds;
+                    double currentTimeSec = currentTimeMs / 1000.0;
+
+                    //var windowBounds = _endpointService.GetCurrentWindowBounds();
+                    //WeakReferenceMessenger.Default.Send(new DrawWindowBoundsMessage(ChannelId, windowBounds));
+
+                    var endpointResult = _endpointService.Update(currentTimeMs);
+
+                    if (Recipe.PcaEnabled && _pcaHandler != null)
                     {
-                        _pcaHandler.ProcessAsync(_fullSpectrumHistory.LastOrDefault());
-                        PcaStatus = _pcaHandler.Status;
+                        var latestFullSpectrum = _fullSpectrumHistory.LastOrDefault();
+                        if (latestFullSpectrum != null)
+                        {
+                            var result = await _pcaHandler.ProcessAsync(latestFullSpectrum);
+                            
+                            if (PcaStatus != _pcaHandler.Status)
+                            {
+                                PcaStatus = _pcaHandler.Status;
+
+                                if (result is PcaAnomalyResult detailed && result.IsAnomaly)
+                                {
+                                    var ranges = _pcaHandler.DetectAnomalyRanges(detailed.Residual);
+
+                                    WeakReferenceMessenger.Default.Send(new PcaAnomalyMapMessage(
+                                        ChannelId,
+                                        ranges));
+                                }
+                                else
+                                {
+                                    WeakReferenceMessenger.Default.Send(new PcaAnomalyMapMessage(
+                                        ChannelId, new List<(int, int)>()));
+                                }
+                            }
+                        }
                     }
                     else
                     {
                         PcaStatus = "PCA disabled";
                     }
 
-                    var endpointResult = _endpointService.Update(currentTimeMs);
-
+                    // Data snapshot
                     uint[] intensitiesSnapshot = (uint[])_currentIntensities.Clone();
-                    RecordDataForExport(intensitiesSnapshot, currentTime);
+                    RecordDataForExport(intensitiesSnapshot, currentTimeSec);
 
                     WeakReferenceMessenger.Default.Send(new ProcessStepUpdateMessage(
                         ChannelId,
                         endpointResult.Status,
-                        currentTime,
+                        currentTimeSec,
                         intensitiesSnapshot));
-
-                    WeakReferenceMessenger.Default.Send(new PcaStatusMessage(ChannelId, PcaStatus));
 
                     if (endpointResult.Status != ProcessStatus)
                     {
@@ -322,7 +361,6 @@ namespace OpticEMS.Orchestrator
                 if (behind > intervalMs)
                 {
                     long skipped = behind / intervalMs;
-                    frameIndex += skipped;
                     nextTick += skipped * intervalMs;
                 }
             }
@@ -468,7 +506,10 @@ namespace OpticEMS.Orchestrator
 
             if (_isRunning && !_isPaused && elapsed >= 1000)
             {
-                _fullSpectrumHistory.Add(intensities.ToArray());
+                var rented = ArrayPool<uint>.Shared.Rent(intensities.Length);
+                Buffer.BlockCopy(intensities, 0, rented, 0, intensities.Length * sizeof(uint));
+
+                _fullSpectrumHistory.Add(rented);
                 _pcaHandler?.PushForTraining(intensities);
 
                 _lastPcaAnalysisTime = DateTime.Now;

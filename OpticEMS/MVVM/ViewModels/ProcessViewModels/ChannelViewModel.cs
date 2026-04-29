@@ -9,7 +9,6 @@ using OpticEMS.Contracts.Services.Export;
 using OpticEMS.Contracts.Services.Mapper;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
-using OpticEMS.Devices;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Orchestrator;
 using System.Windows;
@@ -31,9 +30,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         [ObservableProperty] 
         private string _processStatus = "Waiting start";
-
-        [ObservableProperty]
-        private string _pcaStatus = "None";
 
         [ObservableProperty] 
         private Recipe? _recipe;
@@ -123,6 +119,15 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 }
             });
 
+            
+            WeakReferenceMessenger.Default.Register<DrawWindowBoundsMessage>(this, (recipient, message) =>
+            {
+                if (message.ChannelId == ChannelId)
+                {
+                    ProcessChartViewModel.DrawWindowBounds(message.WindowBounds);
+                }
+            });
+
             WeakReferenceMessenger.Default.Register<ProcessFinishedMessage>(this, (recipient, message) =>
             {
                 if (message.ChannelId == ChannelId)
@@ -192,11 +197,11 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 }
             });
 
-            WeakReferenceMessenger.Default.Register<PcaStatusMessage>(this, (recipient, message) =>
+            WeakReferenceMessenger.Default.Register<PcaAnomalyMapMessage>(this, (recipient, message) =>
             {
                 if (message.ChannelId == ChannelId)
                 {
-                    PcaStatus = message.Status;
+                    SpectrumChartViewModel.UpdateAnomaly(message.Ranges);
                 }
             });
         }

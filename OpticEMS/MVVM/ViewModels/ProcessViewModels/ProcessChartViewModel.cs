@@ -1,10 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using OpticEMS.Common.Helpers;
+using OpticEMS.Services.Etching;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using System.Windows.Media;
+using XAct.Messages;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {
@@ -245,6 +247,49 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             lock (PlotModel.SyncRoot)
             {
                 PlotModel.Annotations.Add(annotation);
+            }
+
+            PlotModel.InvalidatePlot(false);
+        }
+
+        
+        public void DrawWindowBounds(List<WindowBounds> windowBounds)
+        {
+            if (PlotModel == null)
+            {
+                return;
+            }
+
+            lock (PlotModel.SyncRoot)
+            {
+                var oldWindows = PlotModel.Annotations
+                    .Where(a => a.Tag?.ToString() == "DynamicWindow")
+                    .ToList();
+
+                foreach (var old in oldWindows)
+                {
+                    PlotModel.Annotations.Remove(old);
+                }
+
+                foreach (var b in windowBounds)
+                {
+                    double startX = DateTimeAxis.ToDouble(_epoch.AddSeconds(b.StartTime));
+                    double endX = DateTimeAxis.ToDouble(_epoch.AddSeconds(b.EndTime));
+
+                    var rect = new RectangleAnnotation
+                    {
+                        Tag = "DynamicWindow",
+                        MinimumX = startX,
+                        MaximumX = endX,
+                        MinimumY = b.Bottom,
+                        MaximumY = b.Top,
+                        Fill = OxyColor.FromAColor(40, OxyColors.White),
+                        Stroke = OxyColor.FromAColor(120, OxyColors.Gray),
+                        StrokeThickness = 1,
+                        Layer = AnnotationLayer.AboveSeries
+                    };
+                    PlotModel.Annotations.Add(rect);
+                }
             }
 
             PlotModel.InvalidatePlot(false);

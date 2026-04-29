@@ -1,38 +1,28 @@
 ﻿using OpticEMS.Contracts.Services.Etching;
 using OpticEMS.Contracts.Services.Recipe;
-using System.Diagnostics;
 
 namespace OpticEMS.Services.Etching
 {
     public class EtchingProcessService : IEtchingProcessService
     {
         private Recipe? _recipe;
-        //private readonly Stopwatch _processTimer = new();
-
-        private double[] _baselineSums = Array.Empty<double>();
-        private double[] _finalBaselines = Array.Empty<double>();
-        private int _baselineSamplesCount;
-
-        private bool _inStableWindow;
-        private bool _isOverEtching;
-
-        private int _inConfirmCount;
-        private int _outConfirmCount;
-
-        private double[] _prevIntensities = Array.Empty<double>();
-        private bool _hasPrevAvg;
-
         private readonly object _swapLock = new();
+
+        private double[] _windowStartTimes = Array.Empty<double>();
+        private double[] _referenceValues = Array.Empty<double>();
+        private double[] _baseline = Array.Empty<double>();
 
         private List<uint[]> _writeBuffer = new();
         private List<uint[]> _readBuffer = new();
         private uint[] _lastAveraged = Array.Empty<uint>();
 
-        private double _overEtchStartTime;
+        private ProcessState _state = ProcessState.Idle;
+        private int _consecutiveWindowsIn = 0;
+        private int _consecutiveWindowsOut = 0;
+
         private double _detectedAtMs;
         private double _finishedAtMs;
-
-        private string _currentStatus = "Ready";
+        private double _overEtchStartTime;
 
         public double DetectedAtSeconds => _detectedAtMs / 1000.0;
         public double TotalDurationSeconds => _finishedAtMs / 1000.0;
@@ -53,214 +43,285 @@ namespace OpticEMS.Services.Etching
                 return new EndpointResult(false, "No Recipe", false);
             }
 
-            //if (!_processTimer.IsRunning) 
-            //{
-            //    return new EndpointResult(false, "Paused", false);
-            //}
-
-            //double elapsedMs = _processTimer.Elapsed.TotalMilliseconds;
-
             if (elapsedMs >= _recipe.MaxEndpointTime)
             {
                 _finishedAtMs = elapsedMs;
-                return new EndpointResult(true, "Force endpoint detected (Timeout)", true);
+                _state = ProcessState.Idle;
+
+                return new EndpointResult(true, "Force Stop (Timeout)", true);
             }
 
-            if (_isOverEtching)
+            var currentSignal = GetAveragedFrame();
+            if (currentSignal == null || currentSignal.Length == 0)
             {
-                double overEtchTime = elapsedMs - _overEtchStartTime;
-
-                if (overEtchTime >= _recipe.OverEtchValue)
-                {
-                    _finishedAtMs = _overEtchStartTime + _recipe.OverEtchValue;
-                    return new EndpointResult(true, "Process Finished", false);
-                }
-
-                double remaining = _recipe.OverEtchValue - overEtchTime;
-                _currentStatus = $"Over-etching: {remaining / 1000.0:F1}s";
-                return new EndpointResult(false, _currentStatus, false);
+                return new EndpointResult(false, "Waiting for signal...", false);
             }
 
-            var currentIntensities = GetAveragedFrame();
-
-            if (elapsedMs <= _recipe.InitialDelay)
+            switch (_state)
             {
-                for (int i = 0; i < currentIntensities.Length; i++)
-                    _baselineSums[i] += currentIntensities[i];
+                case ProcessState.InitialDeadTime:
 
-                _baselineSamplesCount++;
+                    if (elapsedMs >= _recipe.InitialDelay)
+                    {
+                        InitializeWindows(currentSignal, elapsedMs);
+                        _state = ProcessState.WindowIn;
+                    }
 
-                _currentStatus = "On going initial delay";
-                return new EndpointResult(false, _currentStatus, false);
+                    return new EndpointResult(false, "Initial Dead Time", false);
+
+                case ProcessState.WindowIn:
+
+                    if (IsInsideDetectionLimits(currentSignal))
+                    {
+                        if (CheckAndSlideWindows(currentSignal, elapsedMs))
+                        {
+                            _consecutiveWindowsIn++;
+                        }
+
+                        if (_consecutiveWindowsIn >= _recipe.WindowInCount)
+                        {
+                            _state = ProcessState.Monitoring;
+                            _consecutiveWindowsOut = 0;
+                        }
+                    }
+                    else
+                    {
+                        _consecutiveWindowsIn = 0;
+                        ResetWindows(currentSignal, elapsedMs);
+                    }
+
+                    return new EndpointResult(false, $"Stabilizing ({_consecutiveWindowsIn}/{_recipe.WindowInCount})", false);
+
+                case ProcessState.Monitoring:
+
+                    bool violated = IsOutsideDetectionWindow(currentSignal, elapsedMs);
+                    if (violated)
+                    {
+                        _consecutiveWindowsOut++;
+                        if (_consecutiveWindowsOut >= _recipe.WindowOutCount)
+                        {
+                            _detectedAtMs = elapsedMs;
+
+                            if (_recipe.OverEtchEnabled && _recipe.OverEtchValue > 0)
+                            {
+                                _state = ProcessState.Overetch;
+                                _overEtchStartTime = elapsedMs;
+
+                                return new EndpointResult(false, "Endpoint Found. Starting Overetch...", false);
+                            }
+                            else
+                            {
+                                _finishedAtMs = elapsedMs;
+                                _state = ProcessState.Idle;
+
+                                return new EndpointResult(true, "Endpoint Detected", false);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        bool allWindowsExpired = true;
+                        for (int i = 0; i < _windowStartTimes.Length; i++)
+                        {
+                            if (elapsedMs - _windowStartTimes[i] < _recipe.DetectionWindowTime)
+                            {
+                                allWindowsExpired = false;
+                                break;
+                            }
+                        }
+                        if (allWindowsExpired)
+                        {
+                            _consecutiveWindowsOut = 0;
+                        }
+                    }
+
+                    return new EndpointResult(false, $"Monitoring", false);
+
+                case ProcessState.Overetch:
+
+                    double currentOE = elapsedMs - _overEtchStartTime;
+
+                    if (currentOE >= _recipe.OverEtchValue)
+                    {
+                        _finishedAtMs = _overEtchStartTime + _recipe.OverEtchValue;
+                        _state = ProcessState.Idle;
+
+                        return new EndpointResult(true, "Process Completed", false);
+                    }
+
+                    double remaining = (_recipe.OverEtchValue - currentOE) / 1000.0;
+
+                    return new EndpointResult(false, $"Overetching", false);
             }
 
-            // Finalize baseline
-            if (_baselineSamplesCount > 0)
+            return new EndpointResult(false, "Idle", false);
+        }
+
+        private bool IsInsideDetectionLimits(uint[] signal)
+        {
+            for (int i = 0; i < signal.Length; i++)
             {
-                for (int i = 0; i < _baselineSums.Length; i++)
+                double delta = Math.Abs((double)signal[i] - _referenceValues[i]);
+                double threshold = Math.Abs(_recipe.DetectionWindowHighs[i]) / 2.0;
+                
+                if (delta > threshold)
                 {
-                    double avg = _baselineSums[i] / _baselineSamplesCount;
-                    _finalBaselines[i] = avg == 0 ? currentIntensities[i] : avg;
+                    return false;
                 }
-                _baselineSamplesCount = 0;
+            }
+            return true;
+        }
+
+        private bool CheckAndSlideWindows(uint[] signal, double elapsedMs)
+        {
+            bool anyMoved = false;
+
+            for (int i = 0; i < signal.Length; i++)
+            {
+                if (elapsedMs - _windowStartTimes[i] >= _recipe.DetectionWindowTime)
+                {
+                    _windowStartTimes[i] = elapsedMs;
+                    _referenceValues[i] = signal[i];
+                    anyMoved = true;
+                }
             }
 
-            // Window-IN (stabilization)
-            if (!_inStableWindow)
+            return anyMoved;
+        }
+
+        private void ResetWindows(uint[] signal, double elapsedMs)
+        {
+            for (int i = 0; i < signal.Length; i++)
             {
-                if (!_hasPrevAvg)
+                _windowStartTimes[i] = elapsedMs;
+                _referenceValues[i] = signal[i];
+            }
+        }
+
+        private bool IsOutsideDetectionWindow(uint[] currentSignal, double elapsedMs)
+        {
+            bool anyLineViolatedThisCycle = false;
+
+            for (int i = 0; i < currentSignal.Length; i++)
+            {
+                if (_referenceValues[i] <= 0)
                 {
-                    _prevIntensities = currentIntensities.Select(v => (double)v).ToArray();
-                    _hasPrevAvg = true;
-                    return new EndpointResult(false, "Stabilizing...", false);
+                    continue;
                 }
 
-                double sumDelta = 0;
-                int count = currentIntensities.Length;
+                double delta = Math.Abs((double)currentSignal[i] - _referenceValues[i]);
+                double allowedTolerance = Math.Abs(_recipe.DetectionWindowHighs[i]) / 2.0;
 
-                for (int i = 0; i < count; i++)
+                if (delta >= allowedTolerance)
                 {
-                    double prev = _prevIntensities[i];
-                    double curr = currentIntensities[i];
+                    anyLineViolatedThisCycle = true;
 
-                    if (prev == 0)
-                        continue;
-
-                    double delta = Math.Abs(curr - prev) / prev * 100.0;
-                    sumDelta += delta;
-                }
-
-                double avgDelta = sumDelta / count;
-
-                if (avgDelta < _recipe.StableThresholdPercent)
-                {
-                    _inConfirmCount++;
+                    _windowStartTimes[i] = elapsedMs;
+                    _referenceValues[i] = currentSignal[i];
                 }
                 else
                 {
-                    _inConfirmCount = 0;
-                    _prevIntensities = currentIntensities.Select(v => (double)v).ToArray();
+                    if (elapsedMs - _windowStartTimes[i] >= _recipe.DetectionWindowTime)
+                    {
+                        _windowStartTimes[i] = elapsedMs;
+                        _referenceValues[i] = currentSignal[i];
+                    }
                 }
-
-                if (_inConfirmCount >= _recipe.WindowInCount)
-                    _inStableWindow = true;
-
-                return new EndpointResult(false, "Stabilizing...", false);
             }
 
-            // Window-OUT (endpoint detection)
-            bool changed = CheckIfSignalChanged(currentIntensities);
+            return anyLineViolatedThisCycle;
+        }
 
-            _outConfirmCount = changed ? _outConfirmCount + 1 : 0;
+        private void InitializeWindows(uint[] signal, double elapsedMs)
+        {
+            int count = signal.Length;
 
-            if (_outConfirmCount >= _recipe.WindowOutCount)
+            if (_windowStartTimes.Length != count)
             {
-                _detectedAtMs = elapsedMs;
-
-                if (_recipe.OverEtchEnabled && _recipe.OverEtchValue > 0)
-                {
-                    _isOverEtching = true;
-                    _overEtchStartTime = elapsedMs;
-                    return new EndpointResult(false, "Over-etching...", false);
-                }
-
-                _finishedAtMs = elapsedMs;
-                return new EndpointResult(true, "Endpoint Detected", false);
+                _windowStartTimes = new double[count];
+                _referenceValues = new double[count];
+                _baseline = new double[count];
             }
 
-            _currentStatus = "Monitoring...";
-            return new EndpointResult(false, _currentStatus, false);
+            for (int i = 0; i < count; i++)
+            {
+                _windowStartTimes[i] = elapsedMs;
+                _referenceValues[i] = signal[i];
+                _baseline[i] = signal[i];
+            }
         }
 
         private uint[] GetAveragedFrame()
         {
             lock (_swapLock)
             {
+                if (_writeBuffer.Count == 0) return _lastAveraged;
+
                 var tmp = _readBuffer;
                 _readBuffer = _writeBuffer;
                 _writeBuffer = tmp;
                 _writeBuffer.Clear();
             }
 
-            if (_readBuffer.Count == 0)
-                return _lastAveraged.Length > 0 ? _lastAveraged : new uint[_finalBaselines.Length];
-
             int length = _readBuffer[0].Length;
             double[] sum = new double[length];
 
             foreach (var frame in _readBuffer)
             {
-                for (int i = 0; i < length; i++)
-                    sum[i] += frame[i];
+                for (int i = 0; i < length; i++) sum[i] += frame[i];
             }
 
             uint[] avg = new uint[length];
             for (int i = 0; i < length; i++)
-                avg[i] = (uint)(sum[i] / _readBuffer.Count);
-
-            _lastAveraged = avg;
-            return avg;
-        }
-
-        private bool CheckIfSignalChanged(uint[] currentIntensities)
-        {
-            for (int i = 0; i < _finalBaselines.Length; i++)
             {
-                double baseline = _finalBaselines[i];
-                if (baseline <= 0)
-                {
-                    baseline = currentIntensities[i];
-                }
-
-                double deltaPercent = Math.Abs(currentIntensities[i] - baseline) / baseline * 100.0;
-
-                if (deltaPercent >= _recipe.DetectionWindowHighs[i])
-                {
-                    return true;
-                }
+                avg[i] = (uint)(sum[i] / _readBuffer.Count);
             }
 
-            return false;
+            _lastAveraged = avg;
+
+            return avg;
         }
 
         public void Start(Recipe recipe, uint[] startIntensities)
         {
             _recipe = recipe;
-            //_processTimer.Restart();
+            _state = ProcessState.InitialDeadTime;
 
-            int count = startIntensities.Length;
+            _consecutiveWindowsIn = 0;
+            _consecutiveWindowsOut = 0;
 
-            _baselineSums = new double[count];
-            _finalBaselines = new double[count];
-            _baselineSamplesCount = 0;
-
-            _inStableWindow = false;
-            _isOverEtching = false;
-
-            _inConfirmCount = 0;
-            _outConfirmCount = 0;
-
-            _hasPrevAvg = false; 
-            _prevIntensities = new double[count];
-
-            _detectedAtMs = 0;
-            _finishedAtMs = 0;
+            InitializeWindows(startIntensities, 0);
 
             _readBuffer.Clear();
             _writeBuffer.Clear();
-            _lastAveraged = Array.Empty<uint>();
-
-            _currentStatus = "On going initial delay";
         }
 
-        //public void Pause() => _processTimer.Stop();
-        //public void Resume() => _processTimer.Start();
+        public void Stop() => _state = ProcessState.Idle;
 
-        public void Stop()
+
+        public List<WindowBounds> GetCurrentWindowBounds()
         {
-            _recipe = null;
-            _inStableWindow = false;
-            _currentStatus = "Stopped";
+            var bounds = new List<WindowBounds>();
+            if (_recipe == null) return bounds;
+
+            for (int i = 0; i < _referenceValues.Length; i++)
+            {
+                double totalHeight = Math.Abs(_recipe.DetectionWindowHighs[i]);
+                double refVal = _referenceValues[i];
+
+                double half = totalHeight / 2.0;
+
+                bounds.Add(new WindowBounds
+                {
+                    WavelengthIndex = i,
+                    StartTime = _windowStartTimes[i] / 1000.0,
+                    EndTime = (_windowStartTimes[i] + _recipe.DetectionWindowTime) / 1000.0,
+                    Top = refVal + half,
+                    Bottom = refVal - half,
+                    Reference = refVal
+                });
+            }
+            return bounds;
         }
     }
 }

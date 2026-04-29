@@ -1,14 +1,7 @@
 ﻿namespace OpticEMS.Processing.PCA
 {
-    public class PcaAnomalyResult
+    public class PcaAnomalyResult : Result
     {
-
-        /// <summary>
-        /// Anomaly detection flag.
-        /// True if the T² (process change) or Q (unknown noise) threshold is exceeded.
-        /// </summary>
-        public bool IsAnomaly { get; set; }
-
         /// <summary>
         /// Hotelling statistics (T²).
         /// Shows how far the current spectrum has moved from the center of the "normal" state
@@ -40,9 +33,22 @@
         /// </summary>
         public double[] Residual { get; set; }
 
-        /// <summary>
-        /// Text description of the condition or error.
-        /// </summary>
-        public string Message { get; set; } = string.Empty;
+        public PcaAnomalyResult(
+            bool isAnomaly,
+            double t2,
+            double q,
+            double t2Limit,
+            double qLimit,
+            double[] residual,
+            string message) : base(isAnomaly, message)
+        {
+            IsAnomaly = isAnomaly;
+            T2 = t2;
+            Q = q;
+            T2Limit = t2Limit;
+            QLimit = qLimit;
+            Residual = residual;
+            Message = message;
+        }
     }
 }

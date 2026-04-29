@@ -123,8 +123,20 @@ namespace OpticEMS.Devices.Devices.VirtualSpec
                     value += signal + shotNoise;
                 }
 
+                bool isAnomalyTime = _isRunning && elapsed > 10.0;
+
+                if (isAnomalyTime)
+                {
+                    double anomalyWl = 500.0;
+                    double px = MapWavelengthToPixel(anomalyWl, currentCoef);
+                    double dx = i - px;
+                    double signal = 5000 * Math.Exp(-(dx * dx) / (2 * 1.5 * 1.5));
+                    value += signal;
+                }
+
                 data[i] = (uint)Math.Clamp(value, 0, 65535);
             }
+
             return data;
         }
 

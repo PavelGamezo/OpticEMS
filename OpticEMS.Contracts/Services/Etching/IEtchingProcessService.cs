@@ -1,4 +1,6 @@
-﻿namespace OpticEMS.Contracts.Services.Etching
+﻿using OpticEMS.Services.Etching;
+
+namespace OpticEMS.Contracts.Services.Etching
 {
     public interface IEtchingProcessService
     {
@@ -9,6 +11,8 @@
         double TotalDurationSeconds { get; }
 
         void Start(Recipe.Recipe recipe, uint[] startIntensities);
+
+        List<WindowBounds> GetCurrentWindowBounds();
 
         //void Pause();
 

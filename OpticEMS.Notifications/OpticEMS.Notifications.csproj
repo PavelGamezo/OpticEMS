@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\OpticEMS.Contracts\OpticEMS.Contracts.csproj" />
+  </ItemGroup>
+
 </Project>

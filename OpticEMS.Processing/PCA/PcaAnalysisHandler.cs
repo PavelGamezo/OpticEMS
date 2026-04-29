@@ -32,13 +32,13 @@
         {
             if (_isBusy)
             {
-                return new Result(false, "PCA busy");
+                return new PcaAnomalyResult(false, 0, 0, 0, 0, null, "PCA busy");
             }
 
             if (!Analyzer.IsTrained)
             {
                 Status = "PCA not trained";
-                return new Result(false, Status);
+                return new PcaAnomalyResult(false, 0, 0, 0, 0, null, Status);
             }
 
             _isBusy = true;
@@ -58,12 +58,73 @@
             catch (Exception ex)
             {
                 Status = "PCA Error";
-                return new Result(false, ex.Message);
+                return new PcaAnomalyResult(false, 0, 0, 0, 0, null, ex.Message);
             }
             finally
             {
                 _isBusy = false; 
             }
+        }
+
+        public List<(int start, int end)> DetectAnomalyRanges(double[] residual, double k = 3.0)
+        {
+            var ranges = new List<(int start, int end)>();
+
+            if (residual == null || residual.Length == 0)
+                return ranges;
+
+            // Абсолютные значения
+            double[] abs = new double[residual.Length];
+            for (int i = 0; i < residual.Length; i++)
+                abs[i] = Math.Abs(residual[i]);
+
+            // Среднее
+            double sum = 0;
+            for (int i = 0; i < abs.Length; i++)
+                sum += abs[i];
+            double mean = sum / abs.Length;
+
+            // Стандартное отклонение
+            double var = 0;
+            for (int i = 0; i < abs.Length; i++)
+            {
+                double d = abs[i] - mean;
+                var += d * d;
+            }
+            double std = Math.Sqrt(var / abs.Length);
+
+            if (std == 0)
+                return ranges;
+
+            // Динамический порог PCA
+            double threshold = mean + k * std;
+
+            int start = -1;
+
+            for (int i = 0; i < abs.Length; i++)
+            {
+                bool isAnomaly = abs[i] > threshold;
+
+                if (isAnomaly)
+                {
+                    if (start == -1)
+                        start = i;
+                }
+                else
+                {
+                    if (start != -1)
+                    {
+                        ranges.Add((start, i - 1));
+                        start = -1;
+                    }
+                }
+            }
+
+            // Если диапазон закончился в конце массива
+            if (start != -1)
+                ranges.Add((start, abs.Length - 1));
+
+            return ranges;
         }
 
         public Result TryAutoTrain(IEnumerable<uint[]> spectra)
