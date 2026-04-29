@@ -9,7 +9,8 @@ namespace OpticEMS.Contracts.Services.Settings
         private double _coefC;
         private double _coefD;
 
-        public DeviceInfo(string name, int pixelNum, int deviceId, int channelId, DeviceType deviceType, int trimLeft, int trimRight, double coefA,
+        public DeviceInfo(string name, int pixelNum, int deviceId, int channelId, 
+            DeviceType deviceType, int trimLeft, int trimRight, double coefA,
             double coefB, double coefC, double coefD, ushort smoothPixelCount)
         {
             Name = name;
@@ -26,6 +27,7 @@ namespace OpticEMS.Contracts.Services.Settings
             Init();
             StartPixel = 0;
             EndPixel = pixelNum - 1;
+            Ip = $"192.168.1.{10 + channelId}";
         }
 
         public DeviceInfo()
@@ -81,13 +83,11 @@ namespace OpticEMS.Contracts.Services.Settings
             set => _coefA = value;
         }
 
-
         public double CoefB
         {
             get => _coefB;
             set => _coefB = value;
         }
-
 
         public double CoefC
         {
@@ -95,12 +95,15 @@ namespace OpticEMS.Contracts.Services.Settings
             set => _coefC = value;
         }
 
-
         public double CoefD
         {
             get => _coefD;
             set => _coefD = value;
         }
+
+        public string Ip { get; set; } = $"192.168.1.10";
+
+        public string Port { get; set; } = "502";
 
         [XmlIgnore]
         public double[] Wavelengths { get; set; }

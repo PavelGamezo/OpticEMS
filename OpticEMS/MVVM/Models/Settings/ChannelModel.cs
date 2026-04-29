@@ -27,5 +27,11 @@ namespace OpticEMS.MVVM.Models
 
         [ObservableProperty]
         private DeviceType deviceType = DeviceType.Unknown;
+
+        [ObservableProperty]
+        private string _ip = "192.168.1.10";
+
+        [ObservableProperty]
+        private string _port = "502";
     }
 }
