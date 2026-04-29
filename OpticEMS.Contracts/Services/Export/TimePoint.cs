@@ -4,6 +4,6 @@
     {
         public double TimeSeconds { get; set; }
 
-        public List<uint> Intensities { get; set; } = new();    
+        public uint[] Intensities { get; set; } = Array.Empty<uint>();    
     }
 }

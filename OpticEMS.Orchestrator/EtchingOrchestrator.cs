@@ -147,6 +147,7 @@ namespace OpticEMS.Orchestrator
             _stopwatch.Restart();
             _startTime = DateTime.Now;
             _exportData.Clear();
+            _fullSpectrumHistory.Clear();
 
             WeakReferenceMessenger.Default.Send(new ExportAvailabilityChangedMessage(ChannelId, false));
 
@@ -236,13 +237,15 @@ namespace OpticEMS.Orchestrator
             _isPcaBusy = true;
             PcaStatus = "Training PCA...";
 
+            uint[][] spectra = null;
+
             try
             {
-                var spectra = _fullSpectrumHistory
-                    .Select(s =>
+                spectra = _fullSpectrumHistory
+                    .Select(spec =>
                     {
-                        var copy = ArrayPool<uint>.Shared.Rent(s.Length);
-                        Buffer.BlockCopy(s, 0, copy, 0, s.Length * sizeof(uint));
+                        var copy = ArrayPool<uint>.Shared.Rent(spec.Length);
+                        Buffer.BlockCopy(spec, 0, copy, 0, spec.Length * sizeof(uint));
                         return copy;
                     })
                     .ToArray();
@@ -252,18 +255,23 @@ namespace OpticEMS.Orchestrator
                 PcaStatus = result.IsAnomaly
                     ? _pcaHandler.Status
                     : $"PCA Error | {result.Message}";
-
-                _fullSpectrumHistory.Clear();
             }
             finally
             {
+                if (spectra != null)
+                {
+                    foreach (var spec in spectra)
+                    {
+                        ArrayPool<uint>.Shared.Return(spec);
+                    }
+                }
+
                 foreach (var s in _fullSpectrumHistory)
                 {
                     ArrayPool<uint>.Shared.Return(s);
                 }
 
                 _fullSpectrumHistory.Clear();
-
                 _isPcaBusy = false;
             }
         }
@@ -336,7 +344,9 @@ namespace OpticEMS.Orchestrator
                     }
 
                     // Data snapshot
-                    uint[] intensitiesSnapshot = (uint[])_currentIntensities.Clone();
+                    var intensitiesSnapshot = ArrayPool<uint>.Shared.Rent(_currentIntensities.Length);
+                    Buffer.BlockCopy(_currentIntensities, 0, intensitiesSnapshot, 0, _currentIntensities.Length * sizeof(uint));
+
                     RecordDataForExport(intensitiesSnapshot, currentTimeSec);
 
                     WeakReferenceMessenger.Default.Send(new ProcessStepUpdateMessage(
@@ -411,6 +421,8 @@ namespace OpticEMS.Orchestrator
                 channelName: channelName,
                 wavelengths: Recipe.Wavelengths,
                 points: _exportData);
+
+            ReleaseExportBuffers();
         }
 
         public void ExportToExcel(string path, string channelName)
@@ -436,6 +448,8 @@ namespace OpticEMS.Orchestrator
                 channelName: channelName,
                 wavelengths: Recipe.Wavelengths,
                 points: _exportData);
+
+            ReleaseExportBuffers();
         }
 
         public void ExportToTxt(string path, string channelName)
@@ -461,6 +475,8 @@ namespace OpticEMS.Orchestrator
                 channelName: channelName,
                 wavelengths: Recipe.Wavelengths,
                 points: _exportData);
+
+            ReleaseExportBuffers();
         }
 
         private void RegisterMessages()
@@ -616,18 +632,26 @@ namespace OpticEMS.Orchestrator
 
         #region export
 
-        private void RecordDataForExport(uint[] currentIntensities, double currentTime)
+        private void RecordDataForExport(uint[] intensities, double currentTime)
         {
             var timePoint = new TimePoint
             {
                 TimeSeconds = currentTime,
-                Intensities = new List<uint>(currentIntensities)
+                Intensities = intensities
             };
 
             _exportData.Add(timePoint);
         }
 
-        public List<TimePoint> GetExportData() => _exportData.ToList();
+        private void ReleaseExportBuffers()
+        {
+            foreach (var tp in _exportData)
+            {
+                ArrayPool<uint>.Shared.Return(tp.Intensities);
+            }
+
+            _exportData.Clear();
+        }
 
         #endregion
     }

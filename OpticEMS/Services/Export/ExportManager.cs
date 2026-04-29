@@ -109,7 +109,7 @@ namespace OpticEMS.Services.Export
                     worksheets.Cells[currentRow, 1].Value = point.TimeSeconds;
                     worksheets.Cells[currentRow, 1].Style.Numberformat.Format = "0.00";
 
-                    for (int i = 0; i < point.Intensities.Count; i++)
+                    for (int i = 0; i < point.Intensities.Length; i++)
                     {
                         worksheets.Cells[currentRow, i + 2].Value = point.Intensities[i];
                     }
