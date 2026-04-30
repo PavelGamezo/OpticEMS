@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
+using OpticEMS.Communication.Modules;
 using OpticEMS.Contracts.Services.Calibration;
 using OpticEMS.Contracts.Services.Etching;
 using OpticEMS.Contracts.Services.Export;
@@ -31,6 +32,7 @@ namespace OpticEMS.Orchestrator
         private bool _isDemoMode = false;
         private bool _isPcaBusy = false;
         private DateTime _lastPcaAnalysisTime = DateTime.MinValue;
+        private bool _isConnected = false;
 
         private readonly IEtchingProcessService _endpointService;
         private readonly ICalibrationService _calibrationService;
@@ -41,6 +43,7 @@ namespace OpticEMS.Orchestrator
 
         private readonly DeviceProcessing _deviceProcessing;
         private PcaAnalysisHandler? _pcaHandler;
+        private ModuleHandler _connectionHandler;
 
         public EtchingOrchestrator(
             int channelId,
@@ -56,7 +59,11 @@ namespace OpticEMS.Orchestrator
             _cancellationToken = new CancellationTokenSource();
             _cancellationTokenStart = new CancellationTokenSource();
 
+            var ip = configureProvider.GetByChannelId(ChannelId).Ip;
+            var port = int.Parse(configureProvider.GetByChannelId(ChannelId).Port);
+
             _deviceProcessing = new DeviceProcessing(ChannelId, configureProvider);
+            _connectionHandler = new ModuleHandler(ip, port);
 
             _endpointService = endpointService;
             _calibrationService = calibrationService;
@@ -71,6 +78,8 @@ namespace OpticEMS.Orchestrator
             {
                 _deviceProcessing.StartContinueScan(1, 1, _cancellationToken.Token);
             });
+
+            _connectionHandler.OnInputChanged += HandleModuleInputs;
         }
 
         public int ChannelId { get; private set; }
@@ -173,13 +182,11 @@ namespace OpticEMS.Orchestrator
             if (_isPaused)
             {
                 _stopwatch.Stop();
-                //_endpointService.Pause();
                 ProcessStatus = "Paused";
             }
             else
             {
                 _stopwatch.Start();
-                //_endpointService.Resume();
             }
 
             if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec) 
@@ -194,6 +201,8 @@ namespace OpticEMS.Orchestrator
             {
                 throw new Exception("Process is not running.");
             }
+
+            _connectionHandler.SetOutputs((false, false, true, false));
 
             _isRunning = false;
             _isPaused = false;
@@ -393,9 +402,19 @@ namespace OpticEMS.Orchestrator
 
             ProcessStatus = "Endpoint detected";
 
-            WeakReferenceMessenger.Default.Send(new ProcessFinishedMessage(ChannelId, report, forced));
-
             StopProcessAsync();
+
+            WeakReferenceMessenger.Default.Send(new ProcessFinishedMessage(ChannelId, report, forced));
+        }
+
+        private void HandleModuleInputs((int, bool) state)
+        {
+            var (recipeId, isStarted) = state;
+
+            if (isStarted)
+            {
+                StartProcess();
+            }
         }
 
         public void ExportToCsv(string path, string channelName)
@@ -578,6 +597,12 @@ namespace OpticEMS.Orchestrator
             WeakReferenceMessenger.Default.Send(new RecipeAppliedMessage(ChannelId, Recipe.Wavelengths, Recipe.WavelengthColors));
         }
 
+        public void UpdateWavelengthManually()
+        {
+            UpdateInternalIndexes();
+            SaveUpdatedWavelengths();
+        }
+
         private void UpdateInternalIndexes()
         {
             var targets = Recipe.Wavelengths;
@@ -588,12 +613,6 @@ namespace OpticEMS.Orchestrator
             {
                 _wavelengthsIndices[i] = _wavelengthMapper.FindNearestIndex(currentWavelengths, targets[i]);
             }
-        }
-
-        public void UpdateWavelengthManually()
-        {
-            UpdateInternalIndexes();
-            SaveUpdatedWavelengths();
         }
 
         private void SaveUpdatedWavelengths()
