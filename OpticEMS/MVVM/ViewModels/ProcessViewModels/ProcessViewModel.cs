@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using OpticEMS.Contracts.Services.Dialog;
-using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Factories.Channels;
 using OpticEMS.MVVM.ViewModels.RecipeViewModels;
@@ -35,9 +34,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _dialogService = dialogService;
 
             InitializeChannels();
-            SubscribeToRecipeChanges();
+            //SubscribeToRecipeChanges();
         }
-
+        /*
         private void SubscribeToRecipeChanges()
         {
             _recipeViewModel.ApplyRecipeRequested = OnApplyRecipeRequested;
@@ -55,7 +54,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             { 
                 _dialogService.ShowError($"Channel {recipe.Channel} not found");
             }
-        }
+        }*/
 
         private void InitializeChannels()
         {

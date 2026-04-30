@@ -46,7 +46,7 @@ namespace OpticEMS.Communication.Modules
                     while (!_client.TryConnect())
                     {
                         Log.Warning("Reconnect failed, retrying...");
-                        await Task.Delay(1000);
+                        await Task.Delay(5000);
                     }
 
                     Log.Information("Reconnected successfully.");

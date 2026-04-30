@@ -355,7 +355,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             try
             {
                 _orchestrator.ApplyRecipe(recipe);
-                _dialogService.ShowInformation($"Recipe '{recipe.Name}' for channel {recipe.Channel} applied successfully.");
+                _dialogService.ShowInformation($"Recipe '{recipe.Name}' with ID {recipe.Id} applied successfully for channel {ChannelName}");
             }
             catch (Exception exception)
             {

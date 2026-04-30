@@ -4,11 +4,9 @@ namespace OpticEMS.Contracts.Services.Recipe
 {
     public class Recipe
     {
+        public int Id { get; set; }
+
         public string Name { get; set; } = string.Empty;
-
-        public int Channel { get; set; }
-
-        public string ProcessChamber { get; set; } = string.Empty;
 
         public List<double> Wavelengths { get; set; } = new();
 

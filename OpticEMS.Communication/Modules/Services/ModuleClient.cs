@@ -1,6 +1,4 @@
 ﻿using Modbus.Device;
-using Serilog;
-using Serilog.Core;
 using System.Net.Sockets;
 
 namespace OpticEMS.Communication.Modules.Services

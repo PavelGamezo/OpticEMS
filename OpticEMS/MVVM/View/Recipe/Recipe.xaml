@@ -373,7 +373,7 @@
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Row="0" 
-                                           Text="Chamber setup" 
+                                           Text="Recipe setup" 
                                            FontSize="12" 
                                            FontWeight="Bold"
                                            Foreground="White"
@@ -388,7 +388,7 @@
                                     <StackPanel Grid.Column="0">
 
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Channel" 
+                                            <TextBlock Text="Recipe ID" 
                                                        FontSize="11" 
                                                        Foreground="#999999" 
                                                        VerticalAlignment="Center"/>
@@ -419,7 +419,7 @@
                                                              HasDropShadow="True">
 
                                                         <StackPanel Width="200">
-                                                            <TextBlock Text="Channel number" 
+                                                            <TextBlock Text="Recipe ID" 
                                                                        FontWeight="Bold" 
                                                                        Foreground="White" 
                                                                        Margin="0,0,0,5"/>
@@ -444,7 +444,7 @@
                                             </Border>
                                         </StackPanel>
 
-                                        <TextBox Text="{Binding SelectedRecipe.Channel, UpdateSourceTrigger=PropertyChanged}" 
+                                        <TextBox Text="{Binding SelectedRecipe.Id, UpdateSourceTrigger=PropertyChanged}" 
                                                  Background="#3E3E40"
                                                  BorderThickness="0"
                                                  Foreground="White"

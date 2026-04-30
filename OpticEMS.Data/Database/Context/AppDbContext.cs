@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OpticEMS.Contracts.Services.Database;
+using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Data.Database.Configurations;
 
 namespace OpticEMS.Data.Database.Context
@@ -7,6 +8,8 @@ namespace OpticEMS.Data.Database.Context
     public class AppDbContext : DbContext
     {
         public DbSet<SpectralLine> SpectralLines { get; set; }
+
+        public DbSet<Recipe> Recipes { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -18,7 +21,9 @@ namespace OpticEMS.Data.Database.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             var spectralLineConfiguration = new SpectralLineConfiguration();
+            var recipeConfiguration = new RecipeConfiguration();
 
+            modelBuilder.ApplyConfiguration(recipeConfiguration);
             modelBuilder.ApplyConfiguration(spectralLineConfiguration);
 
             base.OnModelCreating(modelBuilder);
