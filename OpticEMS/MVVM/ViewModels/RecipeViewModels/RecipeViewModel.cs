@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.MVVM.Models;
@@ -13,13 +14,17 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 {
     public partial class RecipeViewModel : ObservableObject
     {
-        private readonly IRecipeFileManager _recipeFileManager;
+        private readonly IRecipeRepository _recipeRepository;
         private readonly IDialogService _dialogService;
 
         [ObservableProperty]
         private Color _currentWavelengthColor;
 
         [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(DeleteRecipeCommand))]
+        [NotifyCanExecuteChangedFor(nameof(RenameRecipeCommand))]
+        [NotifyCanExecuteChangedFor(nameof(SaveRecipeCommand))]
+        [NotifyCanExecuteChangedFor(nameof(AddWavelengthCommand))]
         private Recipe? _selectedRecipe;
 
         [ObservableProperty]
@@ -42,9 +47,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
         [ObservableProperty]
         private ObservableCollection<WavelengthMonitorItem> _wavelengthItems = new();
-
-        public Action<Recipe>? ApplyRecipeRequested { get; set; }
-
+        
         public ICollectionView RecipesView { get; private set; }
 
         public int SelectedWavelengthIndex { get; set; }
@@ -58,12 +61,11 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
         private bool HasSelectedRecipe => SelectedRecipe != null;
 
-        public RecipeViewModel(IRecipeFileManager recipeFileManager,
-            IDialogService dialogService)
+        public RecipeViewModel(IRecipeRepository recipeRepository, IDialogService dialogService)
         {
             try
             {
-                _recipeFileManager = recipeFileManager;
+                _recipeRepository = recipeRepository;
                 _dialogService = dialogService;
                 _ = LoadFilesAsync();
             }
@@ -73,42 +75,34 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             }
         }
 
-        [RelayCommand(CanExecute = nameof(HasSelectedRecipe))]
-        private void ApplySelectedRecipe()
-        {
-            Log.Information("RecipeViewMode: Applying selected recipe requested.");
-            ApplyRecipeRequested?.Invoke(SelectedRecipe);
-        }
-
         [RelayCommand] 
         private async Task NewRecipe() 
         {
             try
             {
-                if (SelectedRecipe is null)
-                {
-                    SelectedRecipe = new Recipe();
-                    Log.Information("RecipeViewMode: Created new empty recipe file.");
-                }
-
                 var name = _dialogService.ShowRenameQuestion("NewRecipe");
 
-                if (!string.IsNullOrEmpty(name))
+                if (string.IsNullOrWhiteSpace(name))
                 {
-                    var newRecipe = new Recipe
-                    {
-                        Name = name,
-                        CreatedAt = DateTime.Now,
-                        LastModifiedAt = DateTime.Now,
-                    };
-
-                    Log.Information("RecipeViewMode: Created new recipe file.");
-
-                    SelectedRecipe = newRecipe;
-
-                    await _recipeFileManager.SaveRecipe(newRecipe);
-                    await LoadFilesAsync();
+                    return;
                 }
+
+                var newRecipe = new Recipe
+                {
+                    Name = name,
+                    CreatedAt = DateTime.Now,
+                    LastModifiedAt = DateTime.Now,
+                    Wavelengths = new List<double>(),
+                    WavelengthColors = new List<Color>(),
+                    DetectionWindowHighs = new List<int>()
+                };
+
+                Log.Information("RecipeViewModel: Creating and saving new recipe: {Name}", name);
+
+                await _recipeRepository.AddRecipeAsync(newRecipe);
+                await _recipeRepository.SaveChangesAsync();
+
+                await LoadFilesAsync(newRecipe.Name);
             }
             catch (Exception exception)
             {
@@ -125,7 +119,9 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
                 if (confirmed == true)
                 {
-                    _recipeFileManager.DeleteRecipe(SelectedRecipe.Name);
+                    _recipeRepository.RemoveRecipe(SelectedRecipe);
+                    await _recipeRepository.SaveChangesAsync();
+
                     Log.Information("RecipeViewModel: Recipe deleted successfully.");
 
                     await LoadFilesAsync();
@@ -152,7 +148,8 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                     SelectedRecipe.LastModifiedAt = DateTime.Now;
 
                     Log.Information("RecipeViewModel: Recipe renamed successfully.");
-                    await _recipeFileManager.RenameRecipe(oldName, SelectedRecipe);
+                    await _recipeRepository.UpdateRecipeAsync(SelectedRecipe);
+                    await _recipeRepository.SaveChangesAsync();
 
                     await LoadFilesAsync();
                 }
@@ -187,10 +184,12 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             try
             {
                 SelectedRecipe.LastModifiedAt = DateTime.Now;
-                await _recipeFileManager.SaveRecipe(SelectedRecipe);
+                await _recipeRepository.UpdateRecipeAsync(SelectedRecipe);
+                await _recipeRepository.SaveChangesAsync();
 
                 Log.Information("RecipeViewModel: Recipe saved successfully.");
                 _dialogService.ShowInformation("Recipe saved successfully.");
+
                 await LoadFilesAsync();
             }
             catch (Exception exception)
@@ -243,11 +242,11 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
         private async Task LoadFilesAsync(string? nameToSelect = null) 
         {
-            var files = await _recipeFileManager.LoadRecipeFiles();
+            var recipes = await _recipeRepository.GetRecipesAsync();
 
             var selectedName = nameToSelect ?? SelectedRecipe?.Name;
 
-            RecipeFiles = new ObservableCollection<Recipe>(files);
+            RecipeFiles = new ObservableCollection<Recipe>(recipes);
 
             RecipesView = CollectionViewSource.GetDefaultView(RecipeFiles);
             RecipesView.Filter = obj =>

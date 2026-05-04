@@ -11,8 +11,8 @@ using OpticEMS.Data.Database.Context;
 namespace OpticEMS.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260430164833_RecipeImplementation")]
-    partial class RecipeImplementation
+    [Migration("20260501091318_ImplementedRecipeEntity")]
+    partial class ImplementedRecipeEntity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -50,7 +50,8 @@ namespace OpticEMS.Data.Migrations
 
             modelBuilder.Entity("OpticEMS.Contracts.Services.Recipe.Recipe", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("DatabaseId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("AutocalibrationEnabled")
@@ -97,6 +98,9 @@ namespace OpticEMS.Data.Migrations
                     b.Property<int>("PcaMinTrainingSize")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("RecipeId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("ScansNum")
                         .HasColumnType("INTEGER");
 
@@ -117,7 +121,9 @@ namespace OpticEMS.Data.Migrations
                     b.Property<int>("WindowOutCount")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("Id");
+                    b.HasKey("DatabaseId");
+
+                    b.HasIndex("RecipeId");
 
                     b.ToTable("Recipes");
                 });

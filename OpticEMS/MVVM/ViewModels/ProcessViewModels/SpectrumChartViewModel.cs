@@ -84,7 +84,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             var anomaly = new RectangleAnnotation
             {
                 Tag = "AnomalyRegion",
-                Fill = OxyColor.FromArgb(40, 255, 80, 80),   // мягкий красный
+                Fill = OxyColor.FromArgb(40, 255, 80, 80),
                 Stroke = OxyColor.FromArgb(120, 255, 120, 120),
                 StrokeThickness = 1.5,
                 Layer = AnnotationLayer.AboveSeries,
@@ -99,7 +99,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             return plotModel;
         }
 
-        // --- СПЕКТР ---
         public void UpdateChart(IReadOnlyList<double> x, IReadOnlyList<uint> y)
         {
             _lastX = x;

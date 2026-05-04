@@ -53,15 +53,6 @@
                             Style="{StaticResource ActionButtonStyle}"
                             Command="{Binding RenameRecipeCommand}"/>
 
-                    <Button Grid.Column="2" 
-                            Content="Apply"
-                            Width="120"
-                            Height="35"
-                            Foreground="White"
-                            Background="#222120"
-                            Style="{StaticResource ActionButtonStyle}"
-                            Command="{Binding ApplySelectedRecipeCommand}"/>
-
                     <Button Grid.Column="3" 
                             Content="Save" 
                             Width="120"
@@ -431,9 +422,9 @@
                                                                    Margin="0,5"
                                                                    RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                                            <TextBlock Text="Ensure the number matches the controlled channel number." 
-                                                                       Foreground="#CCCCCC" 
-                                                                       FontSize="11" 
+                                                            <TextBlock Text="Identifier used for communication with external equipment."
+                                                                       Foreground="#CCCCCC"
+                                                                       FontSize="11"
                                                                        TextWrapping="Wrap"/>
                                                         </StackPanel>
 
@@ -444,7 +435,7 @@
                                             </Border>
                                         </StackPanel>
 
-                                        <TextBox Text="{Binding SelectedRecipe.Id, UpdateSourceTrigger=PropertyChanged}" 
+                                        <TextBox Text="{Binding SelectedRecipe.RecipeId, UpdateSourceTrigger=PropertyChanged}" 
                                                  Background="#3E3E40"
                                                  BorderThickness="0"
                                                  Foreground="White"
@@ -495,11 +486,13 @@
                                                     Background="#1E1E1E">
 
                                                 <Border.Effect>
+                                                    
                                                     <DropShadowEffect Color="Black" 
                                                                       Direction="315" 
                                                                       ShadowDepth="4" 
                                                                       Opacity="0.6" 
                                                                       BlurRadius="12"/>
+                                                    
                                                 </Border.Effect>
 
                                                 <StackPanel>
@@ -689,7 +682,9 @@
                                                                                Margin="0,5"
                                                                                RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                                                        <TextBlock Text="Upper intensity limits used as triggers for state changes in the detection algorithm." 
+                                                                        <TextBlock Text="Upper intensity thresholds for each wavelength that define the boundary of the detection window.
+                                                                                         When the measured signal crosses these limits, the algorithm evaluates stability and may transition between Window‑In, Monitoring, and Window‑Out states.
+                                                                                         Used to detect significant rises in intensity that indicate process transitions or endpoint behavior." 
                                                                                    Foreground="#CCCCCC" 
                                                                                    FontSize="11" 
                                                                                    TextWrapping="Wrap"/>
@@ -769,22 +764,29 @@
                                                      Padding="10"
                                                      HasDropShadow="True">
 
-                                                <StackPanel Width="200">
-                                                    <TextBlock Text="Autocalibration" 
+                                                <StackPanel Width="220">
+                                                    <TextBlock Text="Automatic Peak Alignment" 
                                                                FontWeight="Bold" 
-                                                               Foreground="White"/>
+                                                               Foreground="White"
+                                                               Margin="0,0,0,5"/>
 
-                                                    <Image Source="pack://application:,,,/Common/Images/splash.png"
-                                                           Height="108"
-                                                           Width="192"
-                                                           Stretch="Uniform" 
-                                                           Margin="0,5"
-                                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                    <TextBlock Text="Enables automatic center-wavelength tracking. The system scans a ±1 nm range around the target wavelength to lock onto the actual intensity peak." 
+                                                               Foreground="#CCCCCC"
+                                                               FontSize="11" 
+                                                               TextWrapping="Wrap" 
+                                                               Margin="0,5,0,0"/>
 
-                                                    <TextBlock Text="Upper intensity limits used as triggers for state changes in the detection algorithm." 
-                                                               Foreground="#CCCCCC" 
+                                                    <TextBlock Text="Ensures monitoring always stays on the highest point of the emission line. Corrects for pixel shifts caused by spectrometer temperature changes." 
+                                                               Foreground="#888888" 
                                                                FontSize="11" 
                                                                TextWrapping="Wrap"/>
+
+                                                    <TextBlock Text="Note: The system will search within a ~2 nm window to establish the reference anchor point." 
+                                                               Foreground="#888888"
+                                                               FontStyle="Italic" 
+                                                               FontSize="10" 
+                                                               TextWrapping="Wrap" 
+                                                               Margin="0,10,0,0"/>
                                                 </StackPanel>
 
                                             </ToolTip>
@@ -1035,7 +1037,7 @@
                                                                    Margin="0,5"
                                                                    RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                                            <TextBlock Text="This parameter sets the heartbeat of the detection algorithm. Every {DetectionWindowTime}ms, the system averages points to analyze signal trends. The result must remain stable for {WindowOutCount} consecutive cycles to trigger the process Stop." 
+                                                            <TextBlock Text="This parameter sets the heartbeat of the detection algorithm. Minimum time (in milliseconds) during which the signal must remain within the detection window to be considered stable. The result must remain stable for {WindowOutCount} consecutive cycles to trigger the process is in stable or to stop it." 
                                                                        Foreground="#CCCCCC" 
                                                                        FontSize="11" 
                                                                        TextWrapping="Wrap"/>
@@ -1306,7 +1308,7 @@
                                                                    Margin="0,5"
                                                                    RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                                            <TextBlock Text="Number of raw data points averaged to filter out high-frequency noise from the incoming signal." 
+                                                            <TextBlock Text="Number of consecutive stable measurements required to enter the detection window." 
                                                                        Foreground="#CCCCCC" 
                                                                        FontSize="11" 
                                                                        TextWrapping="Wrap"/>
@@ -1397,100 +1399,6 @@
                                                  Padding="8"
                                                  Margin="0,5,0,0"/>
 
-                                    </StackPanel>
-
-                                    <StackPanel Grid.Row="2" 
-                                                Grid.Column="0" 
-                                                Margin="0,0,10,15">
-
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-
-                                            <TextBlock Text="Stable Threshold Percent" 
-                                                       FontSize="11" 
-                                                       Foreground="#999999"/>
-
-                                            <Border Margin="6,0,0,0" 
-                                                    Width="14" 
-                                                    Height="14" 
-                                                    CornerRadius="7" 
-                                                    Background="#444444" 
-                                                    Cursor="Help"
-                                                    VerticalAlignment="Center"
-                                                    ToolTipService.InitialShowDelay="100">
-
-                                                <TextBlock Text="?" 
-                                                           FontSize="10" 
-                                                           FontWeight="Bold"
-                                                           Foreground="#AAAAAA" 
-                                                           HorizontalAlignment="Center" 
-                                                           VerticalAlignment="Center"
-                                                           Margin="0,0,0,1"/>
-
-                                                <Border.ToolTip>
-
-                                                    <ToolTip Background="#252526" 
-                                                             Foreground="White" 
-                                                             BorderBrush="#454545"
-                                                             Padding="10"
-                                                             HasDropShadow="True">
-
-                                                        <StackPanel Width="220">
-
-                                                            <TextBlock Text="Stable Threshold (%)" 
-                                                                       FontWeight="Bold" 
-                                                                       Foreground="White" 
-                                                                       Margin="0,0,0,5"/>
-
-                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
-                                                                   Height="108"
-                                                                   Width="192"
-                                                                   Stretch="Uniform" 
-                                                                   Margin="0,5"
-                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
-
-                                                            <TextBlock Text="Defines how much the average signal may change between frames while still being considered stable. Lower values require a more stable plasma before endpoint monitoring begins."
-                                                                       Foreground="#CCCCCC" 
-                                                                       FontSize="11" 
-                                                                       TextWrapping="Wrap"
-                                                                       Margin="0,5,0,0"/>
-
-                                                            <TextBlock Text="Recommended:"
-                                                                       Foreground="#AAAAAA"
-                                                                       FontSize="11"
-                                                                       Margin="0,10,0,0"/>
-
-                                                            <TextBlock Text="• 1–3%: very stable plasma" 
-                                                                       Foreground="#888888"
-                                                                       FontSize="11"/>
-
-                                                            <TextBlock Text="• 5–10%: typical processes" 
-                                                                       Foreground="#888888"
-                                                                       FontSize="11"/>
-
-                                                            <TextBlock Text="• 10–20%: noisy or unstable chambers" 
-                                                                       Foreground="#888888"
-                                                                       FontSize="11"/>
-
-                                                        </StackPanel>
-
-                                                    </ToolTip>
-
-                                                </Border.ToolTip>
-
-                                            </Border>
-                                        </StackPanel>
-
-                                        <TextBox Text="{Binding SelectedRecipe.StableThresholdPercent}" 
-                                                 Background="#3E3E40"
-                                                 BorderThickness="0"
-                                                 Foreground="White"
-                                                 Padding="8"
-                                                 Margin="0,5,0,0"/>
-
-                                        <TextBlock Text="%" 
-                                                   FontSize="10" 
-                                                   Foreground="#999999"
-                                                   Margin="0,2,0,0"/>
                                     </StackPanel>
 
                                 </Grid>
@@ -1854,16 +1762,6 @@
                                                      BorderThickness="0"
                                                      Foreground="White"
                                                      Padding="8"/>
-
-                                            <Border Grid.Column="1" 
-                                                    Background="#3E3E40"
-                                                    CornerRadius="0,3,3,0"
-                                                    Padding="8,8">
-
-                                                <TextBlock Text="ms" 
-                                                           Foreground="White"/>
-
-                                            </Border>
 
                                         </Grid>
 

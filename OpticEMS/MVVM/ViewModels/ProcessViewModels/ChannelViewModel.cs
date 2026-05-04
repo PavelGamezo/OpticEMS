@@ -63,11 +63,11 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         public ChannelViewModel(int id,
             IWavelengthMapper wavelengthMapper,
+            IRecipeRepository recipeRepository,
             IDialogService dialogService,
             IEtchingProcessService endpointService,
             ISettingsProvider configureProvider, 
             IExportManager exportManager,
-            IRecipeFileManager recipeFileManager,
             ICalibrationService calibrationService,
             ISpectralLineRepository spectralLineRepository)
         {
@@ -75,9 +75,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _orchestrator = new EtchingOrchestrator(
                 id,
                 endpointService,
+                recipeRepository,
                 calibrationService, 
                 wavelengthMapper,
-                recipeFileManager, 
                 configureProvider, 
                 exportManager);
 
@@ -249,20 +249,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
-        // This will be unusefull
-        [RelayCommand]
-        public async Task ToggleDemoMode()
-        {
-            try
-            {
-                _orchestrator.ToggleDemoMode();
-            }
-            catch (Exception exception)
-            {
-                _dialogService.ShowError(exception.Message);
-            }
-        }
-
         [RelayCommand(CanExecute = nameof(CanExport))]
         public void ExportToCsv()
         {
@@ -350,6 +336,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         #region methods
         
+        /*
         public void ApplyRecipe(Recipe recipe)
         {
             try
@@ -361,7 +348,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 _dialogService.ShowError($"Failed to apply recipe: {exception.Message}");
             }
-        }
+        }*/
 
         private void UpdateSpectrumAnnotations(double wavelength, Color color)
         {

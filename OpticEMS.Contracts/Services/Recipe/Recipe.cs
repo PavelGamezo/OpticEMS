@@ -4,7 +4,12 @@ namespace OpticEMS.Contracts.Services.Recipe
 {
     public class Recipe
     {
-        public int Id { get; set; }
+        /// <summary>
+        /// Unique identifier of the recipe stored in the database.
+        /// </summary>
+        public int DatabaseId { get; set; }
+
+        public int RecipeId { get; set; }
 
         public string Name { get; set; } = string.Empty;
 

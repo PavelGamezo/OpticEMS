@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using OpticEMS.Communication.Modules;
 using OpticEMS.Contracts.Services.Calibration;
+using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Etching;
 using OpticEMS.Contracts.Services.Export;
 using OpticEMS.Contracts.Services.Mapper;
@@ -29,15 +30,13 @@ namespace OpticEMS.Orchestrator
         private int[] _wavelengthsIndices = Array.Empty<int>();
         public uint[] _currentIntensities = Array.Empty<uint>(); 
         private readonly List<uint[]> _fullSpectrumHistory = new();
-        private bool _isDemoMode = false;
         private bool _isPcaBusy = false;
         private DateTime _lastPcaAnalysisTime = DateTime.MinValue;
-        private bool _isConnected = false;
 
         private readonly IEtchingProcessService _endpointService;
+        private readonly IRecipeRepository _recipeRepository;
         private readonly ICalibrationService _calibrationService;
         private readonly IWavelengthMapper _wavelengthMapper;
-        private readonly IRecipeFileManager _recipeFileManager;
         private readonly ISettingsProvider _configureProvider;
         private readonly IExportManager _exportManager;
 
@@ -48,9 +47,9 @@ namespace OpticEMS.Orchestrator
         public EtchingOrchestrator(
             int channelId,
             IEtchingProcessService endpointService,
+            IRecipeRepository recipeRepository,
             ICalibrationService calibrationService,
             IWavelengthMapper wavelengthMapper,
-            IRecipeFileManager recipeFileManager,
             ISettingsProvider configureProvider,
             IExportManager exportManager)
         {
@@ -59,16 +58,16 @@ namespace OpticEMS.Orchestrator
             _cancellationToken = new CancellationTokenSource();
             _cancellationTokenStart = new CancellationTokenSource();
 
-            var ip = configureProvider.GetByChannelId(ChannelId).Ip;
-            var port = int.Parse(configureProvider.GetByChannelId(ChannelId).Port);
+            var ip = configureProvider?.GetByChannelId(ChannelId)?.Ip;
+            var port = int.Parse(configureProvider?.GetByChannelId(ChannelId).Port);
 
             _deviceProcessing = new DeviceProcessing(ChannelId, configureProvider);
             _connectionHandler = new ModuleHandler(ip, port);
 
             _endpointService = endpointService;
+            _recipeRepository = recipeRepository;
             _calibrationService = calibrationService;
             _wavelengthMapper = wavelengthMapper;
-            _recipeFileManager = recipeFileManager;
             _configureProvider = configureProvider;
             _exportManager = exportManager;
 
@@ -90,30 +89,23 @@ namespace OpticEMS.Orchestrator
 
         public string PcaStatus { get; private set; } = "None";
 
-        public bool IsDemoMode => _isDemoMode;
-
         public DeviceProcessing Device => _deviceProcessing;
 
-        public void ToggleDemoMode()
-        {
-            _isDemoMode = !_isDemoMode;
-        }
-
-        public void ApplyRecipe(Recipe recipe)
+        public async Task ApplyRecipe(int recipeId)
         {
             if (_isRunning)
             {
                 throw new Exception("Cannot apply recipe while process is running. Please stop the process first.");
             }
 
-            Recipe = recipe;
+            Recipe = await _recipeRepository.GetRecipeByRecipeIdAsync(recipeId);
 
             _cancellationToken.Cancel();
             _cancellationToken = new CancellationTokenSource();
                 
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
-                _deviceProcessing.StartContinueScan(recipe.ExposureMs, recipe.ScansNum, _cancellationToken.Token);
+                _deviceProcessing.StartContinueScan(Recipe.ExposureMs, Recipe.ScansNum, _cancellationToken.Token);
             });
 
             WeakReferenceMessenger.Default.Send(new RecipeAppliedMessage(
@@ -126,9 +118,9 @@ namespace OpticEMS.Orchestrator
 
             _pcaHandler = new PcaAnalysisHandler(
                 new PcaSpectrumAnalyzer(),
-                recipe.Name,
-                recipe.PcaMinTrainingSize,
-                recipe.PcaComponents);
+                Recipe.Name,
+                Recipe.PcaMinTrainingSize,
+                Recipe.PcaComponents);
         }
 
         public void StartProcess()
@@ -216,13 +208,6 @@ namespace OpticEMS.Orchestrator
             if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec)
             {
                 _deviceProcessing?.NotifyVirtualProcessStopped();
-
-                if (_isDemoMode)
-                {
-                    await Task.Delay(5000);
-
-                    StartProcess();
-                }
             }
         }
 
@@ -413,6 +398,7 @@ namespace OpticEMS.Orchestrator
 
             if (isStarted)
             {
+                ApplyRecipe(recipeId);
                 StartProcess();
             }
         }
@@ -638,7 +624,8 @@ namespace OpticEMS.Orchestrator
 
             try
             {
-                _recipeFileManager.SaveRecipe((Recipe)Recipe);
+                _recipeRepository.UpdateRecipeAsync(Recipe);
+                _recipeRepository.SaveChangesAsync();
             }
             catch (Exception exception)
             {

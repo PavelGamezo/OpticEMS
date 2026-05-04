@@ -25,7 +25,6 @@ using OpticEMS.Services.Calibration;
 using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Etching;
 using OpticEMS.Services.Export;
-using OpticEMS.Services.Files;
 using OpticEMS.Services.Spectrometers;
 using OpticEMS.Services.Times;
 using OpticEMS.Services.Windows;
@@ -62,7 +61,6 @@ namespace OpticEMS
             services.AddScoped<IWindowService, WindowService>();
             services.AddScoped<ITimeService, TimeService>();
             services.AddScoped<ICalibrationService, CalibrationService>();
-            services.AddScoped<IRecipeFileManager, RecipeFileManager>();
             services.AddScoped<IWavelengthMapper, WavelengthMapper>();
             services.AddScoped<IDialogService, DialogService>();
             services.AddScoped<IExportManager, ExportManager>();
@@ -70,11 +68,10 @@ namespace OpticEMS
 
             // Repositories
             services.AddScoped<ISpectralLineRepository, SpectralLineRepository>();
+            services.AddScoped<IRecipeRepository, RecipeRepository>();
 
             // Databases
             services.AddScoped<AppDbContext>();
-
-            // Orchestrators
 
             // Factories
             services.AddScoped<IChannelViewModelFactory, ChannelViewModelFactory>();

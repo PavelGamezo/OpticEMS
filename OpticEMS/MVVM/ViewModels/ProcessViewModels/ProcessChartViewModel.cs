@@ -6,7 +6,6 @@ using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using System.Windows.Media;
-using XAct.Messages;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {

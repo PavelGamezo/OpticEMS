@@ -5,7 +5,6 @@ using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.Contracts.Services.Etching;
 using OpticEMS.Contracts.Services.Export;
 using OpticEMS.Contracts.Services.Mapper;
-using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.MVVM.ViewModels.ProcessViewModels;
 
@@ -24,23 +23,22 @@ namespace OpticEMS.Factories.Channels
         {
             IWavelengthMapper wavelengthMapper = _serviceProvider.GetRequiredService<IWavelengthMapper>();
             IDialogService dialogService = _serviceProvider.GetRequiredService<IDialogService>();
+            IRecipeRepository recipeRepository = _serviceProvider.GetRequiredService<IRecipeRepository>();
             IEtchingProcessService endpointService = _serviceProvider.GetRequiredService<IEtchingProcessService>();
             ISettingsProvider configProvider = _serviceProvider.GetRequiredService<ISettingsProvider>();
             IExportManager exportManager = _serviceProvider.GetRequiredService<IExportManager>();
-            IRecipeFileManager recipeFileManager = _serviceProvider.GetRequiredService<IRecipeFileManager>();
             ICalibrationService calibrationService = _serviceProvider.GetRequiredService<ICalibrationService>();
             ISpectralLineRepository spectralLineRepository = _serviceProvider.GetRequiredService<ISpectralLineRepository>();
 
             var id = configuration.ChannelId;
 
-            return new ChannelViewModel(
-                id,
+            return new ChannelViewModel(id,
                 wavelengthMapper,
+                recipeRepository,
                 dialogService,
                 endpointService,
                 configProvider,
                 exportManager,
-                recipeFileManager,
                 calibrationService,
                 spectralLineRepository);
         }

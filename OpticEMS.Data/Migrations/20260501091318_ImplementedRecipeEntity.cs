@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace OpticEMS.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class RecipeImplementation : Migration
+    public partial class ImplementedRecipeEntity : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,7 +15,9 @@ namespace OpticEMS.Data.Migrations
                 name: "Recipes",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false),
+                    DatabaseId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    RecipeId = table.Column<int>(type: "INTEGER", nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     Wavelengths = table.Column<string>(type: "TEXT", nullable: false),
                     WavelengthColors = table.Column<string>(type: "TEXT", nullable: false),
@@ -39,8 +41,13 @@ namespace OpticEMS.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Recipes", x => x.Id);
+                    table.PrimaryKey("PK_Recipes", x => x.DatabaseId);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Recipes_RecipeId",
+                table: "Recipes",
+                column: "RecipeId");
         }
 
         /// <inheritdoc />

@@ -10,10 +10,13 @@ namespace OpticEMS.Data.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<Recipe> builder)
         {
-            builder.HasKey(recipe => recipe.Id);
-            
-            builder.Property(recipe => recipe.Id)
+            builder.HasKey(recipe => recipe.DatabaseId);
+
+            builder.Property(recipe => recipe.RecipeId)
+                .IsRequired()
                 .ValueGeneratedNever();
+
+            builder.HasIndex(r => r.RecipeId);
 
             builder.Property(r => r.Wavelengths)
                 .HasConversion(

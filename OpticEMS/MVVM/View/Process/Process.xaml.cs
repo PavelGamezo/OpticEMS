@@ -18,29 +18,27 @@ namespace OpticEMS.MVVM.View.Process
     /// </summary>
     public partial class Process : Page
     {
-        private bool _isCollapsed = false;
-        private double _cachedWidth;
-
         public Process()
         {
             InitializeComponent();
+
+            dockingManager.Loaded += DockingManager_Loaded;
         }
 
-        private void BtnToggleMenu_Click(object sender, RoutedEventArgs e)
+        private void DockingManager_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!_isCollapsed)
+            try
             {
-                _cachedWidth = SideMenuParent.ActualWidth;
-                SideMenuColumn.Width = new GridLength(0);
-                BtnToggleMenu.Content = "◀";
+                if (dockingManager.Layout == null || dockingManager.Layout.RootPanel == null)
+                {
+                    dockingManager.Layout = new AvalonDock.Layout.LayoutRoot();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                SideMenuColumn.Width = new GridLength(_cachedWidth);
-                BtnToggleMenu.Content = "▶";
+                // Логирование
+                System.Diagnostics.Debug.WriteLine("AvalonDock init error: " + ex);
             }
-
-            _isCollapsed = !_isCollapsed;
         }
     }
 }
