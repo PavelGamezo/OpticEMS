@@ -62,6 +62,15 @@
                             Style="{StaticResource ActionButtonStyle}"
                             Command="{Binding SaveRecipeCommand}"/>
 
+                    <Button Grid.Column="3" 
+                            Content="Save" 
+                            Width="120"
+                            Height="35"
+                            Foreground="White"
+                            Background="#222120"
+                            Style="{StaticResource ActionButtonStyle}"
+                            Command="{Binding ApplySelectedRecipeCommand}"/>
+
                 </StackPanel>
             </Grid>
         </Border>
@@ -1393,6 +1402,159 @@
                                         </StackPanel>
 
                                         <TextBox Text="{Binding SelectedRecipe.WindowOutCount}" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"
+                                                 Margin="0,5,0,0"/>
+
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="2" 
+                                                Grid.Column="0">
+
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                                            <TextBlock Text="Magnetic Field Period" 
+                                                       FontSize="11" 
+                                                       Foreground="#999999"/>           
+
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
+
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
+
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="200">
+
+                                                            <TextBlock Text="Magnetic Field Period" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="Time interval (in milliseconds) representing one full cycle of the magnetic field oscillation used during plasma stabilization or endpoint detection." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+
+                                                            <TextBlock Text="•  The signal processing algorithm must be synchronized with the magnetic field period of the Centura 
+                                                                            magnetically enhanced RIE Chamber, which is typically 2.0 seconds. This number must be the same as the field period of the 
+                                                                            Centura. If it isn’t the same, the signal will show a periodic wave-like trace. " 
+                                                                       Foreground="#AAAAAA" 
+                                                                       FontSize="10" 
+                                                                       TextWrapping="Wrap"/>
+
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+                                        </StackPanel>
+
+                                        <TextBox Text="{Binding SelectedRecipe.MagneticFieldPeriod}" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"
+                                                 Margin="0,5,10,0"/>
+
+                                        <TextBlock Text="ms" 
+                                                   FontSize="10" 
+                                                   Foreground="#999999"
+                                                   Margin="0,2,0,0"/>
+
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="2" 
+                                                Grid.Column="1">
+
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                                            <TextBlock Text="Number of Field Periods to Average" 
+                                                       FontSize="11" 
+                                                       Foreground="#999999"/>
+
+                                            <Border Margin="6,0,0,0" 
+                                                    Width="14" 
+                                                    Height="14" 
+                                                    CornerRadius="7" 
+                                                    Background="#444444" 
+                                                    Cursor="Help"
+                                                    VerticalAlignment="Center"
+                                                    ToolTipService.InitialShowDelay="100">
+
+                                                <TextBlock Text="?" 
+                                                           FontSize="10" 
+                                                           FontWeight="Bold"
+                                                           Foreground="#AAAAAA" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,1"/>
+
+                                                <Border.ToolTip>
+
+                                                    <ToolTip Background="#252526" 
+                                                             Foreground="White" 
+                                                             BorderBrush="#454545"
+                                                             Padding="10"
+                                                             HasDropShadow="True">
+
+                                                        <StackPanel Width="200">
+
+                                                            <TextBlock Text="Window Out Count" 
+                                                                       FontWeight="Bold" 
+                                                                       Foreground="White" 
+                                                                       Margin="0,0,0,5"/>
+
+                                                            <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                   Height="108"
+                                                                   Width="192"
+                                                                   Stretch="Uniform" 
+                                                                   Margin="0,5"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                            <TextBlock Text="Number of consecutive magnetic field periods whose signal data are averaged to reduce noise and improve measurement stability." 
+                                                                       Foreground="#CCCCCC" 
+                                                                       FontSize="11" 
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+
+                                                    </ToolTip>
+
+                                                </Border.ToolTip>
+
+                                            </Border>
+                                        </StackPanel>
+
+                                        <TextBox Text="{Binding SelectedRecipe.FieldPeriodsToAverage}" 
                                                  Background="#3E3E40"
                                                  BorderThickness="0"
                                                  Foreground="White"

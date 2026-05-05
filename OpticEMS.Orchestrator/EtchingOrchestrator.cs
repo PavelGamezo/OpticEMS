@@ -62,7 +62,7 @@ namespace OpticEMS.Orchestrator
             var port = int.Parse(configureProvider?.GetByChannelId(ChannelId).Port);
 
             _deviceProcessing = new DeviceProcessing(ChannelId, configureProvider);
-            _connectionHandler = new ModuleHandler(ip, port);
+            //_connectionHandler = new ModuleHandler(ip, port);
 
             _endpointService = endpointService;
             _recipeRepository = recipeRepository;
@@ -78,7 +78,7 @@ namespace OpticEMS.Orchestrator
                 _deviceProcessing.StartContinueScan(1, 1, _cancellationToken.Token);
             });
 
-            _connectionHandler.OnInputChanged += HandleModuleInputs;
+            //_connectionHandler.OnInputChanged += HandleModuleInputs;
         }
 
         public int ChannelId { get; private set; }
@@ -90,6 +90,38 @@ namespace OpticEMS.Orchestrator
         public string PcaStatus { get; private set; } = "None";
 
         public DeviceProcessing Device => _deviceProcessing;
+
+        public async Task ApplyRecipe(Recipe recipe)
+        {
+            if (_isRunning)
+            {
+                throw new Exception("Cannot apply recipe while process is running. Please stop the process first.");
+            }
+
+            Recipe = recipe;
+
+            _cancellationToken.Cancel();
+            _cancellationToken = new CancellationTokenSource();
+
+            _ = Task.Run(() =>
+            {
+                _deviceProcessing.StartContinueScan(Recipe.ExposureMs, Recipe.ScansNum, _cancellationToken.Token);
+            });
+
+            WeakReferenceMessenger.Default.Send(new RecipeAppliedMessage(
+                ChannelId, Recipe.Wavelengths,
+                Recipe.WavelengthColors));
+
+            UpdateInternalIndexes();
+            _currentIntensities = new uint[Recipe.Wavelengths.Count];
+            _isIndicesCorrected = false;
+
+            _pcaHandler = new PcaAnalysisHandler(
+                new PcaSpectrumAnalyzer(),
+                Recipe.Name,
+                Recipe.PcaMinTrainingSize,
+                Recipe.PcaComponents);
+        }
 
         public async Task ApplyRecipe(int recipeId)
         {
@@ -194,7 +226,7 @@ namespace OpticEMS.Orchestrator
                 throw new Exception("Process is not running.");
             }
 
-            _connectionHandler.SetOutputs((false, false, true, false));
+            //_connectionHandler.SetOutputs((false, false, true, false));
 
             _isRunning = false;
             _isPaused = false;
@@ -300,8 +332,8 @@ namespace OpticEMS.Orchestrator
                     double currentTimeMs = _stopwatch.Elapsed.TotalMilliseconds;
                     double currentTimeSec = currentTimeMs / 1000.0;
 
-                    //var windowBounds = _endpointService.GetCurrentWindowBounds();
-                    //WeakReferenceMessenger.Default.Send(new DrawWindowBoundsMessage(ChannelId, windowBounds));
+                    var windowBounds = _endpointService.GetCurrentWindowBounds();
+                    WeakReferenceMessenger.Default.Send(new DrawWindowBoundsMessage(ChannelId, windowBounds));
 
                     var endpointResult = _endpointService.Update(currentTimeMs);
 

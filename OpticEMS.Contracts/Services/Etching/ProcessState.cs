@@ -4,8 +4,8 @@
     {
         Idle, 
         InitialDeadTime,
+        WindowOut, 
         WindowIn, 
-        Monitoring, 
         Overetch 
     }
 }

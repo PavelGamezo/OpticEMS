@@ -91,47 +91,62 @@ namespace OpticEMS.Devices.Devices.VirtualSpec
         private uint[] GenerateSpectrum()
         {
             uint[] data = new uint[PIXELS];
-            var elapsed = (DateTime.Now - _startTime).TotalSeconds;
 
-            if (_isRunning && elapsed > 10.0) _phase += 0.0005;
+            double elapsed = _isRunning ? (DateTime.Now - _startTime).TotalSeconds : 0;
+
             double[] currentCoef = { 344.56, 0.379, -5.33E-06, -1.02E-08 };
+
+            double magneticPeriod = 2.0;
+            double dropStart = 12.0;
+            double dropEnd = 25.0;
+            double startIntensity = 5000.0;
+            double noiseFloor = 150.0;
+
+            double magneticRipple = 1.0 + 0.03 * Math.Sin(2 * Math.PI * elapsed / magneticPeriod);
 
             for (int i = 0; i < PIXELS; i++)
             {
-                double value = 600 + (_rnd.NextDouble() * 150 - 10);
+                double value = (100 + (_rnd.NextDouble() * 50)) * magneticRipple;
 
                 foreach (var line in _lines)
                 {
                     double px = MapWavelengthToPixel(line.wavelength, currentCoef);
-                    double modIntensity = line.intensity;
+                    double modIntensity;
 
-                    if (Math.Abs(line.wavelength - 365) < 1.0)
+                    if (Math.Abs(line.wavelength - 365.015) < 1.0)
                     {
-                        modIntensity *= (1.0 + 0.5 * Math.Sin(_phase * 1.5));
+                        if (!_isRunning)
+                        {
+                            modIntensity = startIntensity;
+                        }
+                        else if (elapsed < dropStart)
+                        {
+                            modIntensity = startIntensity - (elapsed * 2.0);
+                        }
+                        else if (elapsed < dropEnd)
+                        {
+                            double progress = (elapsed - dropStart) / (dropEnd - dropStart);
+                            double factor = Math.Pow(0.01, progress);
+                            modIntensity = (startIntensity * factor) + noiseFloor;
+                        }
+                        else
+                        {
+                            modIntensity = noiseFloor + (_rnd.NextDouble() * 20);
+                        }
                     }
-                    else if (Math.Abs(line.wavelength - 404) < 1.0)
+                    else
                     {
-                        modIntensity *= (1.0 + 0.5 * Math.Sin(_phase * 1.5 + Math.PI));
+                        modIntensity = line.intensity * 1500;
                     }
+
+                    double currentSignal = modIntensity * magneticRipple;
 
                     double dx = i - px;
-                    double sigma = 1.2;
-                    double signal = 3000 * modIntensity * Math.Exp(-(dx * dx) / (2 * sigma * sigma));
+                    double signal = currentSignal * Math.Exp(-(dx * dx) / (2 * 1.2 * 1.2));
 
-                    double shotNoise = (_rnd.NextDouble() - 0.5) * Math.Sqrt(signal) * 2.0;
+                    double shotNoise = (_rnd.NextDouble() - 0.5) * Math.Sqrt(signal + 1) * 2.0;
 
                     value += signal + shotNoise;
-                }
-
-                bool isAnomalyTime = _isRunning && elapsed > 10.0;
-
-                if (isAnomalyTime)
-                {
-                    double anomalyWl = 500.0;
-                    double px = MapWavelengthToPixel(anomalyWl, currentCoef);
-                    double dx = i - px;
-                    double signal = 5000 * Math.Exp(-(dx * dx) / (2 * 1.5 * 1.5));
-                    value += signal;
                 }
 
                 data[i] = (uint)Math.Clamp(value, 0, 65535);

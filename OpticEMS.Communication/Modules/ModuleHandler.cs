@@ -1,9 +1,5 @@
-﻿using Modbus.Device;
-using OpticEMS.Communication.Modules.Services;
+﻿using OpticEMS.Communication.Modules.Services;
 using Serilog;
-using System.Data.Common;
-using System.Diagnostics;
-using System.Net.Sockets;
 
 namespace OpticEMS.Communication.Modules
 {
@@ -33,9 +29,9 @@ namespace OpticEMS.Communication.Modules
                 {
                     var state = _client.ReadInputs();
 
-                    if (HasStateChanged(state))
+                    if (state != _prevState)
                     {
-                        OnInputChanged?.Invoke(state);
+                        HandleInputState(state);
                     }
                 }
                 catch (Exception exception)
@@ -56,14 +52,22 @@ namespace OpticEMS.Communication.Modules
             }
         }
 
-        private bool HasStateChanged((int recipeId, bool start) current)
+        private void HandleInputState((int recipeId, bool start) state)
         {
-            var hasStateChanged = current.recipeId != _prevState.recipeId ||
-                   current.start != _prevState.start;
+            if (state.recipeId == 7)
+            {
+                _client.SendHandshakeResponse();
+                Log.Information("Handshake request received. Responding ready");
+                
+                return;
+            }
 
-            _prevState = current;
+            if (state.recipeId > 0 && state.recipeId <= 6)
+            {
+                OnInputChanged?.Invoke(state);
+            }
 
-            return hasStateChanged;
+            _prevState = state;
         }
 
 

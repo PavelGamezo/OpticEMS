@@ -35,6 +35,10 @@ namespace OpticEMS.Contracts.Services.Recipe
 
         public int MaxEndpointTime { get; set; }
 
+        public float MagneticFieldPeriod { get; set; }
+
+        public int FieldPeriodsToAverage { get; set; }
+
         public bool AutocalibrationEnabled { get; set; }
 
         public bool OverEtchEnabled { get; set; }

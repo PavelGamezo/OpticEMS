@@ -72,5 +72,10 @@ namespace OpticEMS.Communication.Modules.Services
             _client.Close();
             _client.Dispose();
         }
+
+        public void SendHandshakeResponse()
+        {
+            _connection.WriteSingleCoil(1, 18, true);
+        }
     }
 }

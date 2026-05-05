@@ -336,19 +336,18 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         #region methods
         
-        /*
         public void ApplyRecipe(Recipe recipe)
         {
             try
             {
                 _orchestrator.ApplyRecipe(recipe);
-                _dialogService.ShowInformation($"Recipe '{recipe.Name}' with ID {recipe.Id} applied successfully for channel {ChannelName}");
+                _dialogService.ShowInformation($"Recipe '{recipe.Name}' with ID {recipe.DatabaseId} applied successfully for channel {ChannelName}");
             }
             catch (Exception exception)
             {
                 _dialogService.ShowError($"Failed to apply recipe: {exception.Message}");
             }
-        }*/
+        }
 
         private void UpdateSpectrumAnnotations(double wavelength, Color color)
         {

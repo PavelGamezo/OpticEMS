@@ -59,6 +59,8 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             "Chamber A", "Chamber B", "Chamber C", "Chamber D" 
         };
 
+        public Action<Recipe>? ApplyRecipeRequested { get; set; }
+
         private bool HasSelectedRecipe => SelectedRecipe != null;
 
         public RecipeViewModel(IRecipeRepository recipeRepository, IDialogService dialogService)
@@ -73,6 +75,13 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             {
                 Log.Fatal(exception, "RecipeViewModel: Critical failure during startup.");
             }
+        }
+
+        [RelayCommand(CanExecute = nameof(HasSelectedRecipe))]
+        private void ApplySelectedRecipe()
+        {
+            Log.Information("RecipeViewMode: Applying selected recipe requested.");
+            ApplyRecipeRequested?.Invoke(SelectedRecipe);
         }
 
         [RelayCommand] 

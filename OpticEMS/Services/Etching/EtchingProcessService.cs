@@ -14,6 +14,8 @@ namespace OpticEMS.Services.Etching
 
         private List<uint[]> _writeBuffer = new();
         private List<uint[]> _readBuffer = new();
+        private readonly Queue<double[]> _mfBuffer = new();
+        private double _lastMfUpdateTime = 0;
         private uint[] _lastAveraged = Array.Empty<uint>();
 
         private ProcessState _state = ProcessState.Idle;
@@ -51,7 +53,8 @@ namespace OpticEMS.Services.Etching
                 return new EndpointResult(true, "Force Stop (Timeout)", true);
             }
 
-            var currentSignal = GetAveragedFrame();
+            //var currentSignal = GetAveragedFrame();
+            var currentSignal = GetProcessedSignal(elapsedMs);
             if (currentSignal == null || currentSignal.Length == 0)
             {
                 return new EndpointResult(false, "Waiting for signal...", false);
@@ -60,101 +63,112 @@ namespace OpticEMS.Services.Etching
             switch (_state)
             {
                 case ProcessState.InitialDeadTime:
+                    return ProcessInitialDeadTime(currentSignal, elapsedMs);
 
-                    if (elapsedMs >= _recipe.InitialDelay)
-                    {
-                        InitializeWindows(currentSignal, elapsedMs);
-                        _state = ProcessState.WindowIn;
-                    }
-
-                    return new EndpointResult(false, "Initial Dead Time", false);
+                case ProcessState.WindowOut:
+                    return ProcessWindowOutState(currentSignal, elapsedMs);
 
                 case ProcessState.WindowIn:
-
-                    if (IsInsideDetectionLimits(currentSignal))
-                    {
-                        if (CheckAndSlideWindows(currentSignal, elapsedMs))
-                        {
-                            _consecutiveWindowsIn++;
-                        }
-
-                        if (_consecutiveWindowsIn >= _recipe.WindowInCount)
-                        {
-                            _state = ProcessState.Monitoring;
-                            _consecutiveWindowsOut = 0;
-                        }
-                    }
-                    else
-                    {
-                        _consecutiveWindowsIn = 0;
-                        ResetWindows(currentSignal, elapsedMs);
-                    }
-
-                    return new EndpointResult(false, $"Stabilizing ({_consecutiveWindowsIn}/{_recipe.WindowInCount})", false);
-
-                case ProcessState.Monitoring:
-
-                    bool violated = IsOutsideDetectionWindow(currentSignal, elapsedMs);
-                    if (violated)
-                    {
-                        _consecutiveWindowsOut++;
-                        if (_consecutiveWindowsOut >= _recipe.WindowOutCount)
-                        {
-                            _detectedAtMs = elapsedMs;
-
-                            if (_recipe.OverEtchEnabled && _recipe.OverEtchValue > 0)
-                            {
-                                _state = ProcessState.Overetch;
-                                _overEtchStartTime = elapsedMs;
-
-                                return new EndpointResult(false, "Endpoint Found. Starting Overetch...", false);
-                            }
-                            else
-                            {
-                                _finishedAtMs = elapsedMs;
-                                _state = ProcessState.Idle;
-
-                                return new EndpointResult(true, "Endpoint Detected", false);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        bool allWindowsExpired = true;
-                        for (int i = 0; i < _windowStartTimes.Length; i++)
-                        {
-                            if (elapsedMs - _windowStartTimes[i] < _recipe.DetectionWindowTime)
-                            {
-                                allWindowsExpired = false;
-                                break;
-                            }
-                        }
-                        if (allWindowsExpired)
-                        {
-                            _consecutiveWindowsOut = 0;
-                        }
-                    }
-
-                    return new EndpointResult(false, $"Monitoring", false);
+                    return ProcessWindowInState(currentSignal, elapsedMs);
 
                 case ProcessState.Overetch:
-
-                    double currentOE = elapsedMs - _overEtchStartTime;
-
-                    if (currentOE >= _recipe.OverEtchValue)
-                    {
-                        _finishedAtMs = _overEtchStartTime + _recipe.OverEtchValue;
-                        _state = ProcessState.Idle;
-
-                        return new EndpointResult(true, "Process Completed", false);
-                    }
-
-                    double remaining = (_recipe.OverEtchValue - currentOE) / 1000.0;
-
-                    return new EndpointResult(false, $"Overetching", false);
+                    return ProcessOveretchState(elapsedMs);
             }
 
             return new EndpointResult(false, "Idle", false);
+        }
+
+        private EndpointResult ProcessInitialDeadTime(uint[] signal, double elapsedMs)
+        {
+            if (elapsedMs >= _recipe.InitialDelay)
+            {
+                InitializeWindows(signal, elapsedMs);
+                _state = ProcessState.WindowOut;
+            }
+
+            return new EndpointResult(false, "Initial Dead Time", false);
+        }
+
+        private EndpointResult ProcessWindowOutState(uint[] signal, double elapsedMs)
+        {
+            bool violated = IsOutsideDetectionWindow(signal, elapsedMs);
+            if (violated)
+            {
+                _consecutiveWindowsOut++;
+                if (_consecutiveWindowsOut >= _recipe.WindowOutCount)
+                {
+                    _state = ProcessState.WindowIn;
+                    _consecutiveWindowsIn = 0;
+
+                    return new EndpointResult(false, "Monitoring", false);
+                }
+            }
+            else
+            {
+                bool allWindowsExpired = true;
+                for (int i = 0; i < _windowStartTimes.Length; i++)
+                {
+                    if (elapsedMs - _windowStartTimes[i] < _recipe.DetectionWindowTime)
+                    {
+                        allWindowsExpired = false;
+                        break;
+                    }
+                }
+                if (allWindowsExpired)
+                    _consecutiveWindowsOut = 0;
+            }
+
+            return new EndpointResult(false, $"Monitoring", false);
+        }
+
+        private EndpointResult ProcessWindowInState(uint[] signal, double elapsedMs)
+        {
+            if (IsInsideDetectionLimits(signal))
+            {
+                if (CheckAndSlideWindows(signal, elapsedMs))
+                {
+                    _consecutiveWindowsIn++;
+                }
+
+                if (_consecutiveWindowsIn >= _recipe.WindowInCount)
+                {
+                    _detectedAtMs = elapsedMs;
+                    if (_recipe.OverEtchEnabled && _recipe.OverEtchValue > 0)
+                    {
+                        _state = ProcessState.Overetch;
+                        _overEtchStartTime = elapsedMs;
+                        return new EndpointResult(false, "Endpoint Found. Starting Overetch...", false);
+                    }
+                    else
+                    {
+                        _finishedAtMs = elapsedMs;
+                        _state = ProcessState.Idle;
+                        return new EndpointResult(true, "Endpoint Detected", false);
+                    }
+                }
+            }
+            else
+            {
+                _consecutiveWindowsIn = 0;
+                ResetWindows(signal, elapsedMs);
+            }
+
+            return new EndpointResult(false, $"Monitoring", false);
+        }
+
+        private EndpointResult ProcessOveretchState(double elapsedMs)
+        {
+            double currentOE = elapsedMs - _overEtchStartTime;
+
+            if (currentOE >= _recipe.OverEtchValue)
+            {
+                _finishedAtMs = _overEtchStartTime + _recipe.OverEtchValue;
+                _state = ProcessState.Idle;
+
+                return new EndpointResult(true, "Process Completed", false);
+            }
+
+            return new EndpointResult(false, $"Overetching", false);
         }
 
         private bool IsInsideDetectionLimits(uint[] signal)
@@ -170,6 +184,45 @@ namespace OpticEMS.Services.Etching
                 }
             }
             return true;
+        }
+
+        private uint[]? GetProcessedSignal(double elapsedMs)
+        {
+            var raw = GetAveragedFrame();
+            if (raw == null)
+            {
+                return null;
+            }
+
+            double periodMs = _recipe!.MagneticFieldPeriod * 1000.0;
+            int avgCount = Math.Max(1, _recipe.FieldPeriodsToAverage);
+
+            if (elapsedMs - _lastMfUpdateTime >= periodMs / avgCount)
+            {
+                _mfBuffer.Enqueue(Array.ConvertAll(raw, x => (double)x));
+                if (_mfBuffer.Count > avgCount)
+                {
+                    _mfBuffer.Dequeue();
+                }
+
+                _lastMfUpdateTime = elapsedMs;
+            }
+
+            if (_mfBuffer.Count == 0)
+            {
+                return raw;
+            }
+
+            var averaged = new uint[raw.Length];
+            foreach (var frame in _mfBuffer)
+            {
+                for (int i = 0; i < raw.Length; i++)
+                {
+                    averaged[i] += (uint)(frame[i] / _mfBuffer.Count);
+                }
+            }
+
+            return averaged;
         }
 
         private bool CheckAndSlideWindows(uint[] signal, double elapsedMs)
@@ -292,6 +345,12 @@ namespace OpticEMS.Services.Etching
 
             InitializeWindows(startIntensities, 0);
 
+            _lastMfUpdateTime = 0;
+            _detectedAtMs = 0;
+            _finishedAtMs = 0;
+            _overEtchStartTime = 0;
+
+            _mfBuffer.Clear();
             _readBuffer.Clear();
             _writeBuffer.Clear();
         }
