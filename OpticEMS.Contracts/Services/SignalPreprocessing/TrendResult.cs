@@ -2,7 +2,6 @@
 {
     public class TrendResult()
     {
-        public uint[] Raw { get; init; } = Array.Empty<uint>();
         public uint[] FrameAveraged { get; init; } = Array.Empty<uint>();
         public uint[] Smoothed { get; init; } = Array.Empty<uint>();
         public double[] Derivatives { get; init; } = Array.Empty<double>();

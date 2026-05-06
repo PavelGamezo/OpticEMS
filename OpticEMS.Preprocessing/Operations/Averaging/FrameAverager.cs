@@ -25,7 +25,7 @@ namespace OpticEMS.Preprocessing.Operations.Averaging
             throw new NotImplementedException();
         }
 
-        public uint[] ComputeAvg(uint[] currentFrame, double elapsedMs)
+        public uint[] ComputeAveraged()
         {
             lock (_swapLock)
             {
@@ -95,6 +95,11 @@ namespace OpticEMS.Preprocessing.Operations.Averaging
             _readBuffer.Clear();
             _writeBuffer.Clear();
             _lastAveraged = Array.Empty<uint>();
+        }
+
+        public uint[] ComputeAvg(uint[] values, double elapsedMs)
+        {
+            throw new NotImplementedException();
         }
     }
 }

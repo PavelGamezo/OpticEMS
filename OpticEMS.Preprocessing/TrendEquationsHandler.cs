@@ -18,6 +18,11 @@ namespace OpticEMS.Preprocessing
             _useDerivating = useDerivating;
         }
 
+        public void PushIntensities(uint[] intensities)
+        {
+            _frameAverager.PushIntensities(intensities);
+        }
+
         public void Set(double magneticFieldPeriodMs = 2000, int mfPeriodsToAverage = 1, int derivationTime = 5)
         {
             _frameAverager = new FrameAverager();
@@ -29,20 +34,15 @@ namespace OpticEMS.Preprocessing
             }
         }
 
-        public TrendResult Process(uint[] rawIntensities, double elapsedMs)
+        public TrendResult Process(double elapsedMs)
         {
-            if (rawIntensities == null || rawIntensities.Length == 0)
+            var averagedFrame = _frameAverager.ComputeAveraged();
+            if (averagedFrame == null || averagedFrame.Length == 0)
             {
                 return TrendResult.Empty;
             }
 
-            var averagedFrame = _frameAverager.ComputeAvg(rawIntensities, elapsedMs);
-
-            uint[] smoothed = averagedFrame;
-            if (_useMFAveraging)
-            {
-                smoothed = _mfSmoother.ComputeAvg(averagedFrame, elapsedMs);
-            }
+            var smoothed = _mfSmoother.ComputeAvg(averagedFrame, elapsedMs);
 
             double[] derivatives = Array.Empty<double>();
             if (_useDerivating)
@@ -52,7 +52,6 @@ namespace OpticEMS.Preprocessing
 
             return new TrendResult
             {
-                Raw = rawIntensities,
                 FrameAveraged = averagedFrame,
                 Smoothed = smoothed,
                 Derivatives = derivatives,

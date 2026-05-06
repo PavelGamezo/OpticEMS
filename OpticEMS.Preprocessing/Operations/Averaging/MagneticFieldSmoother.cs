@@ -1,4 +1,5 @@
-﻿using OpticEMS.Contracts.Services.SignalPreprocessing;
+﻿using OpticEMS.Contracts.Services.Recipe;
+using OpticEMS.Contracts.Services.SignalPreprocessing;
 
 namespace OpticEMS.Preprocessing.Operations.Averaging
 {
@@ -26,18 +27,13 @@ namespace OpticEMS.Preprocessing.Operations.Averaging
 
         public uint[] ComputeAvg(uint[] inputSignal, double elapsedMs)
         {
-            if (inputSignal == null || inputSignal.Length == 0)
-            {
-                return Array.Empty<uint>();
-            }
+            double periodMs = _periodMs;
+            int avgCount = Math.Max(1, _periodsToAverage);
 
-            double interval = _periodMs / _periodsToAverage;
-
-            if (elapsedMs - _lastUpdateTime >= interval)
+            if (elapsedMs - _lastUpdateTime >= periodMs / avgCount)
             {
                 _mfBuffer.Enqueue(Array.ConvertAll(inputSignal, x => (double)x));
-
-                if (_mfBuffer.Count > _periodsToAverage)
+                if (_mfBuffer.Count > avgCount)
                 {
                     _mfBuffer.Dequeue();
                 }
@@ -47,27 +43,19 @@ namespace OpticEMS.Preprocessing.Operations.Averaging
 
             if (_mfBuffer.Count == 0)
             {
-                return (uint[])inputSignal.Clone();
+                return inputSignal;
             }
 
-            int length = inputSignal.Length;
-            double[] sum = new double[length];
-
+            var averaged = new uint[inputSignal.Length];
             foreach (var frame in _mfBuffer)
             {
-                for (int i = 0; i < length; i++)
+                for (int i = 0; i < inputSignal.Length; i++)
                 {
-                    sum[i] += frame[i];
+                    averaged[i] += (uint)(frame[i] / _mfBuffer.Count);
                 }
             }
 
-            uint[] smoothed = new uint[length];
-            for (int i = 0; i < length; i++)
-            {
-                smoothed[i] = (uint)(sum[i] / _mfBuffer.Count);
-            }
-
-            return smoothed;
+            return averaged;
         }
 
         /// <summary>

@@ -8,17 +8,10 @@ namespace OpticEMS.Services.Etching
     {
         private Recipe? _recipe;
         private TrendEquationsHandler? _trendHandler;
-        private readonly object _swapLock = new();
 
         private double[] _windowStartTimes = Array.Empty<double>();
         private double[] _referenceValues = Array.Empty<double>();
         private double[] _baseline = Array.Empty<double>();
-
-        private List<uint[]> _writeBuffer = new();
-        private List<uint[]> _readBuffer = new();
-        private readonly Queue<double[]> _mfBuffer = new();
-        private double _lastMfUpdateTime = 0;
-        private uint[] _lastAveraged = Array.Empty<uint>();
 
         private ProcessState _state = ProcessState.Idle;
         private int _consecutiveWindowsIn = 0;
@@ -34,10 +27,7 @@ namespace OpticEMS.Services.Etching
 
         public void PushIntensities(uint[] currentIntensities)
         {
-            lock (_swapLock)
-            {
-                _writeBuffer.Add((uint[])currentIntensities.Clone());
-            }
+            _trendHandler?.PushIntensities(currentIntensities);
         }
 
         public EndpointResult Update(double elapsedMs)
@@ -189,45 +179,9 @@ namespace OpticEMS.Services.Etching
 
         private uint[]? GetProcessedSignal(double elapsedMs)
         {
-            var raw = GetAveragedFrame();
-            if (raw == null)
-            {
-                return null;
-            }
-
-            var trendResult = _trendHandler?.Process(raw, elapsedMs);
+            var trendResult = _trendHandler?.Process(elapsedMs);
 
             return trendResult?.Smoothed;
-
-            double periodMs = _recipe!.MagneticFieldPeriodMs * 1000.0;
-            int avgCount = Math.Max(1, _recipe.FieldPeriodsToAverage);
-
-            if (elapsedMs - _lastMfUpdateTime >= periodMs / avgCount)
-            {
-                _mfBuffer.Enqueue(Array.ConvertAll(raw, x => (double)x));
-                if (_mfBuffer.Count > avgCount)
-                {
-                    _mfBuffer.Dequeue();
-                }
-
-                _lastMfUpdateTime = elapsedMs;
-            }
-
-            if (_mfBuffer.Count == 0)
-            {
-                return raw;
-            }
-
-            var averaged = new uint[raw.Length];
-            foreach (var frame in _mfBuffer)
-            {
-                for (int i = 0; i < raw.Length; i++)
-                {
-                    averaged[i] += (uint)(frame[i] / _mfBuffer.Count);
-                }
-            }
-
-            return averaged;
         }
 
         private bool CheckAndSlideWindows(uint[] signal, double elapsedMs)
@@ -309,46 +263,12 @@ namespace OpticEMS.Services.Etching
             }
         }
 
-        private uint[] GetAveragedFrame()
-        {
-            lock (_swapLock)
-            {
-                if (_writeBuffer.Count == 0)
-                {
-                    return _lastAveraged;
-                }
-
-                var tmp = _readBuffer;
-                _readBuffer = _writeBuffer;
-                _writeBuffer = tmp;
-                _writeBuffer.Clear();
-            }
-
-            int length = _readBuffer[0].Length;
-            double[] sum = new double[length];
-
-            foreach (var frame in _readBuffer)
-            {
-                for (int i = 0; i < length; i++) sum[i] += frame[i];
-            }
-
-            uint[] avg = new uint[length];
-            for (int i = 0; i < length; i++)
-            {
-                avg[i] = (uint)(sum[i] / _readBuffer.Count);
-            }
-
-            _lastAveraged = avg;
-
-            return avg;
-        }
-
         public void Start(Recipe recipe, uint[] startIntensities)
         {
             _recipe = recipe;
             
             _trendHandler = new TrendEquationsHandler(recipe.DerivativeEnabled);
-            _trendHandler.Set(recipe.MagneticFieldPeriodMs);
+            _trendHandler.Set(recipe.MagneticFieldPeriodMs, recipe.FieldPeriodsToAverage);
 
             _state = ProcessState.InitialDeadTime;
 
@@ -357,14 +277,9 @@ namespace OpticEMS.Services.Etching
 
             InitializeWindows(startIntensities, 0);
 
-            _lastMfUpdateTime = 0;
             _detectedAtMs = 0;
             _finishedAtMs = 0;
             _overEtchStartTime = 0;
-
-            _mfBuffer.Clear();
-            _readBuffer.Clear();
-            _writeBuffer.Clear();
         }
 
         public void Stop() => _state = ProcessState.Idle;
