@@ -23,6 +23,14 @@ namespace OpticEMS.Contracts.Services.Recipe
 
         public int DetectionWindowTime { get; set; }
 
+        public float MagneticFieldPeriodMs { get; set; }
+
+        public int FieldPeriodsToAverage { get; set; }
+
+        public bool DerivativeEnabled { get; set; }
+
+        public int DerivativePoints { get; set; } = 1;
+
         public float ExposureMs { get; set; } = 1;
 
         public int ScansNum { get; set; } = 1;
@@ -31,13 +39,7 @@ namespace OpticEMS.Contracts.Services.Recipe
 
         public int WindowOutCount { get; set; } = 1;
 
-        public int StableThresholdPercent { get; set; } = 1;
-
         public int MaxEndpointTime { get; set; }
-
-        public float MagneticFieldPeriod { get; set; }
-
-        public int FieldPeriodsToAverage { get; set; }
 
         public bool AutocalibrationEnabled { get; set; }
 

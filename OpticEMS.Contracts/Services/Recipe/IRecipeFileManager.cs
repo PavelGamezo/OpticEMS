@@ -1,5 +1,6 @@
 ﻿namespace OpticEMS.Contracts.Services.Recipe
 {
+    /*
     public interface IRecipeFileManager
     {
         Task SaveRecipe(Recipe recipe);
@@ -10,4 +11,5 @@
 
         void DeleteRecipe(string name);
     }
+    */
 }

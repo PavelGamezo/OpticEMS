@@ -46,6 +46,9 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         private string _selectedPcaText = "No";
 
         [ObservableProperty]
+        private string _selectedDerivativeText = "No";
+
+        [ObservableProperty]
         private ObservableCollection<WavelengthMonitorItem> _wavelengthItems = new();
         
         public ICollectionView RecipesView { get; private set; }
@@ -297,6 +300,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                 SelectedOverEtchText = value.OverEtchEnabled ? "Yes" : "No";
                 SelectedAutocalibrationText = value.AutocalibrationEnabled ? "Yes" : "No";
                 SelectedPcaText = value.PcaEnabled ? "Yes" : "No";
+                SelectedDerivativeText = value.DerivativeEnabled ? "Yes" : "No";
             }
             Log.Information("RecipeViewModel: Recipe changed");
         }
@@ -331,6 +335,14 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             if (SelectedRecipe != null)
             {
                 SelectedRecipe.AutocalibrationEnabled = (value == "Yes");
+            }
+        }
+
+        partial void OnSelectedDerivativeTextChanged(string value)
+        {
+            if (SelectedRecipe != null)
+            {
+                SelectedRecipe.DerivativeEnabled = (value == "Yes");
             }
         }
     }

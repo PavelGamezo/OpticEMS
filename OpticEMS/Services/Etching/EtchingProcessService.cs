@@ -1,11 +1,13 @@
 ﻿using OpticEMS.Contracts.Services.Etching;
 using OpticEMS.Contracts.Services.Recipe;
+using OpticEMS.Preprocessing;
 
 namespace OpticEMS.Services.Etching
 {
     public class EtchingProcessService : IEtchingProcessService
     {
         private Recipe? _recipe;
+        private TrendEquationsHandler? _trendHandler;
         private readonly object _swapLock = new();
 
         private double[] _windowStartTimes = Array.Empty<double>();
@@ -53,7 +55,6 @@ namespace OpticEMS.Services.Etching
                 return new EndpointResult(true, "Force Stop (Timeout)", true);
             }
 
-            //var currentSignal = GetAveragedFrame();
             var currentSignal = GetProcessedSignal(elapsedMs);
             if (currentSignal == null || currentSignal.Length == 0)
             {
@@ -194,7 +195,11 @@ namespace OpticEMS.Services.Etching
                 return null;
             }
 
-            double periodMs = _recipe!.MagneticFieldPeriod * 1000.0;
+            var trendResult = _trendHandler?.Process(raw, elapsedMs);
+
+            return trendResult?.Smoothed;
+
+            double periodMs = _recipe!.MagneticFieldPeriodMs * 1000.0;
             int avgCount = Math.Max(1, _recipe.FieldPeriodsToAverage);
 
             if (elapsedMs - _lastMfUpdateTime >= periodMs / avgCount)
@@ -308,7 +313,10 @@ namespace OpticEMS.Services.Etching
         {
             lock (_swapLock)
             {
-                if (_writeBuffer.Count == 0) return _lastAveraged;
+                if (_writeBuffer.Count == 0)
+                {
+                    return _lastAveraged;
+                }
 
                 var tmp = _readBuffer;
                 _readBuffer = _writeBuffer;
@@ -338,6 +346,10 @@ namespace OpticEMS.Services.Etching
         public void Start(Recipe recipe, uint[] startIntensities)
         {
             _recipe = recipe;
+            
+            _trendHandler = new TrendEquationsHandler(recipe.DerivativeEnabled);
+            _trendHandler.Set(recipe.MagneticFieldPeriodMs);
+
             _state = ProcessState.InitialDeadTime;
 
             _consecutiveWindowsIn = 0;
