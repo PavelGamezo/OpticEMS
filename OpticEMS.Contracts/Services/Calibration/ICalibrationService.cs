@@ -4,6 +4,6 @@
     {
         double[] CalculateCoefficients(IEnumerable<CalibrationPoint> calibrationPoints);
 
-        void CorrectWavelengthIndices(uint[] intensities, ref int nominalPixel);
+        void CorrectWavelengthIndices(double[] intensities, ref int nominalPixel);
     }
 }

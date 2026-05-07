@@ -99,7 +99,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             return plotModel;
         }
 
-        public void UpdateChart(IReadOnlyList<double> x, IReadOnlyList<uint> y)
+        public void UpdateChart(IReadOnlyList<double> x, IReadOnlyList<double> y)
         {
             _lastX = x;
 

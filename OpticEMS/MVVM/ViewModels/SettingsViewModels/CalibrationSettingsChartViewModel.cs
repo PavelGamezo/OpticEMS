@@ -142,7 +142,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 
         public void ResetPlotAxes() => PlotModel.ResetAllAxes();
 
-        public void UpdateCalibrationPlot(uint[] data)
+        public void UpdateCalibrationPlot(double[] data)
         {
             if (data == null)
             {
@@ -180,7 +180,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
             }
         }
 
-        public void UpdateInterpolationPlot(uint[] currentSpectrumData, double[] wavelengths)
+        public void UpdateInterpolationPlot(double[] currentSpectrumData, double[] wavelengths)
         {
             try
             {

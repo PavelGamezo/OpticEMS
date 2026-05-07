@@ -21,7 +21,7 @@ namespace OpticEMS.Processing.PCA
             set => _nComponents = Math.Clamp(value, 1, 15);
         }
 
-        public bool TryAutoTrain(IEnumerable<uint[]> spectra, string modelPath)
+        public bool TryAutoTrain(IEnumerable<double[]> spectra, string modelPath)
         {
             if (IsTrained)
             {
@@ -44,7 +44,7 @@ namespace OpticEMS.Processing.PCA
         /// <summary>
         /// Main PCA analize method for spectrum process
         /// </summary>
-        public override Result Analyze(uint[] intensities)
+        public override Result Analyze(double[] intensities)
         {
             if (!IsTrained || _mean.Count == 0)
             {
@@ -85,7 +85,7 @@ namespace OpticEMS.Processing.PCA
             return new PcaAnomalyResult(isAnomaly, t2, q, _t2Limit, _qLimit, residual.ToArray(), message);
         }
 
-        public override void Train(IEnumerable<uint[]> trainingData)
+        public override void Train(IEnumerable<double[]> trainingData)
         {
             var doubleData = trainingData.Select(arr => arr.Select(x => (double)x).ToArray()).ToArray();
 

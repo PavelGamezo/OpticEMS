@@ -25,7 +25,7 @@ namespace OpticEMS.Services.Etching
         public double TotalDurationSeconds => _finishedAtMs / 1000.0;
         public double OverEtchDurationSeconds => (_finishedAtMs - _detectedAtMs) / 1000.0;
 
-        public void PushIntensities(uint[] currentIntensities)
+        public void PushIntensities(double[] currentIntensities)
         {
             _trendHandler?.PushIntensities(currentIntensities);
         }
@@ -69,7 +69,7 @@ namespace OpticEMS.Services.Etching
             return new EndpointResult(false, "Idle", false);
         }
 
-        private EndpointResult ProcessInitialDeadTime(uint[] signal, double elapsedMs)
+        private EndpointResult ProcessInitialDeadTime(double[] signal, double elapsedMs)
         {
             if (elapsedMs >= _recipe.InitialDelay)
             {
@@ -80,7 +80,7 @@ namespace OpticEMS.Services.Etching
             return new EndpointResult(false, "Initial Dead Time", false);
         }
 
-        private EndpointResult ProcessWindowOutState(uint[] signal, double elapsedMs)
+        private EndpointResult ProcessWindowOutState(double[] signal, double elapsedMs)
         {
             bool violated = IsOutsideDetectionWindow(signal, elapsedMs);
             if (violated)
@@ -112,7 +112,7 @@ namespace OpticEMS.Services.Etching
             return new EndpointResult(false, $"Monitoring", false);
         }
 
-        private EndpointResult ProcessWindowInState(uint[] signal, double elapsedMs)
+        private EndpointResult ProcessWindowInState(double[] signal, double elapsedMs)
         {
             if (IsInsideDetectionLimits(signal))
             {
@@ -162,7 +162,7 @@ namespace OpticEMS.Services.Etching
             return new EndpointResult(false, $"Overetching", false);
         }
 
-        private bool IsInsideDetectionLimits(uint[] signal)
+        private bool IsInsideDetectionLimits(double[] signal)
         {
             for (int i = 0; i < signal.Length; i++)
             {
@@ -177,14 +177,14 @@ namespace OpticEMS.Services.Etching
             return true;
         }
 
-        private uint[]? GetProcessedSignal(double elapsedMs)
+        private double[]? GetProcessedSignal(double elapsedMs)
         {
             var trendResult = _trendHandler?.Process(elapsedMs);
 
             return trendResult?.Smoothed;
         }
 
-        private bool CheckAndSlideWindows(uint[] signal, double elapsedMs)
+        private bool CheckAndSlideWindows(double[] signal, double elapsedMs)
         {
             bool anyMoved = false;
 
@@ -201,7 +201,7 @@ namespace OpticEMS.Services.Etching
             return anyMoved;
         }
 
-        private void ResetWindows(uint[] signal, double elapsedMs)
+        private void ResetWindows(double[] signal, double elapsedMs)
         {
             for (int i = 0; i < signal.Length; i++)
             {
@@ -210,7 +210,7 @@ namespace OpticEMS.Services.Etching
             }
         }
 
-        private bool IsOutsideDetectionWindow(uint[] currentSignal, double elapsedMs)
+        private bool IsOutsideDetectionWindow(double[] currentSignal, double elapsedMs)
         {
             bool anyLineViolatedThisCycle = false;
 
@@ -244,7 +244,7 @@ namespace OpticEMS.Services.Etching
             return anyLineViolatedThisCycle;
         }
 
-        private void InitializeWindows(uint[] signal, double elapsedMs)
+        private void InitializeWindows(double[] signal, double elapsedMs)
         {
             int count = signal.Length;
 
@@ -263,7 +263,7 @@ namespace OpticEMS.Services.Etching
             }
         }
 
-        public void Start(Recipe recipe, uint[] startIntensities)
+        public void Start(Recipe recipe, double[] startIntensities)
         {
             _recipe = recipe;
             

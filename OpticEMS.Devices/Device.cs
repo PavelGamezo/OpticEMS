@@ -8,7 +8,7 @@ namespace OpticEMS.Devices
 
         public abstract void Initialize(int id);
 
-        public abstract bool Scan(int id, uint[] collection, CancellationToken cancellationToken);
+        public abstract bool Scan(int id, double[] collection, CancellationToken cancellationToken);
 
         public abstract void SetParameters(int id, float exposureMs, int scansNum);
 

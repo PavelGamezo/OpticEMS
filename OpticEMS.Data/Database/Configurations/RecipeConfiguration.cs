@@ -13,25 +13,50 @@ namespace OpticEMS.Data.Database.Configurations
             builder.HasKey(recipe => recipe.DatabaseId);
 
             builder.Property(recipe => recipe.RecipeId)
-                .IsRequired()
-                .ValueGeneratedNever();
+                   .IsRequired()
+                   .ValueGeneratedNever();
 
             builder.HasIndex(r => r.RecipeId);
 
+            builder.Property(r => r.ProcessingMode)
+                   .HasConversion<int>();
+
+            builder.Property(r => r.DualSubMode)
+                   .HasConversion<int>();
+
+            builder.Property(r => r.MultiSubMode)
+                   .HasConversion<int>();
+
             builder.Property(r => r.Wavelengths)
-                .HasConversion(
-                    value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
-                    value => JsonSerializer.Deserialize<List<double>>(value) ?? new());
+                   .HasConversion(
+                       value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
+                       value => JsonSerializer.Deserialize<List<double>>(value) ?? new());
+
+
+            builder.Property(r => r.WavelengthNames)
+                   .HasConversion(
+                       value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
+                       value => JsonSerializer.Deserialize<List<string>>(value) ?? new());
 
             builder.Property(r => r.WavelengthColors)
-                .HasConversion(
-                    value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
-                    value => JsonSerializer.Deserialize<List<Color>>(value) ?? new());
+                   .HasConversion(
+                       value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
+                       value => JsonSerializer.Deserialize<List<Color>>(value) ?? new());
 
             builder.Property(r => r.DetectionWindowHighs)
-                .HasConversion(
-                    value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
-                    value => JsonSerializer.Deserialize<List<int>>(value) ?? new());
+                   .HasConversion(
+                       value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
+                       value => JsonSerializer.Deserialize<List<int>>(value) ?? new());
+
+            builder.Property(r => r.CombinedNumeratorIndices)
+                   .HasConversion(
+                       v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                       v => JsonSerializer.Deserialize<List<int>>(v) ?? new());
+
+            builder.Property(r => r.CombinedDenominatorIndices)
+                   .HasConversion(
+                       v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                       v => JsonSerializer.Deserialize<List<int>>(v) ?? new());
         }
     }
 }

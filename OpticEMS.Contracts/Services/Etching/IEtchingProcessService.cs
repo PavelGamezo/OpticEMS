@@ -10,7 +10,7 @@ namespace OpticEMS.Contracts.Services.Etching
 
         double TotalDurationSeconds { get; }
 
-        void Start(Recipe.Recipe recipe, uint[] startIntensities);
+        void Start(Recipe.Recipe recipe, double[] startIntensities);
 
         List<WindowBounds> GetCurrentWindowBounds();
 
@@ -22,6 +22,6 @@ namespace OpticEMS.Contracts.Services.Etching
 
         EndpointResult Update(double elapsedMs);
 
-        void PushIntensities(uint[] currentIntensities);
+        void PushIntensities(double[] currentIntensities);
     }
 }

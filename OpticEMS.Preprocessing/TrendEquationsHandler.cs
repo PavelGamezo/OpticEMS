@@ -18,7 +18,7 @@ namespace OpticEMS.Preprocessing
             _useDerivating = useDerivating;
         }
 
-        public void PushIntensities(uint[] intensities)
+        public void PushIntensities(double[] intensities)
         {
             _frameAverager.PushIntensities(intensities);
         }

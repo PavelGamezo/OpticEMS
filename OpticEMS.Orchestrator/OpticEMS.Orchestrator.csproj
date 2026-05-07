@@ -10,6 +10,7 @@
     <ProjectReference Include="..\OpticEMS.Communication\OpticEMS.Communication.csproj" />
     <ProjectReference Include="..\OpticEMS.Contracts\OpticEMS.Contracts.csproj" />
     <ProjectReference Include="..\OpticEMS.Devices\OpticEMS.Devices.csproj" />
+    <ProjectReference Include="..\OpticEMS.Preprocessing\OpticEMS.Preprocessing.csproj" />
     <ProjectReference Include="..\OpticEMS.Processing\OpticEMS.Processing.csproj" />
   </ItemGroup>
 

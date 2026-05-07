@@ -103,7 +103,7 @@ namespace OpticEMS.Devices.Devices.Solar
             }
         }
 
-        public override bool Scan(int cameraId, uint[] collection, CancellationToken cancellationToken)
+        public override bool Scan(int cameraId, double[] collection, CancellationToken cancellationToken)
         {
             if (!_isInitialized)
             {
@@ -129,7 +129,9 @@ namespace OpticEMS.Devices.Devices.Solar
                             Marshal.Copy(buffer, temp, 0, pixels);
 
                             for (int i = 0; i < pixels; i++)
-                                collection[i] = (uint)temp[i];
+                            {
+                                collection[i] = temp[i];
+                            }
 
                             return true;
                         }

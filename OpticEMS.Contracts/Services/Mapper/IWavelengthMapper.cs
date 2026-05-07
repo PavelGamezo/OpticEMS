@@ -4,10 +4,10 @@
     {
         double[]? Wavelengths { get; }
 
-        double[] ConvertPixelsToWavelengths(uint[] spectrum, double[]? coefficients);
+        double[] ConvertPixelsToWavelengths(double[] spectrum, double[]? coefficients);
 
         int FindNearestIndex(double[] array, double target);
 
-        double FindWavelengthByPixel(uint pixel, double[]? coefficients);
+        double FindWavelengthByPixel(double pixel, double[]? coefficients);
     }
 }

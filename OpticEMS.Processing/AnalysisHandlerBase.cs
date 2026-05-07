@@ -21,8 +21,8 @@
         /// A <see cref="Result"/> object containing the analysis verdict (normal/anomaly) 
         /// and a detailed message regarding the current process state.
         /// </returns>
-        public abstract Result Process(uint[] currentSpectrum);
+        public abstract Result Process(double[] currentSpectrum);
 
-        public abstract Task<Result> ProcessAsync(uint[] currentSpectrum);
+        public abstract Task<Result> ProcessAsync(double[] currentSpectrum);
     }
 }

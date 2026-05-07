@@ -5,7 +5,7 @@
         private readonly string _modelPath;
         private readonly int _components;
         private readonly int _minTrainingSize;
-        private readonly List<uint[]> _trainingBuffer = new();
+        private readonly List<double[]> _trainingBuffer = new();
 
         // STATE
         private bool _isBusy = false;
@@ -28,7 +28,7 @@
             TryLoadExistingModel();
         }
 
-        public override async Task<Result> ProcessAsync(uint[] spectrum)
+        public override async Task<Result> ProcessAsync(double[] spectrum)
         {
             if (_isBusy)
             {
@@ -127,7 +127,7 @@
             return ranges;
         }
 
-        public Result TryAutoTrain(IEnumerable<uint[]> spectra)
+        public Result TryAutoTrain(IEnumerable<double[]> spectra)
         {
             try
             {
@@ -152,7 +152,7 @@
             }
         }
 
-        public void PushForTraining(uint[] spectrum)
+        public void PushForTraining(double[] spectrum)
         {
             _trainingBuffer.Add(spectrum.ToArray());
 
@@ -167,7 +167,7 @@
             return TryAutoTrain(_trainingBuffer);
         }
 
-        public override Result Process(uint[] currentSpectrum)
+        public override Result Process(double[] currentSpectrum)
         {
             if (!Analyzer.IsTrained)
             {

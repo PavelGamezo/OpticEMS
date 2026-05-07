@@ -5,9 +5,14 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:OpticEMS.MVVM.View.Recipe"
       xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+      xmlns:converters="clr-namespace:OpticEMS.Common.Helpers"
       mc:Ignorable="d" 
       d:DesignHeight="1080" d:DesignWidth="1920"
       Title="Recipe">
+
+    <Page.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -282,6 +287,7 @@
 
                     <Grid Margin="10">
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -734,6 +740,75 @@
                                                         </Border>
 
                                                     </Grid>
+
+                                                    <StackPanel Orientation="Horizontal">
+
+                                                        <TextBlock Text="Detection wavelength name"
+                                                                   FontSize="11"
+                                                                   Margin="0,10,0,0"
+                                                                   Foreground="#999999"/>
+
+                                                        <Border Margin="6,10,0,0" 
+                                                                Width="14" 
+                                                                Height="14" 
+                                                                CornerRadius="7" 
+                                                                Background="#444444" 
+                                                                Cursor="Help"
+                                                                VerticalAlignment="Center"
+                                                                ToolTipService.InitialShowDelay="100">
+
+                                                            <TextBlock Text="?" 
+                                                                       FontSize="10" 
+                                                                       FontWeight="Bold"
+                                                                       Foreground="#AAAAAA" 
+                                                                       HorizontalAlignment="Center" 
+                                                                       VerticalAlignment="Center"
+                                                                       Margin="0,0,0,1"/>
+
+                                                            <Border.ToolTip>
+
+                                                                <ToolTip Background="#252526" 
+                                                                         Foreground="White" 
+                                                                         BorderBrush="#454545"
+                                                                         Padding="10"
+                                                                         HasDropShadow="True">
+
+                                                                    <StackPanel Width="200">
+                                                                        <TextBlock Text="Detection wavelength name" 
+                                                                                   FontWeight="Bold" 
+                                                                                   Foreground="White"/>
+
+                                                                        <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                                               Height="108"
+                                                                               Width="192"
+                                                                               Stretch="Uniform" 
+                                                                               Margin="0,5"
+                                                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                                        <TextBlock Text="Upper intensity thresholds for each wavelength that define the boundary of the detection window.
+                                                                                         When the measured signal crosses these limits, the algorithm evaluates stability and may transition between Window‑In, Monitoring, and Window‑Out states.
+                                                                                         Used to detect significant rises in intensity that indicate process transitions or endpoint behavior." 
+                                                                                   Foreground="#CCCCCC" 
+                                                                                   FontSize="11" 
+                                                                                   TextWrapping="Wrap"/>
+                                                                    </StackPanel>
+
+                                                                </ToolTip>
+
+                                                            </Border.ToolTip>
+
+                                                        </Border>
+
+                                                    </StackPanel>
+
+                                                        <TextBox Grid.Column="0" 
+                                                                 Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
+                                                                 Background="#3E3E40"
+                                                                 BorderThickness="0"
+                                                                 Foreground="White"
+                                                                 Padding="8"
+                                                                 Margin="0,5,0,0"/>
+
 
                                                 </StackPanel>
                                             </Border>
@@ -2094,6 +2169,106 @@
                                 </Grid>
 
                             </Grid>
+
+                        </Border>
+                        <Border Grid.Row="8"
+                                CornerRadius="5"
+                                Padding="15,10,15,0">
+
+                            <StackPanel Margin="0,20,0,0">
+
+                                <TextBlock Text="Processing Mode"
+               FontSize="12"
+               FontWeight="Bold"
+               Foreground="White"
+               Margin="0,5,0,8"/>
+
+                                <!-- Основной режим -->
+                                <ComboBox Background="#3E3E40"
+              BorderThickness="0"
+              Foreground="White"
+              Padding="8"
+              Height="32"
+              ItemsSource="{Binding AvailableProcessingModes}"
+              SelectedItem="{Binding ProcessingMode}"
+              Style="{StaticResource ComboBoxStyle}"/>
+
+                                <!-- Dual Channel SubMode -->
+                                <StackPanel Margin="0,12,0,0" 
+                Visibility="{Binding IsDualChannelMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                                    <TextBlock Text="Dual Channel Mode"
+                   FontSize="11"
+                   Foreground="#999999"
+                   Margin="0,0,0,5"/>
+
+                                    <ComboBox Background="#3E3E40"
+                  BorderThickness="0"
+                  Foreground="White"
+                  Padding="8"
+                  Height="32"
+                  ItemsSource="{Binding DualSubModes}"
+                  SelectedItem="{Binding DualSubMode}"
+                  Style="{StaticResource ComboBoxStyle}"/>
+                                </StackPanel>
+
+                                <!-- Multi Channel SubMode -->
+                                <StackPanel Margin="0,12,0,0" 
+                Visibility="{Binding IsMultiChannelMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                                    <TextBlock Text="Multi Channel Mode"
+                   FontSize="11"
+                   Foreground="#999999"
+                   Margin="0,0,0,5"/>
+
+                                    <ComboBox Background="#3E3E40"
+                  BorderThickness="0"
+                  Foreground="White"
+                  Padding="8"
+                  Height="32"
+                  ItemsSource="{Binding MultiSubModes}"
+                  SelectedItem="{Binding MultiSubMode}"
+                  Style="{StaticResource ComboBoxStyle}"/>
+                                </StackPanel>
+
+                                <StackPanel Visibility="{Binding IsCombinedMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <TextBlock Text="Combined Expression: (A + B) / C)"
+                                               FontSize="11" 
+                                               Foreground="#999999"
+                                               Margin="0,10,0,0"/>
+
+                                    <TextBox Text="{Binding CombinedExpression, UpdateSourceTrigger=PropertyChanged}"
+                                             Background="#3E3E40"
+                                             BorderThickness="0"
+                                             Foreground="White"
+                                             Padding="8"
+                                             Margin="0,5,0,5"
+                                             AcceptsReturn="True"/>
+
+                                    <TextBlock Text="Available channels:"
+                                               Foreground="White"
+                                               Margin="0,5,0,0"/>
+                                    
+                                    <ItemsControl ItemsSource="{Binding AvailableChannelNames}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Margin="2" Padding="6,2"
+                                                        Content="{Binding}"
+                                                        Command="{Binding DataContext.InsertChannelCommand, 
+                                                                          RelativeSource={RelativeSource AncestorType=Page}}"
+                                                        CommandParameter="{Binding}"
+                                                        Style="{StaticResource MenuButtonStyle}"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+
+                            </StackPanel>
 
                         </Border>
                     </Grid>

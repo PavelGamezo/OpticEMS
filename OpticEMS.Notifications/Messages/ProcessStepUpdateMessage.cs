@@ -4,5 +4,5 @@
         int ChannelId,
         string Status,
         double CurrentTime,
-        uint[] IntensitiesSnapshot);
+        double[] IntensitiesSnapshot);
 }

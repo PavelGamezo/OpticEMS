@@ -2,7 +2,7 @@
 
 namespace OpticEMS.Preprocessing.Operations.Derivation
 {
-    public class DerivativeCalculator : ISignalOperation
+    public class DerivativeCalculator
     {
         private readonly int _derivationTime;
         private readonly Queue<double> _buffer = new();
@@ -23,7 +23,7 @@ namespace OpticEMS.Preprocessing.Operations.Derivation
             _derivationTime = derivationTime;
         }
 
-        public double ComputeDer(uint currentValue)
+        public double ComputeDer(double currentValue)
         {
             _buffer.Enqueue(currentValue);
 
@@ -65,7 +65,7 @@ namespace OpticEMS.Preprocessing.Operations.Derivation
             return slope;
         }
 
-        public double[] ComputeDer(uint[] currentValues, double elapsedMs)
+        public double[] ComputeDer(double[] currentValues, double elapsedMs)
         {
             if (currentValues == null || currentValues.Length == 0)
             {
@@ -87,29 +87,6 @@ namespace OpticEMS.Preprocessing.Operations.Derivation
             _buffer.Clear();
             _lastValue = 0;
             _isInitialized = false;
-        }
-
-        /// <summary>
-        /// Not implemented in current version
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public uint ComputeAvg(uint value)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Not implemented in current version
-        /// </summary>
-        /// <param name="values"></param>
-        /// <param name="elapsedMs"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public uint[] ComputeAvg(uint[] values, double elapsedMs)
-        {
-            throw new NotImplementedException();
         }
     }
 }

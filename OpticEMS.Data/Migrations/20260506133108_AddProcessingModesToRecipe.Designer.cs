@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OpticEMS.Data.Database.Context;
 
@@ -10,9 +11,11 @@ using OpticEMS.Data.Database.Context;
 namespace OpticEMS.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260506133108_AddProcessingModesToRecipe")]
+    partial class AddProcessingModesToRecipe
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.2");
@@ -55,10 +58,6 @@ namespace OpticEMS.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("CombinedDenominatorIndices")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CombinedExpression")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -135,10 +134,6 @@ namespace OpticEMS.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("WavelengthColors")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("WavelengthNames")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

@@ -25,7 +25,7 @@ namespace OpticEMS.Devices
 
         public double[] Wavelengths { get; set; }
 
-        public uint[] Intensities { get; set; }
+        public double[] Intensities { get; set; }
 
         public Device Device => _device;
 
@@ -82,7 +82,7 @@ namespace OpticEMS.Devices
             }
 
             Wavelengths = new double[_device.DeviceInfo.PixelNum];
-            Intensities = new uint[_device.DeviceInfo.PixelNum];
+            Intensities = new double[_device.DeviceInfo.PixelNum];
 
             for (int i = 0; i < _device.DeviceInfo.PixelNum; i++)
             {

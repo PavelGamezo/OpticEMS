@@ -25,7 +25,7 @@ namespace OpticEMS.Services.Calibration
             return bestIndex;
         }
 
-        public double[] ConvertPixelsToWavelengths(uint[] spectrum, double[]? coefficients)
+        public double[] ConvertPixelsToWavelengths(double[] spectrum, double[]? coefficients)
         {
             if (Wavelengths is null)
             {
@@ -49,7 +49,7 @@ namespace OpticEMS.Services.Calibration
             }
         }
 
-        public double FindWavelengthByPixel(uint pixel, double[]? coefficients)
+        public double FindWavelengthByPixel(double pixel, double[]? coefficients)
         {
             var wavelength = coefficients[3]
                     + coefficients[2] * pixel

@@ -71,7 +71,7 @@ namespace OpticEMS.Devices.Devices.Avantes
             _wavelengths = lambda.Value.Take(_numPixels).ToArray();
         }
 
-        public override bool Scan(int id, uint[] collection, CancellationToken cancellationToken)
+        public override bool Scan(int id, double[] collection, CancellationToken cancellationToken)
         {
             if (_devHandle == -1)
             {
@@ -92,7 +92,7 @@ namespace OpticEMS.Devices.Devices.Avantes
 
                     for (int i = 0; i < _numPixels && i < collection.Length; i++)
                     {
-                        collection[i] = (uint)spectrum.Value[i];
+                        collection[i] = spectrum.Value[i];
                     }
 
                     return true;

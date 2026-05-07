@@ -13,13 +13,13 @@
         /// </summary>
         /// <param name="intensities"></param>
         /// <returns></returns>
-        public abstract Result Analyze(uint[] intensities);
+        public abstract Result Analyze(double[] intensities);
 
         /// <summary>
         /// Method for training (accepts a collection of spectra)
         /// </summary>
         /// <param name="trainingData"></param>
-        public abstract void Train(IEnumerable<uint[]> trainingData);
+        public abstract void Train(IEnumerable<double[]> trainingData);
 
         /// <summary>
         /// Method for working with analysis files

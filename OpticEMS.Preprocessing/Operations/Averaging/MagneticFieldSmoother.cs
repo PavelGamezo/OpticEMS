@@ -1,9 +1,6 @@
-﻿using OpticEMS.Contracts.Services.Recipe;
-using OpticEMS.Contracts.Services.SignalPreprocessing;
-
-namespace OpticEMS.Preprocessing.Operations.Averaging
+﻿namespace OpticEMS.Preprocessing.Operations.Averaging
 {
-    public class MagneticFieldSmoother : ISignalOperation
+    public class MagneticFieldSmoother
     {
         private readonly double _periodMs;
         private readonly int _periodsToAverage;
@@ -20,12 +17,7 @@ namespace OpticEMS.Preprocessing.Operations.Averaging
 
         public string Description => $"MF smoothing over {_periodsToAverage} periods";
 
-        public uint ComputeAvg(uint value)
-        {
-            throw new NotImplementedException();
-        }
-
-        public uint[] ComputeAvg(uint[] inputSignal, double elapsedMs)
+        public double[] ComputeAvg(double[] inputSignal, double elapsedMs)
         {
             double periodMs = _periodMs;
             int avgCount = Math.Max(1, _periodsToAverage);
@@ -46,12 +38,12 @@ namespace OpticEMS.Preprocessing.Operations.Averaging
                 return inputSignal;
             }
 
-            var averaged = new uint[inputSignal.Length];
+            var averaged = new double[inputSignal.Length];
             foreach (var frame in _mfBuffer)
             {
                 for (int i = 0; i < inputSignal.Length; i++)
                 {
-                    averaged[i] += (uint)(frame[i] / _mfBuffer.Count);
+                    averaged[i] += (frame[i] / _mfBuffer.Count);
                 }
             }
 

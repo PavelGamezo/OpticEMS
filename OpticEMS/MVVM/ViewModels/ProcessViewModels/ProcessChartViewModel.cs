@@ -85,7 +85,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             PlotModel = model;
         }
 
-        public void UpdateTopPlot(TimeSpan elapsedTime, uint[] intensities)
+        public void UpdateTopPlot(TimeSpan elapsedTime, double[] intensities)
         {
             if (PlotModel == null)
             {

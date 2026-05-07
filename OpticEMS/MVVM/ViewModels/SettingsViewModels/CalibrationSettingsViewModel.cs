@@ -19,7 +19,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
         private readonly IDialogService _dialogService;
         private readonly ICalibrationService _calibrationService;
 
-        private uint[]? _currentSpectrumData;
+        private double[]? _currentSpectrumData;
 
         public CalibrationSettingsChartViewModel CalibrationSettingsChartViewModel { get; }
 
@@ -223,7 +223,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
             });
         }
 
-        private void HandleIncomingSpectrum(uint[] intensities)
+        private void HandleIncomingSpectrum(double[] intensities)
         {
             _currentSpectrumData = intensities;
             CalibrationSettingsChartViewModel.UpdateCalibrationPlot(_currentSpectrumData);

@@ -56,7 +56,7 @@ namespace OpticEMS.Devices.Devices.VirtualSpec
             _exposureMs = exposureMs;
         }
 
-        public override bool Scan(int id, uint[] collection, CancellationToken cancellationToken)
+        public override bool Scan(int id, double[] collection, CancellationToken cancellationToken)
         {
             Thread.Sleep((int)_exposureMs);
 
@@ -88,9 +88,9 @@ namespace OpticEMS.Devices.Devices.VirtualSpec
             _isRunning = false;
         }
 
-        private uint[] GenerateSpectrum()
+        private double[] GenerateSpectrum()
         {
-            uint[] data = new uint[PIXELS];
+            double[] data = new double[PIXELS];
 
             double elapsed = _isRunning ? (DateTime.Now - _startTime).TotalSeconds : 0;
 

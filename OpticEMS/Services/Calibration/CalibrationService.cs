@@ -21,7 +21,7 @@ namespace OpticEMS.Services.Calibration
             return coefficients;
         }
 
-        public void CorrectWavelengthIndices(uint[] intensities, ref int nominalPixel)
+        public void CorrectWavelengthIndices(double[] intensities, ref int nominalPixel)
         {
             if (intensities == null || nominalPixel < 0 || nominalPixel >= intensities.Length)
             {
@@ -29,7 +29,7 @@ namespace OpticEMS.Services.Calibration
             }
 
             int bestPixel = nominalPixel;
-            uint maxIntensity = intensities[nominalPixel];
+            double maxIntensity = intensities[nominalPixel];
 
             for (int offset = -CORRECTION_PIXELS_WINDOW; offset <= CORRECTION_PIXELS_WINDOW; offset++)
             {

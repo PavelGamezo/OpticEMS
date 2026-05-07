@@ -28,8 +28,8 @@ namespace OpticEMS.Orchestrator
         private DateTime _endTime;
         private long _lastUiUpdateMs = 0;
         private int[] _wavelengthsIndices = Array.Empty<int>();
-        public uint[] _currentIntensities = Array.Empty<uint>(); 
-        private readonly List<uint[]> _fullSpectrumHistory = new();
+        public double[] _currentIntensities = Array.Empty<double>(); 
+        private readonly List<double[]> _fullSpectrumHistory = new();
         private bool _isPcaBusy = false;
         private DateTime _lastPcaAnalysisTime = DateTime.MinValue;
 
@@ -113,7 +113,7 @@ namespace OpticEMS.Orchestrator
                 Recipe.WavelengthColors));
 
             UpdateInternalIndexes();
-            _currentIntensities = new uint[Recipe.Wavelengths.Count];
+            _currentIntensities = new double[Recipe.Wavelengths.Count];
             _isIndicesCorrected = false;
 
             _pcaHandler = new PcaAnalysisHandler(
@@ -145,7 +145,7 @@ namespace OpticEMS.Orchestrator
                 Recipe.WavelengthColors));
             
             UpdateInternalIndexes();
-            _currentIntensities = new uint[Recipe.Wavelengths.Count];
+            _currentIntensities = new double[Recipe.Wavelengths.Count];
             _isIndicesCorrected = false;
 
             _pcaHandler = new PcaAnalysisHandler(
@@ -263,15 +263,15 @@ namespace OpticEMS.Orchestrator
             _isPcaBusy = true;
             PcaStatus = "Training PCA...";
 
-            uint[][] spectra = null;
+            double[][] spectra = null;
 
             try
             {
                 spectra = _fullSpectrumHistory
                     .Select(spec =>
                     {
-                        var copy = ArrayPool<uint>.Shared.Rent(spec.Length);
-                        Buffer.BlockCopy(spec, 0, copy, 0, spec.Length * sizeof(uint));
+                        var copy = ArrayPool<double>.Shared.Rent(spec.Length);
+                        Buffer.BlockCopy(spec, 0, copy, 0, spec.Length * sizeof(double));
                         return copy;
                     })
                     .ToArray();
@@ -288,13 +288,13 @@ namespace OpticEMS.Orchestrator
                 {
                     foreach (var spec in spectra)
                     {
-                        ArrayPool<uint>.Shared.Return(spec);
+                        ArrayPool<double>.Shared.Return(spec);
                     }
                 }
 
                 foreach (var s in _fullSpectrumHistory)
                 {
-                    ArrayPool<uint>.Shared.Return(s);
+                    ArrayPool<double>.Shared.Return(s);
                 }
 
                 _fullSpectrumHistory.Clear();
@@ -370,8 +370,8 @@ namespace OpticEMS.Orchestrator
                     }
 
                     // Data snapshot
-                    var intensitiesSnapshot = ArrayPool<uint>.Shared.Rent(_currentIntensities.Length);
-                    Buffer.BlockCopy(_currentIntensities, 0, intensitiesSnapshot, 0, _currentIntensities.Length * sizeof(uint));
+                    var intensitiesSnapshot = ArrayPool<double>.Shared.Rent(_currentIntensities.Length);
+                    Buffer.BlockCopy(_currentIntensities, 0, intensitiesSnapshot, 0, _currentIntensities.Length * sizeof(double));
 
                     RecordDataForExport(intensitiesSnapshot, currentTimeSec);
 
@@ -531,7 +531,7 @@ namespace OpticEMS.Orchestrator
             });
         }
 
-        private void HandleIncomingSpectrum(uint[] intensities, double[] wavelengths)
+        private void HandleIncomingSpectrum(double[] intensities, double[] wavelengths)
         {
             if (intensities == null || intensities.Length == 0)
             {
@@ -542,7 +542,7 @@ namespace OpticEMS.Orchestrator
             UpdateSpectrumChart(intensities, wavelengths);
         }
 
-        private void UpdateSpectrumChart(uint[] intensities, double[] wavelengths)
+        private void UpdateSpectrumChart(double[] intensities, double[] wavelengths)
         {
             long currentMs = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             if (currentMs - _lastUiUpdateMs > 33)
@@ -553,14 +553,14 @@ namespace OpticEMS.Orchestrator
             }
         }
 
-        private void CreateSpectrumSnapshot(uint[] intensities)
+        private void CreateSpectrumSnapshot(double[] intensities)
         {
             var elapsed = (DateTime.Now - _lastPcaAnalysisTime).TotalMilliseconds;
 
             if (_isRunning && !_isPaused && elapsed >= 1000)
             {
-                var rented = ArrayPool<uint>.Shared.Rent(intensities.Length);
-                Buffer.BlockCopy(intensities, 0, rented, 0, intensities.Length * sizeof(uint));
+                var rented = ArrayPool<double>.Shared.Rent(intensities.Length);
+                Buffer.BlockCopy(intensities, 0, rented, 0, intensities.Length * sizeof(double));
 
                 _fullSpectrumHistory.Add(rented);
                 _pcaHandler?.PushForTraining(intensities);
@@ -569,7 +569,7 @@ namespace OpticEMS.Orchestrator
             }
         }
 
-        private void UpdateInternalIntensities(uint[] intensities, double[] wavelengths)
+        private void UpdateInternalIntensities(double[] intensities, double[] wavelengths)
         {
             if (!_isIndicesCorrected && _isRunning && intensities.Length > 0 && Recipe.AutocalibrationEnabled)
             {
@@ -589,7 +589,7 @@ namespace OpticEMS.Orchestrator
             }
         }
 
-        private void CorrectIndices(uint[] intensities)
+        private void CorrectIndices(double[] intensities)
         {
             if (_wavelengthsIndices.Length == 0)
             {
@@ -603,7 +603,7 @@ namespace OpticEMS.Orchestrator
 
             _isIndicesCorrected = true;
 
-            _currentIntensities = new uint[_wavelengthsIndices.Length];
+            _currentIntensities = new double[_wavelengthsIndices.Length];
             for (int i = 0; i < _wavelengthsIndices.Length; i++)
             {
                 int idx = _wavelengthsIndices[i];
@@ -647,7 +647,7 @@ namespace OpticEMS.Orchestrator
 
             foreach (var wavelengthIndex in _wavelengthsIndices)
             {
-                var wavelength = _wavelengthMapper.FindWavelengthByPixel((uint)wavelengthIndex, calibrationCoefficients);
+                var wavelength = _wavelengthMapper.FindWavelengthByPixel((double)wavelengthIndex, calibrationCoefficients);
 
                 double roundedWavelength = Math.Round(wavelength, 2);
 
@@ -670,7 +670,7 @@ namespace OpticEMS.Orchestrator
 
         #region export
 
-        private void RecordDataForExport(uint[] intensities, double currentTime)
+        private void RecordDataForExport(double[] intensities, double currentTime)
         {
             var timePoint = new TimePoint
             {
@@ -685,7 +685,7 @@ namespace OpticEMS.Orchestrator
         {
             foreach (var tp in _exportData)
             {
-                ArrayPool<uint>.Shared.Return(tp.Intensities);
+                ArrayPool<double>.Shared.Return(tp.Intensities);
             }
 
             _exportData.Clear();
