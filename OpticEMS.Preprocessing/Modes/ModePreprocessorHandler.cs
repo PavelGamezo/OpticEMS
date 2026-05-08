@@ -54,34 +54,60 @@ namespace OpticEMS.Preprocessing.Modes
                 return data.Length > 0 ? data[0] : 0;
             }
 
-            return Math.Abs(data[1]) < 1e-9 ? 0 : data[0] / data[1];
+            return Math.Abs(data[1]) == 0 ? 0 : data[0] / data[1];
         }
 
         private double CombinedExpression(double[] data)
         {
-            var result = _compiledExpression(data);
+            try
+            {
+                var result = _compiledExpression(data);
 
-            return result;
+                return result;
+            }
+            catch (Exception exception)
+            {
+                return data[0];
+            }
         }
 
         private Func<double[], double> CompileExpression(string expression, List<string> names)
         {
-            var interpreter = new Interpreter();
-            string finalExpr = expression;
-
-            var sortedNames = names
-                .Select((name, index) => new { name, index })
-                .OrderByDescending(x => x.name.Length);
-
-            foreach (var item in sortedNames)
+            try
             {
-                string pattern = $@"\b{Regex.Escape(item.name)}\b";
-                finalExpr = Regex.Replace(finalExpr, pattern, $"data[{item.index}]", RegexOptions.IgnoreCase);
+                var interpreter = new Interpreter();
+                string finalExpr = expression;
+
+                var sortedNames = names
+                    .Select((name, index) => new 
+                    { 
+                        name, index 
+                    });
+
+                foreach (var item in sortedNames)
+                {
+                    string pattern = $@"\b{Regex.Escape(item.name)}\b";
+                    finalExpr = Regex.Replace(finalExpr, pattern, $"data[{item.index}]", RegexOptions.IgnoreCase);
+                }
+
+                var result = interpreter.ParseAsDelegate<Func<double[], double>>(finalExpr, "data");
+
+                return result;
             }
+            catch
+            {
+                var interpreter = new Interpreter();
+                var name = names.First();
+                string finalExpr = expression;
 
-            var result = interpreter.ParseAsDelegate<Func<double[], double>>(finalExpr, "data");
+                string pattern = $@"\b{Regex.Escape(name)}\b";
 
-            return result;
+                finalExpr = Regex.Replace(finalExpr, pattern, $"data[0]", RegexOptions.IgnoreCase);
+
+                var result = interpreter.ParseAsDelegate<Func<double[], double>>(finalExpr, "data");
+
+                return result;
+            }
         }
     }
 }

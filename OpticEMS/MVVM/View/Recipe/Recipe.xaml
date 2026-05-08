@@ -12,6 +12,7 @@
 
     <Page.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:BoolToBrushConverter x:Key="BoolToBrushConverter"/>
     </Page.Resources>
 
     <Grid>
@@ -521,7 +522,7 @@
                                 </StackPanel>
 
                                 <StackPanel Visibility="{Binding IsCombinedMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <TextBlock Text="Combined Expression: (A + B) / C)"
+                                    <TextBlock Text="Combined Expression: (A + B) / C"
                                                FontSize="11" 
                                                Foreground="#999999"
                                                Margin="0,10,0,0"/>
@@ -531,12 +532,8 @@
                                              BorderThickness="0"
                                              Foreground="White"
                                              Padding="8"
-                                             Margin="0,5,0,5"
+                                             Margin="0,5,0,0"
                                              AcceptsReturn="True"/>
-
-                                    <TextBlock Text="Available channels:"
-                                               Foreground="White"
-                                               Margin="0,5,0,0"/>
 
                                     <ItemsControl ItemsSource="{Binding AvailableChannelNames}">
                                         <ItemsControl.ItemsPanel>
@@ -546,15 +543,28 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Button Margin="2" Padding="6,2"
-                                                        Content="{Binding}"
+                                                <Button Content="{Binding}"
                                                         Command="{Binding DataContext.InsertChannelCommand, 
                                                                           RelativeSource={RelativeSource AncestorType=Page}}"
                                                         CommandParameter="{Binding}"
-                                                        Style="{StaticResource MenuButtonStyle}"/>
+                                                        Style="{StaticResource ActionButtonStyle}"
+                                                        Width="50"
+                                                        Foreground="White"
+                                                        Background="Transparent"/>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
+
+                                    <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+
+                                        <TextBlock Text="{Binding CombinedExpressionValidationMessage}"
+                                                   Foreground="{Binding IsCombinedExpressionValid, 
+                                                                        Converter={StaticResource BoolToBrushConverter},
+                                                                        ConverterParameter=GreenRed}"
+                                                   TextWrapping="Wrap"
+                                                   FontSize="11"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
                                 </StackPanel>
 
                             </StackPanel>

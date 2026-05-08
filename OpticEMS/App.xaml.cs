@@ -27,6 +27,7 @@ using OpticEMS.Services.Etching;
 using OpticEMS.Services.Export;
 using OpticEMS.Services.Spectrometers;
 using OpticEMS.Services.Times;
+using OpticEMS.Services.Validators;
 using OpticEMS.Services.Windows;
 using OpticEMS.ViewModels;
 using Serilog;
@@ -65,6 +66,7 @@ namespace OpticEMS
             services.AddScoped<IDialogService, DialogService>();
             services.AddScoped<IExportManager, ExportManager>();
             services.AddTransient<IEtchingProcessService, EtchingProcessService>();
+            services.AddTransient<IExpressionValidator, ExpressionValidator>();
 
             // Repositories
             services.AddScoped<ISpectralLineRepository, SpectralLineRepository>();

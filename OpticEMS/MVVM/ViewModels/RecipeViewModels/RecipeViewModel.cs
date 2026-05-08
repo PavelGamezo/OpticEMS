@@ -5,6 +5,7 @@ using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.MVVM.Models;
+using OpticEMS.Services.Validators;
 using Serilog;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -17,6 +18,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
     {
         private readonly IRecipeRepository _recipeRepository;
         private readonly IDialogService _dialogService;
+        private readonly IExpressionValidator _validator;
 
         [ObservableProperty]
         private Color _currentWavelengthColor;
@@ -55,6 +57,12 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
         [ObservableProperty]
         private bool _isCombinedMode;
+
+        [ObservableProperty]
+        private bool _isCombinedExpressionValid;
+
+        [ObservableProperty]
+        private string _combinedExpressionValidationMessage;
 
         [ObservableProperty]
         private ObservableCollection<WavelengthMonitorItem> _wavelengthItems = new();
@@ -97,15 +105,19 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
         private bool HasSelectedRecipe => SelectedRecipe != null;
 
-        public RecipeViewModel(IRecipeRepository recipeRepository, IDialogService dialogService)
+        public RecipeViewModel(
+            IRecipeRepository recipeRepository, 
+            IDialogService dialogService,
+            IExpressionValidator validator)
         {
             try
             {
                 _recipeRepository = recipeRepository;
                 _dialogService = dialogService;
+                _validator = validator;
 
-                SetupWavelengthItemsListener();
                 _ = LoadFilesAsync();
+                SetupWavelengthItemsListener();
             }
             catch (Exception exception)
             {
@@ -441,6 +453,22 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             SyncToModel();
         }
 
+        private void ValidateCombinedExpression()
+        {
+            if (SelectedRecipe?.WavelengthNames == null)
+            {
+                IsCombinedExpressionValid = true;
+                CombinedExpressionValidationMessage = "";
+                
+                return;
+            }
+
+            var result = _validator.Validate(CombinedExpression, SelectedRecipe.WavelengthNames);
+
+            IsCombinedExpressionValid = result.IsValid;
+            CombinedExpressionValidationMessage = result.Message;
+        }
+
         partial void OnSelectedRecipeChanged(Recipe? value)
         {
             if (value != null)
@@ -505,6 +533,11 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             {
                 SelectedRecipe.DerivativeEnabled = (value == "Yes");
             }
+        }
+
+        partial void OnCombinedExpressionChanged(string value)
+        {
+            ValidateCombinedExpression();
         }
     }
 }
