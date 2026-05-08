@@ -104,9 +104,8 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                 _recipeRepository = recipeRepository;
                 _dialogService = dialogService;
 
-                _ = LoadFilesAsync();
-
                 SetupWavelengthItemsListener();
+                _ = LoadFilesAsync();
             }
             catch (Exception exception)
             {
@@ -122,16 +121,27 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         private void UpdateModesAfterWavelengthChange()
         {
             SyncToModel();
-            if (SelectedRecipe == null) return;
+
+            if (SelectedRecipe == null)
+            {
+                return;
+            }
 
             SelectedRecipe.AutoConfigureMode();
 
-            ProcessingMode = SelectedRecipe.ProcessingMode;
-            DualSubMode = SelectedRecipe.DualSubMode;
-            MultiSubMode = SelectedRecipe.MultiSubMode;
-
             UpdateAvailableModes();
+
+            if (!AvailableProcessingModes.Contains(ProcessingMode))
+            {
+                ProcessingMode = AvailableProcessingModes.FirstOrDefault(ProcessingMode.SingleChannel);
+            }
+
+            SelectedRecipe.ProcessingMode = ProcessingMode;
+            SelectedRecipe.DualSubMode = DualSubMode;
+            SelectedRecipe.MultiSubMode = MultiSubMode;
+
             UpdateModeVisibility();
+            UpdateAvailableChannelNames();
         }
 
         private void UpdateAvailableChannelNames()
@@ -149,25 +159,43 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         private void UpdateAvailableModes()
         {
             AvailableProcessingModes.Clear();
-            if (SelectedRecipe == null) return;
+
+            if (SelectedRecipe == null)
+            {
+                return;
+            }
 
             int count = SelectedRecipe.Wavelengths.Count;
 
             if (count <= 1)
+            {
                 AvailableProcessingModes.Add(ProcessingMode.SingleChannel);
+                ProcessingMode = ProcessingMode.SingleChannel;
+            }
             else if (count == 2)
+            {
                 AvailableProcessingModes.Add(ProcessingMode.DualChannel);
+                if (ProcessingMode != ProcessingMode.DualChannel)
+                {
+                    ProcessingMode = ProcessingMode.DualChannel;
+                }
+            }
             else
+            {
                 AvailableProcessingModes.Add(ProcessingMode.MultiChannel);
+                if (ProcessingMode != ProcessingMode.MultiChannel)
+                {
+                    ProcessingMode = ProcessingMode.MultiChannel;
+                }
+            }
         }
 
         private void UpdateModeVisibility()
         {
             IsDualChannelMode = ProcessingMode == ProcessingMode.DualChannel;
             IsMultiChannelMode = ProcessingMode == ProcessingMode.MultiChannel;
-
             IsCombinedMode = ProcessingMode == ProcessingMode.MultiChannel &&
-                      MultiSubMode == MultiChannelSubMode.Combined;
+                             MultiSubMode == MultiChannelSubMode.Combined;
         }
 
         [RelayCommand(CanExecute = nameof(HasSelectedRecipe))]
@@ -196,7 +224,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                     LastModifiedAt = DateTime.Now,
                     Wavelengths = new List<double>(),
                     WavelengthColors = new List<Color>(),
-                    DetectionWindowHighs = new List<int>()
+                    DetectionWindowHighs = new List<double>()
                 };
 
                 Log.Information("RecipeViewModel: Creating and saving new recipe: {Name}", name);
@@ -325,7 +353,6 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             SelectedRecipe.WavelengthColors = WavelengthItems.Select(x => x.Color).ToList();
             SelectedRecipe.WavelengthNames = WavelengthItems.Select(x => x.Name).ToList();
             SelectedRecipe.DetectionWindowHighs = WavelengthItems.Select(x => x.SignalHigh).ToList();
-
             SelectedRecipe.CombinedExpression = CombinedExpression;
         }
 
@@ -392,6 +419,21 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             RecipeCount = RecipesView.Cast<Recipe>().Count();
 
             OnPropertyChanged(nameof(RecipesView));
+        }
+
+        partial void OnProcessingModeChanged(ProcessingMode value)
+        {
+            UpdateModeVisibility();
+        }
+
+        partial void OnMultiSubModeChanged(MultiChannelSubMode value)
+        {
+            UpdateModeVisibility();
+        }
+
+        partial void OnDualSubModeChanged(DualChannelSubMode value)
+        {
+            UpdateModeVisibility();
         }
 
         private void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)

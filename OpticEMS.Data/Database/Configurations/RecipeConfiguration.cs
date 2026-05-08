@@ -46,7 +46,7 @@ namespace OpticEMS.Data.Database.Configurations
             builder.Property(r => r.DetectionWindowHighs)
                    .HasConversion(
                        value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
-                       value => JsonSerializer.Deserialize<List<int>>(value) ?? new());
+                       value => JsonSerializer.Deserialize<List<double>>(value) ?? new());
 
             builder.Property(r => r.CombinedNumeratorIndices)
                    .HasConversion(

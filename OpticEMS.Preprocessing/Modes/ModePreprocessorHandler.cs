@@ -1,18 +1,27 @@
-﻿using OpticEMS.Contracts.ProcessingModes;
+﻿using DynamicExpresso;
+using OpticEMS.Contracts.ProcessingModes;
 using OpticEMS.Contracts.Services.Recipe;
+using System.Text.RegularExpressions;
 
 namespace OpticEMS.Preprocessing.Modes
 {
     public class ModePreprocessorHandler
     {
         private readonly Recipe _recipe;
+        private readonly Func<double[], double>? _compiledExpression;
 
         public ModePreprocessorHandler(Recipe recipe)
         {
             _recipe = recipe;
+            if (recipe.ProcessingMode == ProcessingMode.MultiChannel &&
+                recipe.MultiSubMode == MultiChannelSubMode.Combined &&
+                !string.IsNullOrEmpty(recipe.CombinedExpression))
+            {
+                _compiledExpression = CompileExpression(recipe.CombinedExpression, recipe.WavelengthNames);
+            }
         }
 
-        public double[] Process(uint[] data)
+        public double[] Process(double[] data)
         {
             if (data == null || data.Length == 0)
             {
@@ -29,63 +38,50 @@ namespace OpticEMS.Preprocessing.Modes
                 },
                 ProcessingMode.MultiChannel => _recipe.MultiSubMode switch
                 {
-                    MultiChannelSubMode.Combined => new[] { ProcessCombined(data) },
-                    _ => ProcessSimultaneous(data)
+                    MultiChannelSubMode.Combined => new[] { CombinedExpression(data) },
+                    _ => data
                 },
                 _ => ProcessSimultaneous(data)
             };
         }
 
-        public double[] ProcessSimultaneous(uint[] data)
+        public double[] ProcessSimultaneous(double[] data) => data;
+
+        public double ProcessRatio(double[] data)
         {
-            var result = new double[data.Length];
-            for (int i = 0; i < data.Length; i++)
-            {
-                result[i] = data[i];
-            }
-
-            return result;
-        }
-
-        public double ProcessRatio(uint[] data)
-        {
-            uint numerator = data[0];
-            uint denominator = data[1];
-
-            var result = numerator / Math.Max(denominator, 1.0);
-
-            return result;
-        }
-
-        public double ProcessCombined(uint[] data)
-        {
-            return EvaluateExpression(_recipe.CombinedExpression, data);
-        }
-
-        private double EvaluateExpression(string expression, uint[] data)
-        {
-            try
-            {
-                string expr = expression.Replace(" ", "").ToUpper();
-
-                for (int i = 0; i < _recipe.WavelengthNames.Count; i++)
-                {
-                    var name = _recipe.WavelengthNames[i]?.Trim().ToUpper();
-                    if (!string.IsNullOrEmpty(name))
-                    {
-                        expr = expr.Replace(name, data[i].ToString());
-                    }
-                }
-
-                var table = new System.Data.DataTable();
-                var result = table.Compute(expr, null);
-
-                return Convert.ToDouble(result);
-            }
-            catch (Exception ex)
+            if (data.Length < 2)
             {
                 return data.Length > 0 ? data[0] : 0;
             }
+
+            return Math.Abs(data[1]) < 1e-9 ? 0 : data[0] / data[1];
+        }
+
+        private double CombinedExpression(double[] data)
+        {
+            var result = _compiledExpression(data);
+
+            return result;
+        }
+
+        private Func<double[], double> CompileExpression(string expression, List<string> names)
+        {
+            var interpreter = new Interpreter();
+            string finalExpr = expression;
+
+            var sortedNames = names
+                .Select((name, index) => new { name, index })
+                .OrderByDescending(x => x.name.Length);
+
+            foreach (var item in sortedNames)
+            {
+                string pattern = $@"\b{Regex.Escape(item.name)}\b";
+                finalExpr = Regex.Replace(finalExpr, pattern, $"data[{item.index}]", RegexOptions.IgnoreCase);
+            }
+
+            var result = interpreter.ParseAsDelegate<Func<double[], double>>(finalExpr, "data");
+
+            return result;
         }
     }
 }

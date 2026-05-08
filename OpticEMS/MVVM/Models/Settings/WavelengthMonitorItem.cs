@@ -15,9 +15,9 @@ namespace OpticEMS.MVVM.Models
         private Color _color;
 
         [ObservableProperty] 
-        private int _signalHigh;
+        private double _signalHigh;
 
-        public WavelengthMonitorItem(string name, double wavelength, Color color, int signalHigh)
+        public WavelengthMonitorItem(string name, double wavelength, Color color, double signalHigh)
         {
             Name = string.IsNullOrWhiteSpace(name) ? $"CH{Wavelength}" : name;
             Wavelength = wavelength;

@@ -20,8 +20,6 @@ namespace OpticEMS.Contracts.Services.Etching
 
         void Stop();
 
-        EndpointResult Update(double elapsedMs);
-
-        void PushIntensities(double[] currentIntensities);
+        EndpointResult Update(double[] signal, double elapsedMs);
     }
 }

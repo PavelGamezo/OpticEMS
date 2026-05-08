@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="DynamicExpresso.Core" Version="2.19.3" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\OpticEMS.Contracts\OpticEMS.Contracts.csproj" />
   </ItemGroup>
 

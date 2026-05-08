@@ -11,7 +11,6 @@ namespace OpticEMS.Preprocessing
         private DerivativeCalculator _derivativeCalculator;
 
         private bool _useDerivating = false;
-        private bool _useMFAveraging = false;
 
         public TrendEquationsHandler(bool useDerivating)
         {
@@ -23,7 +22,7 @@ namespace OpticEMS.Preprocessing
             _frameAverager.PushIntensities(intensities);
         }
 
-        public void Set(double magneticFieldPeriodMs = 2000, int mfPeriodsToAverage = 1, int derivationTime = 5)
+        public void Set(double magneticFieldPeriodMs = 0, int mfPeriodsToAverage = 1, int derivationTime = 5)
         {
             _frameAverager = new FrameAverager();
             _mfSmoother = new MagneticFieldSmoother(magneticFieldPeriodMs, mfPeriodsToAverage);
@@ -59,14 +58,15 @@ namespace OpticEMS.Preprocessing
             };
         }
 
-        public void EnableMFAveraging(bool enable) => _useMFAveraging = enable;
-        public void EnableDerivative(bool enable) => _useDerivating = enable;
-
         public void Reset()
         {
             _frameAverager.Reset();
             _mfSmoother.Reset();
-            _derivativeCalculator.Reset();
+
+            if (_derivativeCalculator != null)
+            {
+                _derivativeCalculator.Reset();
+            }
         }
     }
 }

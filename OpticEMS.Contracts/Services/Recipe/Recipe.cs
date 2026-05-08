@@ -26,7 +26,7 @@ namespace OpticEMS.Contracts.Services.Recipe
         public List<double> Wavelengths { get; set; } = new();
         public List<Color> WavelengthColors { get; set; } = new();
 
-        public List<int> DetectionWindowHighs { get; set; } = new();
+        public List<double> DetectionWindowHighs { get; set; } = new();
         public int DetectionWindowTime { get; set; }
 
         public float MagneticFieldPeriodMs { get; set; }

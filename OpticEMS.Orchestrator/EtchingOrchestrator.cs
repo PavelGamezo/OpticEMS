@@ -9,6 +9,8 @@ using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
 using OpticEMS.Notifications.Messages;
+using OpticEMS.Preprocessing;
+using OpticEMS.Preprocessing.Modes;
 using OpticEMS.Processing.PCA;
 using System.Buffers;
 using System.Diagnostics;
@@ -43,6 +45,8 @@ namespace OpticEMS.Orchestrator
         private readonly DeviceProcessing _deviceProcessing;
         private PcaAnalysisHandler? _pcaHandler;
         private ModuleHandler _connectionHandler;
+        private ModePreprocessorHandler _modeHandler;
+        private TrendEquationsHandler _trendHandler;
 
         public EtchingOrchestrator(
             int channelId,
@@ -99,6 +103,9 @@ namespace OpticEMS.Orchestrator
             }
 
             Recipe = recipe;
+            _modeHandler = new ModePreprocessorHandler(Recipe);
+            _trendHandler = new TrendEquationsHandler(Recipe.DerivativeEnabled);
+            _trendHandler.Set(Recipe.MagneticFieldPeriodMs, Recipe.FieldPeriodsToAverage, Recipe.DerivativePoints);
 
             _cancellationToken.Cancel();
             _cancellationToken = new CancellationTokenSource();
@@ -131,6 +138,8 @@ namespace OpticEMS.Orchestrator
             }
 
             Recipe = await _recipeRepository.GetRecipeByRecipeIdAsync(recipeId);
+            _modeHandler = new ModePreprocessorHandler(Recipe);
+            _trendHandler = new TrendEquationsHandler(Recipe.DerivativeEnabled);
 
             _cancellationToken.Cancel();
             _cancellationToken = new CancellationTokenSource();
@@ -234,6 +243,7 @@ namespace OpticEMS.Orchestrator
             _stopwatch.Stop();
             _endpointService.Stop();
             _cancellationTokenStart.Cancel();
+            _trendHandler.Reset();
 
             WeakReferenceMessenger.Default.Send(new ExportAvailabilityChangedMessage(ChannelId, true));
 
@@ -335,7 +345,41 @@ namespace OpticEMS.Orchestrator
                     var windowBounds = _endpointService.GetCurrentWindowBounds();
                     WeakReferenceMessenger.Default.Send(new DrawWindowBoundsMessage(ChannelId, windowBounds));
 
-                    var endpointResult = _endpointService.Update(currentTimeMs);
+                    var intensitiesSnapshot = ArrayPool<double>.Shared.Rent(_currentIntensities.Length);
+                    Buffer.BlockCopy(_currentIntensities, 0, intensitiesSnapshot, 0, _currentIntensities.Length * sizeof(double));
+
+                    var trendEquationResult = _trendHandler.Process(currentTimeMs);
+
+                    EndpointResult endpointResult;
+
+                    if (Recipe.DerivativeEnabled)
+                    {
+                        var derivatedSignal = trendEquationResult.Derivatives;
+                        var preprocessedSignal = _modeHandler.Process(derivatedSignal);
+                        RecordDataForExport(derivatedSignal, currentTimeSec);
+
+                        endpointResult = _endpointService.Update(preprocessedSignal, currentTimeMs);
+
+                        WeakReferenceMessenger.Default.Send(new ProcessStepUpdateMessage(
+                            ChannelId,
+                            endpointResult.Status,
+                            currentTimeSec,
+                            preprocessedSignal));
+                    }
+                    else
+                    {
+                        var smoothedSignal = trendEquationResult.Smoothed;
+                        var preprocessedSignal = _modeHandler.Process(smoothedSignal);
+                        RecordDataForExport(preprocessedSignal, currentTimeSec);
+
+                        endpointResult = _endpointService.Update(preprocessedSignal, currentTimeMs);
+
+                        WeakReferenceMessenger.Default.Send(new ProcessStepUpdateMessage(
+                            ChannelId,
+                            endpointResult.Status,
+                            currentTimeSec,
+                            preprocessedSignal));
+                    }
 
                     if (Recipe.PcaEnabled && _pcaHandler != null)
                     {
@@ -368,18 +412,6 @@ namespace OpticEMS.Orchestrator
                     {
                         PcaStatus = "PCA disabled";
                     }
-
-                    // Data snapshot
-                    var intensitiesSnapshot = ArrayPool<double>.Shared.Rent(_currentIntensities.Length);
-                    Buffer.BlockCopy(_currentIntensities, 0, intensitiesSnapshot, 0, _currentIntensities.Length * sizeof(double));
-
-                    RecordDataForExport(intensitiesSnapshot, currentTimeSec);
-
-                    WeakReferenceMessenger.Default.Send(new ProcessStepUpdateMessage(
-                        ChannelId,
-                        endpointResult.Status,
-                        currentTimeSec,
-                        intensitiesSnapshot));
 
                     if (endpointResult.Status != ProcessStatus)
                     {
@@ -585,7 +617,7 @@ namespace OpticEMS.Orchestrator
 
             if (_isRunning && !_isPaused)
             {
-                _endpointService.PushIntensities(_currentIntensities);
+                _trendHandler.PushIntensities(_currentIntensities);
             }
         }
 

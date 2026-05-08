@@ -10,8 +10,8 @@ namespace OpticEMS.Services.Etching
         private TrendEquationsHandler? _trendHandler;
 
         private double[] _windowStartTimes = Array.Empty<double>();
-        private double[] _referenceValues = Array.Empty<double>();
-        private double[] _baseline = Array.Empty<double>();
+        private double[] _referenceValues = Array.Empty<double>(); 
+        private double[] _fixedThresholds = Array.Empty<double>();
 
         private ProcessState _state = ProcessState.Idle;
         private int _consecutiveWindowsIn = 0;
@@ -30,11 +30,16 @@ namespace OpticEMS.Services.Etching
             _trendHandler?.PushIntensities(currentIntensities);
         }
 
-        public EndpointResult Update(double elapsedMs)
+        public EndpointResult Update(double[] signal, double elapsedMs)
         {
             if (_recipe == null)
             {
                 return new EndpointResult(false, "No Recipe", false);
+            }
+
+            if (signal == null || signal.Length == 0)
+            {
+                return new EndpointResult(false, "Waiting for signal...", false);
             }
 
             if (elapsedMs >= _recipe.MaxEndpointTime)
@@ -45,22 +50,16 @@ namespace OpticEMS.Services.Etching
                 return new EndpointResult(true, "Force Stop (Timeout)", true);
             }
 
-            var currentSignal = GetProcessedSignal(elapsedMs);
-            if (currentSignal == null || currentSignal.Length == 0)
-            {
-                return new EndpointResult(false, "Waiting for signal...", false);
-            }
-
             switch (_state)
             {
                 case ProcessState.InitialDeadTime:
-                    return ProcessInitialDeadTime(currentSignal, elapsedMs);
+                    return ProcessInitialDeadTime(signal, elapsedMs);
 
                 case ProcessState.WindowOut:
-                    return ProcessWindowOutState(currentSignal, elapsedMs);
+                    return ProcessWindowOutState(signal, elapsedMs);
 
                 case ProcessState.WindowIn:
-                    return ProcessWindowInState(currentSignal, elapsedMs);
+                    return ProcessWindowInState(signal, elapsedMs);
 
                 case ProcessState.Overetch:
                     return ProcessOveretchState(elapsedMs);
@@ -162,18 +161,24 @@ namespace OpticEMS.Services.Etching
             return new EndpointResult(false, $"Overetching", false);
         }
 
+        // OK
         private bool IsInsideDetectionLimits(double[] signal)
         {
             for (int i = 0; i < signal.Length; i++)
             {
-                double delta = Math.Abs((double)signal[i] - _referenceValues[i]);
-                double threshold = Math.Abs(_recipe.DetectionWindowHighs[i]) / 2.0;
-                
-                if (delta > threshold)
+                if (_referenceValues[i] <= 0)
+                {
+                    continue;
+                }
+
+                double threshold = _fixedThresholds[i];
+
+                if (Math.Abs(signal[i] - _referenceValues[i]) > threshold)
                 {
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -184,6 +189,7 @@ namespace OpticEMS.Services.Etching
             return trendResult?.Smoothed;
         }
 
+        // OK
         private bool CheckAndSlideWindows(double[] signal, double elapsedMs)
         {
             bool anyMoved = false;
@@ -201,6 +207,7 @@ namespace OpticEMS.Services.Etching
             return anyMoved;
         }
 
+        // OK
         private void ResetWindows(double[] signal, double elapsedMs)
         {
             for (int i = 0; i < signal.Length; i++)
@@ -210,6 +217,7 @@ namespace OpticEMS.Services.Etching
             }
         }
 
+        // OK
         private bool IsOutsideDetectionWindow(double[] currentSignal, double elapsedMs)
         {
             bool anyLineViolatedThisCycle = false;
@@ -221,29 +229,31 @@ namespace OpticEMS.Services.Etching
                     continue;
                 }
 
-                double delta = Math.Abs((double)currentSignal[i] - _referenceValues[i]);
-                double allowedTolerance = Math.Abs(_recipe.DetectionWindowHighs[i]) / 2.0;
+                double threshold = _fixedThresholds[i];
+                double delta = currentSignal[i] - _referenceValues[i];
 
-                if (delta >= allowedTolerance)
+                bool violated = _recipe!.DetectionWindowHighs[i] >= 0
+                    ? delta >= threshold
+                    : delta <= -threshold;
+
+                if (violated)
                 {
                     anyLineViolatedThisCycle = true;
 
                     _windowStartTimes[i] = elapsedMs;
                     _referenceValues[i] = currentSignal[i];
                 }
-                else
+                else if(elapsedMs - _windowStartTimes[i] >= _recipe.DetectionWindowTime)
                 {
-                    if (elapsedMs - _windowStartTimes[i] >= _recipe.DetectionWindowTime)
-                    {
-                        _windowStartTimes[i] = elapsedMs;
-                        _referenceValues[i] = currentSignal[i];
-                    }
+                    _windowStartTimes[i] = elapsedMs;
+                    _referenceValues[i] = currentSignal[i];
                 }
             }
 
             return anyLineViolatedThisCycle;
         }
 
+        // OK
         private void InitializeWindows(double[] signal, double elapsedMs)
         {
             int count = signal.Length;
@@ -252,14 +262,16 @@ namespace OpticEMS.Services.Etching
             {
                 _windowStartTimes = new double[count];
                 _referenceValues = new double[count];
-                _baseline = new double[count];
+                _fixedThresholds = new double[count];
             }
 
             for (int i = 0; i < count; i++)
             {
                 _windowStartTimes[i] = elapsedMs;
                 _referenceValues[i] = signal[i];
-                _baseline[i] = signal[i];
+
+                double percent = Math.Abs(_recipe!.DetectionWindowHighs[i]);
+                _fixedThresholds[i] = signal[i] * percent / 100.0;
             }
         }
 
@@ -288,23 +300,21 @@ namespace OpticEMS.Services.Etching
         public List<WindowBounds> GetCurrentWindowBounds()
         {
             var bounds = new List<WindowBounds>();
-            if (_recipe == null) return bounds;
+            if (_recipe == null || _referenceValues.Length == 0)
+                return bounds;
 
             for (int i = 0; i < _referenceValues.Length; i++)
             {
-                double totalHeight = Math.Abs(_recipe.DetectionWindowHighs[i]);
-                double refVal = _referenceValues[i];
-
-                double half = totalHeight / 2.0;
+                double half = _fixedThresholds[i];
 
                 bounds.Add(new WindowBounds
                 {
                     WavelengthIndex = i,
                     StartTime = _windowStartTimes[i] / 1000.0,
                     EndTime = (_windowStartTimes[i] + _recipe.DetectionWindowTime) / 1000.0,
-                    Top = refVal + half,
-                    Bottom = refVal - half,
-                    Reference = refVal
+                    Top = _referenceValues[i] + half,
+                    Bottom = _referenceValues[i] - half,
+                    Reference = _referenceValues[i]
                 });
             }
             return bounds;

@@ -16,8 +16,7 @@
     public enum MultiChannelSubMode
     {
         Simultaneous = 0,
-        Ratio = 1,
-        Combined = 2
+        Combined = 1
     }
 }
 
