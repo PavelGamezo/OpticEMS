@@ -7,6 +7,7 @@
     {
         Solar,
         Avantes,
+        Yixist,
         VirtualSpec,
         Unknown
     }
