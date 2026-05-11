@@ -1,0 +1,84 @@
+﻿<UserControl x:Class="OpticEMS.MVVM.View.Recipe.NameControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:OpticEMS.MVVM.View.Recipe"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    
+    <Border Background="#1f1f1f"
+            Padding="15">
+        
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Horizontal" 
+                        VerticalAlignment="Center">
+
+                <TextBlock Grid.Column="0" 
+                           Text="{Binding SelectedRecipe.Name}" 
+                           FontSize="24" 
+                           FontWeight="Bold" 
+                           Foreground="White"/>
+
+                <Border Margin="10,0,0,0" 
+                        Width="14" 
+                        Height="14" 
+                        CornerRadius="7" 
+                        Background="#444444" 
+                        Cursor="Help"
+                        VerticalAlignment="Center"
+                        ToolTipService.InitialShowDelay="100">
+
+                    <TextBlock Text="?" 
+                               FontSize="10" 
+                               FontWeight="Bold"
+                               Foreground="#AAAAAA" 
+                               HorizontalAlignment="Center" 
+                               VerticalAlignment="Center"
+                               Margin="0,0,0,1"/>
+
+                    <Border.ToolTip>
+
+                        <ToolTip Background="#252526" 
+                                 Foreground="White" 
+                                 BorderBrush="#454545"
+                                 Padding="10"
+                                 HasDropShadow="True">
+
+                            <StackPanel Width="200">
+
+                                <TextBlock Text="Recipe Name" 
+                                           FontWeight="Bold" 
+                                           Foreground="White" 
+                                           Margin="0,0,0,5"/>
+
+                                <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                       Height="108"
+                                       Width="192"
+                                       Stretch="Uniform" 
+                                       Margin="0,5"
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                <TextBlock Text="Unique identifier for the current process configuration." 
+                                           Foreground="#CCCCCC" 
+                                           FontSize="11" 
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+
+                        </ToolTip>
+
+                    </Border.ToolTip>
+
+                </Border>
+            </StackPanel>
+        </Grid>
+        
+    </Border>
+    
+</UserControl>

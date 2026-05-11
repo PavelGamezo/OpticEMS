@@ -1,0 +1,122 @@
+﻿<UserControl x:Class="OpticEMS.MVVM.View.Recipe.ProcessingModeControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:OpticEMS.MVVM.View.Recipe"
+             xmlns:converters="clr-namespace:OpticEMS.Common.Helpers"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:BoolToBrushConverter x:Key="BoolToBrushConverter"/>
+    </UserControl.Resources>
+    
+    <Border CornerRadius="5"
+            Padding="15,0,15,10">
+
+        <StackPanel Margin="0,0,0,0">
+
+            <TextBlock Text="Processing Mode"
+                       FontSize="12"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0,5,0,8"/>
+
+            <ComboBox Background="#3E3E40"
+                      BorderThickness="0"
+                      Foreground="White"
+                      Padding="8"
+                      Height="32"
+                      ItemsSource="{Binding AvailableProcessingModes}"
+                      SelectedItem="{Binding ProcessingMode}"
+                      Style="{StaticResource ComboBoxStyle}"/>
+
+            <StackPanel Margin="0,12,0,0" 
+                        Visibility="{Binding IsDualChannelMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                <TextBlock Text="Dual Channel Mode"
+                           FontSize="11"
+                           Foreground="#999999"
+                           Margin="0,0,0,5"/>
+
+                <ComboBox Background="#3E3E40"
+                          BorderThickness="0"
+                          Foreground="White"
+                          Padding="8"
+                          Height="32"
+                          ItemsSource="{Binding DualSubModes}"
+                          SelectedItem="{Binding DualSubMode}"
+                          Style="{StaticResource ComboBoxStyle}"/>
+            </StackPanel>
+
+            <StackPanel Margin="0,12,0,0" 
+                        Visibility="{Binding IsMultiChannelMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                <TextBlock Text="Multi Channel Mode"
+                           FontSize="11"
+                           Foreground="#999999"
+                           Margin="0,0,0,5"/>
+
+                <ComboBox Background="#3E3E40"
+                          BorderThickness="0"
+                          Foreground="White"
+                          Padding="8"
+                          Height="32"
+                          ItemsSource="{Binding MultiSubModes}"
+                          SelectedItem="{Binding MultiSubMode}"
+                          Style="{StaticResource ComboBoxStyle}"/>
+            </StackPanel>
+
+            <StackPanel Visibility="{Binding IsCombinedMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="Combined Expression: (A + B) / C"
+                           FontSize="11" 
+                           Foreground="#999999"
+                           Margin="0,10,0,0"/>
+
+                <TextBox Text="{Binding CombinedExpression, UpdateSourceTrigger=PropertyChanged}"
+                         Background="#3E3E40"
+                         BorderThickness="0"
+                         Foreground="White"
+                         Padding="8"
+                         Margin="0,5,0,0"
+                         AcceptsReturn="True"/>
+
+                <ItemsControl ItemsSource="{Binding AvailableChannelNames}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding}"
+                                    Command="{Binding DataContext.InsertChannelCommand, 
+                                                      RelativeSource={RelativeSource AncestorType=Page}}"
+                                    CommandParameter="{Binding}"
+                                    Style="{StaticResource ActionButtonStyle}"
+                                    Width="50"
+                                    Foreground="White"
+                                    Background="Transparent"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel Orientation="Horizontal" 
+                            Margin="0,5,0,5">
+
+                    <TextBlock Text="{Binding CombinedExpressionValidationMessage}"
+                               Foreground="{Binding IsCombinedExpressionValid, 
+                                                    Converter={StaticResource BoolToBrushConverter},
+                                                    ConverterParameter=GreenRed}"
+                               TextWrapping="Wrap"
+                               FontSize="11"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </StackPanel>
+
+        </StackPanel>
+
+    </Border>
+</UserControl>

@@ -1,0 +1,329 @@
+﻿<UserControl x:Class="OpticEMS.MVVM.View.Recipe.PreprocessingParametersControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:OpticEMS.MVVM.View.Recipe"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    
+    <Border Padding="15,10,15,0">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" 
+                       Text="Preprocessing Parameters" 
+                       FontSize="12" 
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0,0,0,5"/>
+
+            <Grid Grid.Row="1">
+                
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" 
+                            Grid.Column="0"
+                            Margin="0,0,0,15">
+
+                    <StackPanel Orientation="Horizontal" 
+                                VerticalAlignment="Center">
+
+                        <TextBlock Text="Magnetic Field Period" 
+                                   FontSize="11" 
+                                   Foreground="#999999"/>
+
+                        <Border Margin="6,0,0,0" 
+                                Width="14" 
+                                Height="14" 
+                                CornerRadius="7" 
+                                Background="#444444" 
+                                Cursor="Help"
+                                VerticalAlignment="Center"
+                                ToolTipService.InitialShowDelay="100">
+
+                            <TextBlock Text="?" 
+                                       FontSize="10" 
+                                       FontWeight="Bold"
+                                       Foreground="#AAAAAA" 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,0,1"/>
+
+                            <Border.ToolTip>
+
+                                <ToolTip Background="#252526" 
+                                         Foreground="White" 
+                                         BorderBrush="#454545"
+                                         Padding="10"
+                                         HasDropShadow="True">
+
+                                    <StackPanel Width="200">
+
+                                        <TextBlock Text="Magnetic Field Period" 
+                                                   FontWeight="Bold" 
+                                                   Foreground="White" 
+                                                   Margin="0,0,0,5"/>
+
+                                        <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                               Height="108"
+                                               Width="192"
+                                               Stretch="Uniform" 
+                                               Margin="0,5"
+                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                        <TextBlock Text="Time interval (in milliseconds) representing one full cycle of the magnetic field oscillation used during plasma stabilization or endpoint detection." 
+                                                   Foreground="#CCCCCC" 
+                                                   FontSize="11" 
+                                                   TextWrapping="Wrap"/>
+
+                                        <TextBlock Text="•  The signal processing algorithm must be synchronized with the magnetic field period of the Centura 
+                                                    magnetically enhanced RIE Chamber, which is typically 2.0 seconds. This number must be the same as the field period of the 
+                                                    Centura. If it isn’t the same, the signal will show a periodic wave-like trace. " 
+                                                   Foreground="#AAAAAA" 
+                                                   FontSize="10" 
+                                                   TextWrapping="Wrap"/>
+
+                                    </StackPanel>
+
+                                </ToolTip>
+
+                            </Border.ToolTip>
+
+                        </Border>
+                    </StackPanel>
+
+                    <TextBox Text="{Binding SelectedRecipe.MagneticFieldPeriodMs}" 
+                             Background="#3E3E40"
+                             BorderThickness="0"
+                             Foreground="White"
+                             Padding="8"
+                             Margin="0,5,10,0"/>
+
+                    <TextBlock Text="ms" 
+                               FontSize="10" 
+                               Foreground="#999999"
+                               Margin="0,2,0,0"/>
+
+                </StackPanel>
+
+                <StackPanel Grid.Row="0" 
+                            Grid.Column="1">
+
+                    <StackPanel Orientation="Horizontal" 
+                                VerticalAlignment="Center">
+
+                        <TextBlock Text="Number of Field Periods to Average" 
+                                   FontSize="11" 
+                                   Foreground="#999999"/>
+
+                        <Border Margin="6,0,0,0" 
+                                Width="14" 
+                                Height="14" 
+                                CornerRadius="7" 
+                                Background="#444444" 
+                                Cursor="Help"
+                                VerticalAlignment="Center"
+                                ToolTipService.InitialShowDelay="100">
+
+                            <TextBlock Text="?" 
+                                       FontSize="10" 
+                                       FontWeight="Bold"
+                                       Foreground="#AAAAAA" 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,0,1"/>
+
+                            <Border.ToolTip>
+
+                                <ToolTip Background="#252526" 
+                                         Foreground="White" 
+                                         BorderBrush="#454545"
+                                         Padding="10"
+                                         HasDropShadow="True">
+
+                                    <StackPanel Width="200">
+
+                                        <TextBlock Text="Window Out Count" 
+                                                   FontWeight="Bold" 
+                                                   Foreground="White" 
+                                                   Margin="0,0,0,5"/>
+
+                                        <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                               Height="108"
+                                               Width="192"
+                                               Stretch="Uniform" 
+                                               Margin="0,5"
+                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                        <TextBlock Text="Number of consecutive magnetic field periods whose signal data are averaged to reduce noise and improve measurement stability." 
+                                                   Foreground="#CCCCCC" 
+                                                   FontSize="11" 
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
+
+                                </ToolTip>
+
+                            </Border.ToolTip>
+
+                        </Border>
+                    </StackPanel>
+
+                    <TextBox Text="{Binding SelectedRecipe.FieldPeriodsToAverage}" 
+                             Background="#3E3E40"
+                             BorderThickness="0"
+                             Foreground="White"
+                             Padding="8"
+                             Margin="0,5,0,0"/>
+
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" 
+                            Grid.Column="0" 
+                            Margin="0,0,10,15">
+
+                    <StackPanel Orientation="Horizontal" 
+                                VerticalAlignment="Center">
+
+                        <TextBlock Text="Derivative Enabled" 
+                                   FontSize="11" 
+                                   Foreground="#999999"/>
+
+                        <Border Margin="6,0,0,0" 
+                                Width="14" 
+                                Height="14" 
+                                CornerRadius="7" 
+                                Background="#444444" 
+                                Cursor="Help"
+                                VerticalAlignment="Center"
+                                ToolTipService.InitialShowDelay="100">
+
+                            <TextBlock Text="?" 
+                                       FontSize="10" 
+                                       FontWeight="Bold"
+                                       Foreground="#AAAAAA" 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,0,1"/>
+
+                            <Border.ToolTip>
+
+                                <ToolTip Background="#252526" 
+                                         Foreground="White" 
+                                         BorderBrush="#454545"
+                                         Padding="10"
+                                         HasDropShadow="True">
+
+                                    <StackPanel Width="200">
+
+                                        <TextBlock Text="Derivative Parameter" 
+                                                   FontWeight="Bold" 
+                                                   Foreground="White" 
+                                                   Margin="0,0,0,5"/>
+
+                                        <TextBlock Text="Computes the mathematical derivative of the selected wavelength or ratio. High derivative values indicate rapid process transitions, making it ideal for high-precision endpoint triggering in complex multi-layer stacks." 
+                                                   Foreground="#CCCCCC" 
+                                                   FontSize="11" 
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
+
+                                </ToolTip>
+
+                            </Border.ToolTip>
+
+                        </Border>
+
+                    </StackPanel>
+
+                    <ComboBox Background="#3E3E40"
+                              BorderThickness="0"
+                              Foreground="White"
+                              Padding="8"
+                              Margin="0,5,0,0"
+                              ItemsSource="{Binding YesNoOptions}"
+                              SelectedItem="{Binding SelectedDerivativeText}"
+                              Style="{StaticResource ComboBoxStyle}"
+                              Height="32"/>
+
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" 
+                            Grid.Column="1">
+
+                    <StackPanel Orientation="Horizontal" 
+                                VerticalAlignment="Center">
+
+                        <TextBlock Text="Derivative Points" 
+                                   FontSize="11" 
+                                   Foreground="#999999"/>
+
+                        <Border Margin="6,0,0,0" 
+                                Width="14" 
+                                Height="14" 
+                                CornerRadius="7" 
+                                Background="#444444" 
+                                Cursor="Help"
+                                VerticalAlignment="Center"
+                                ToolTipService.InitialShowDelay="100">
+
+                            <TextBlock Text="?" 
+                                       FontSize="10" 
+                                       FontWeight="Bold"
+                                       Foreground="#AAAAAA" 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,0,1"/>
+
+                            <Border.ToolTip>
+
+                                <ToolTip Background="#252526" 
+                                         Foreground="White" 
+                                         BorderBrush="#454545"
+                                         Padding="10"
+                                         HasDropShadow="True">
+
+                                    <StackPanel Width="200">
+
+                                        <TextBlock Text="Derivative Points (Derivative Time)" 
+                                                   FontWeight="Bold" 
+                                                   Foreground="White" 
+                                                   Margin="0,0,0,5"/>
+
+                                        <TextBlock Text="This parameter specifies the number of consecutive data samples used to calculate the derivative slope. Increasing the number of points provides a smoother derivative by averaging out high-frequency noise, though it may introduce a slight delay in endpoint detection." 
+                                                   Foreground="#CCCCCC" 
+                                                   FontSize="11" 
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
+
+                                </ToolTip>
+
+                            </Border.ToolTip>
+
+                        </Border>
+                    </StackPanel>
+
+                    <TextBox Text="{Binding SelectedRecipe.DerivativePoints}" 
+                             Background="#3E3E40"
+                             BorderThickness="0"
+                             Foreground="White"
+                             Padding="8"
+                             Margin="0,5,0,0"/>
+
+                </StackPanel>
+
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

@@ -1,0 +1,444 @@
+﻿<UserControl x:Class="OpticEMS.MVVM.View.Recipe.WavelengthControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:OpticEMS.MVVM.View.Recipe"
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    
+    <Border Padding="15,0,15,15">
+
+        <StackPanel>
+
+            <Grid>
+
+                <TextBlock Text="Wavelength monitoring" 
+                           FontSize="12" 
+                           FontWeight="Bold" 
+                           Foreground="White"
+                           Margin="0,5,0,0"/>
+
+                <Button Content="+ Add"
+                        Style="{StaticResource ActionButtonStyle}"
+                        Foreground="White"
+                        Background="#272727"
+                        Command="{Binding AddWavelengthCommand}" 
+                        HorizontalAlignment="Right"/>
+
+            </Grid>
+
+            <ItemsControl ItemsSource="{Binding WavelengthItems}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="3"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+
+                        <Border BorderBrush="#3E3E40" 
+                                BorderThickness="1"
+                                Margin="0,15,5,0"
+                                Padding="10" 
+                                CornerRadius="4"
+                                Background="#1E1E1E">
+
+                            <Border.Effect>
+
+                                <DropShadowEffect Color="Black" 
+                                                  Direction="315" 
+                                                  ShadowDepth="4" 
+                                                  Opacity="0.6" 
+                                                  BlurRadius="12"/>
+
+                            </Border.Effect>
+
+                            <StackPanel>
+
+                                <Grid>
+
+                                    <StackPanel Orientation="Horizontal">
+
+                                        <TextBlock Text="Wavelength" 
+                                                   FontSize="11" 
+                                                   Foreground="#999999"/>
+
+                                        <Border Margin="6,0,0,0" 
+                                                Width="14" 
+                                                Height="14" 
+                                                CornerRadius="7" 
+                                                Background="#444444" 
+                                                Cursor="Help"
+                                                VerticalAlignment="Center"
+                                                ToolTipService.InitialShowDelay="100">
+
+                                            <TextBlock Text="?" 
+                                                       FontSize="10" 
+                                                       FontWeight="Bold"
+                                                       Foreground="#AAAAAA" 
+                                                       HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,0,1"/>
+
+                                            <Border.ToolTip>
+
+                                                <ToolTip Background="#252526" 
+                                                         Foreground="White" 
+                                                         BorderBrush="#454545"
+                                                         Padding="10"
+                                                         HasDropShadow="True">
+
+                                                    <StackPanel Width="200">
+                                                        <TextBlock Text="Target Wavelengths (nm)" 
+                                                               FontWeight="Bold" 
+                                                               Foreground="White" 
+                                                               Margin="0,0,0,5"/>
+
+                                                        <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                               Height="108"
+                                                               Width="192"
+                                                               Stretch="Uniform" 
+                                                               Margin="0,5"
+                                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                        <TextBlock Text="Specific spectral lines (in nanometers) monitored to track chemical species in the plasma." 
+                                                                   Foreground="#CCCCCC" 
+                                                                   FontSize="11" 
+                                                                   TextWrapping="Wrap"/>
+                                                    </StackPanel>
+
+                                                </ToolTip>
+
+                                            </Border.ToolTip>
+
+                                        </Border>
+                                    </StackPanel>
+
+                                    <Button Content="✕" 
+                                            Style="{StaticResource ActionButtonStyle}"
+                                            Command="{Binding DataContext.RemoveWavelengthCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            Width="15" 
+                                            Height="15"
+                                            Margin="0"
+                                            HorizontalAlignment="Right" 
+                                            Background="Transparent"
+                                            Foreground="Gray"
+                                            BorderThickness="0"
+                                            CommandParameter="{Binding}"/>
+                                </Grid>
+
+                                <TextBox Text="{Binding Wavelength}" 
+                                         Background="#3E3E40" 
+                                         Foreground="White" 
+                                         BorderThickness="0" 
+                                         Padding="8" 
+                                         Margin="0,5"/>
+
+                                <StackPanel Orientation="Horizontal">
+
+                                    <TextBlock Text="Color" 
+                                               FontSize="11" 
+                                               Foreground="#999999"/>
+
+                                    <Border Margin="6,0,0,0" 
+                                            Width="14" 
+                                            Height="14" 
+                                            CornerRadius="7" 
+                                            Background="#444444" 
+                                            Cursor="Help"
+                                            VerticalAlignment="Center"
+                                            ToolTipService.InitialShowDelay="100">
+
+                                        <TextBlock Text="?" 
+                                                   FontSize="10" 
+                                                   FontWeight="Bold"
+                                                   Foreground="#AAAAAA" 
+                                                   HorizontalAlignment="Center" 
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,0,1"/>
+
+                                        <Border.ToolTip>
+
+                                            <ToolTip Background="#252526" 
+                                                     Foreground="White" 
+                                                     BorderBrush="#454545"
+                                                     Padding="10"
+                                                     HasDropShadow="True">
+
+                                                <StackPanel Width="200">
+                                                    <TextBlock Text="Target colors" 
+                                                               FontWeight="Bold" 
+                                                               Foreground="White" 
+                                                               Margin="0,0,0,5"/>
+
+                                                    <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                           Height="108"
+                                                           Width="192"
+                                                           Stretch="Uniform" 
+                                                           Margin="0,5"
+                                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                    <TextBlock Text="Assigned colors for each wavelength to distinguish them on the real-time charts." 
+                                                               Foreground="#CCCCCC" 
+                                                               FontSize="11" 
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+
+                                            </ToolTip>
+
+                                        </Border.ToolTip>
+
+                                    </Border>
+                                </StackPanel>
+
+                                <xctk:ColorPicker SelectedColor="{Binding Color, UpdateSourceTrigger=PropertyChanged}" 
+                                                  Height="30" Margin="0,5,0,0"
+                                                  Style="{StaticResource DarkColorPicker}" 
+                                                  UsingAlphaChannel="False"/>
+
+                                <StackPanel Orientation="Horizontal">
+
+                                    <TextBlock Text="Detection window high"
+                                               FontSize="11"
+                                               Margin="0,10,0,0"
+                                               Foreground="#999999"/>
+
+                                    <Border Margin="6,10,0,0" 
+                                            Width="14" 
+                                            Height="14" 
+                                            CornerRadius="7" 
+                                            Background="#444444" 
+                                            Cursor="Help"
+                                            VerticalAlignment="Center"
+                                            ToolTipService.InitialShowDelay="100">
+
+                                        <TextBlock Text="?" 
+                                                   FontSize="10" 
+                                                   FontWeight="Bold"
+                                                   Foreground="#AAAAAA" 
+                                                   HorizontalAlignment="Center" 
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,0,1"/>
+
+                                        <Border.ToolTip>
+
+                                            <ToolTip Background="#252526" 
+                                                     Foreground="White" 
+                                                     BorderBrush="#454545"
+                                                     Padding="10"
+                                                     HasDropShadow="True">
+
+                                                <StackPanel Width="200">
+                                                    <TextBlock Text="Detection window high" 
+                                                               FontWeight="Bold" 
+                                                               Foreground="White"/>
+
+                                                    <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                           Height="108"
+                                                           Width="192"
+                                                           Stretch="Uniform" 
+                                                           Margin="0,5"
+                                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                    <TextBlock Text="Upper intensity thresholds for each wavelength that define the boundary of the detection window.
+                                                                 When the measured signal crosses these limits, the algorithm evaluates stability and may transition between Window‑In, Monitoring, and Window‑Out states.
+                                                                 Used to detect significant rises in intensity that indicate process transitions or endpoint behavior." 
+                                                               Foreground="#CCCCCC" 
+                                                               FontSize="11" 
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+
+                                            </ToolTip>
+
+                                        </Border.ToolTip>
+
+                                    </Border>
+
+                                </StackPanel>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBox Grid.Column="0" 
+                                             Text="{Binding SignalHigh, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#3E3E40"
+                                             BorderThickness="0"
+                                             Foreground="White"
+                                             Padding="8"
+                                             Margin="0,5,0,0"/>
+
+                                    <Border Grid.Column="1" 
+                                            Background="#3E3E40"
+                                            CornerRadius="0,1,1,0"
+                                            Margin="0,5,0,0"
+                                            Padding="8,8,7,0">
+
+                                        <TextBlock Text="%" 
+                                                   Foreground="White"/>
+
+                                    </Border>
+
+                                </Grid>
+
+                                <StackPanel Orientation="Horizontal">
+
+                                    <TextBlock Text="Detection wavelength name"
+                                               FontSize="11"
+                                               Margin="0,10,0,0"
+                                               Foreground="#999999"/>
+
+                                    <Border Margin="6,10,0,0" 
+                                            Width="14" 
+                                            Height="14" 
+                                            CornerRadius="7" 
+                                            Background="#444444" 
+                                            Cursor="Help"
+                                            VerticalAlignment="Center"
+                                            ToolTipService.InitialShowDelay="100">
+
+                                        <TextBlock Text="?" 
+                                                   FontSize="10" 
+                                                   FontWeight="Bold"
+                                                   Foreground="#AAAAAA" 
+                                                   HorizontalAlignment="Center" 
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,0,1"/>
+
+                                        <Border.ToolTip>
+
+                                            <ToolTip Background="#252526" 
+                                                     Foreground="White" 
+                                                     BorderBrush="#454545"
+                                                     Padding="10"
+                                                     HasDropShadow="True">
+
+                                                <StackPanel Width="200">
+                                                    <TextBlock Text="Detection wavelength name" 
+                                                               FontWeight="Bold" 
+                                                               Foreground="White"/>
+
+                                                    <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                           Height="108"
+                                                           Width="192"
+                                                           Stretch="Uniform" 
+                                                           Margin="0,5"
+                                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                    <TextBlock Text="Upper intensity thresholds for each wavelength that define the boundary of the detection window.
+                                                                 When the measured signal crosses these limits, the algorithm evaluates stability and may transition between Window‑In, Monitoring, and Window‑Out states.
+                                                                 Used to detect significant rises in intensity that indicate process transitions or endpoint behavior." 
+                                                               Foreground="#CCCCCC" 
+                                                               FontSize="11" 
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+
+                                            </ToolTip>
+
+                                        </Border.ToolTip>
+
+                                    </Border>
+
+                                </StackPanel>
+
+                                <TextBox Grid.Column="0" 
+                                         Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
+                                         Background="#3E3E40"
+                                         BorderThickness="0"
+                                         Foreground="White"
+                                         Padding="8"
+                                         Margin="0,5,0,0"/>
+
+
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <StackPanel Orientation="Horizontal" 
+                        VerticalAlignment="Center">
+
+                <TextBlock Text="Autocalibration" 
+                           FontSize="12" 
+                           FontWeight="Bold" 
+                           Foreground="White"
+                           Margin="0,15,0,5"/>
+
+                <Border Margin="6,5,0,0" 
+                        Width="14" 
+                        Height="14" 
+                        CornerRadius="7" 
+                        Background="#444444" 
+                        Cursor="Help"
+                        VerticalAlignment="Center"
+                        ToolTipService.InitialShowDelay="100">
+
+                    <TextBlock Text="?" 
+                               FontSize="10" 
+                               FontWeight="Bold"
+                               Foreground="#AAAAAA" 
+                               HorizontalAlignment="Center" 
+                               VerticalAlignment="Center"
+                               Margin="0,0,0,1"/>
+
+                    <Border.ToolTip>
+
+                        <ToolTip Background="#252526" 
+                                 Foreground="White" 
+                                 BorderBrush="#454545"
+                                 Padding="10"
+                                 HasDropShadow="True">
+
+                            <StackPanel Width="220">
+                                <TextBlock Text="Automatic Peak Alignment" 
+                                           FontWeight="Bold" 
+                                           Foreground="White"
+                                           Margin="0,0,0,5"/>
+
+                                <TextBlock Text="Enables automatic center-wavelength tracking. The system scans a ±1 nm range around the target wavelength to lock onto the actual intensity peak." 
+                                           Foreground="#CCCCCC"
+                                           FontSize="11" 
+                                           TextWrapping="Wrap" 
+                                           Margin="0,5,0,0"/>
+
+                                <TextBlock Text="Ensures monitoring always stays on the highest point of the emission line. Corrects for pixel shifts caused by spectrometer temperature changes." 
+                                           Foreground="#888888" 
+                                           FontSize="11" 
+                                           TextWrapping="Wrap"/>
+
+                                <TextBlock Text="Note: The system will search within a ~2 nm window to establish the reference anchor point." 
+                                           Foreground="#888888"
+                                           FontStyle="Italic" 
+                                           FontSize="10" 
+                                           TextWrapping="Wrap" 
+                                           Margin="0,10,0,0"/>
+                            </StackPanel>
+
+                        </ToolTip>
+
+                    </Border.ToolTip>
+
+                </Border>
+
+            </StackPanel>
+
+            <ComboBox Background="#3E3E40"
+                      BorderThickness="0"
+                      Foreground="White"
+                      Padding="8"
+                      Margin="0,5,0,0"
+                      ItemsSource="{Binding YesNoOptions}"
+                      SelectedItem="{Binding SelectedAutocalibrationText}"
+                      Style="{StaticResource ComboBoxStyle}"
+                      Height="32"/>
+
+        </StackPanel>
+        
+    </Border>
+    
+</UserControl>
