@@ -11,6 +11,7 @@ using OpticEMS.Devices;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Preprocessing;
 using OpticEMS.Preprocessing.Modes;
+using OpticEMS.Processing;
 using OpticEMS.Processing.PCA;
 using System.Buffers;
 using System.Diagnostics;
@@ -315,123 +316,141 @@ namespace OpticEMS.Orchestrator
         private async Task RunProcessLoopAsync(CancellationToken cancellationToken)
         {
             const int intervalMs = 33;
-
             long nextTick = Environment.TickCount64;
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                long now = Environment.TickCount64;
-                long sleep = nextTick - now;
-
-                if (sleep > 0)
-                {
-                    try 
-                    { 
-                        await Task.Delay((int)sleep, cancellationToken); 
-                    }
-                    catch (OperationCanceledException) 
-                    { 
-                        break; 
-                    }
-                }
+                if (await WaitForNextTickAsync(nextTick, cancellationToken)) break;
 
                 nextTick += intervalMs;
 
-                if (!_isPaused && _isRunning && Recipe != null)
+                if (ShouldProcess())
                 {
-                    double currentTimeMs = _stopwatch.Elapsed.TotalMilliseconds;
-                    double currentTimeSec = currentTimeMs / 1000.0;
-
-                    var windowBounds = _endpointService.GetCurrentWindowBounds();
-                    WeakReferenceMessenger.Default.Send(new DrawWindowBoundsMessage(ChannelId, windowBounds));
-
-                    var intensitiesSnapshot = ArrayPool<double>.Shared.Rent(_currentIntensities.Length);
-                    Buffer.BlockCopy(_currentIntensities, 0, intensitiesSnapshot, 0, _currentIntensities.Length * sizeof(double));
-
-                    var trendEquationResult = _trendHandler.Process(currentTimeMs);
-
-                    EndpointResult endpointResult;
-
-                    if (Recipe.DerivativeEnabled)
-                    {
-                        var derivatedSignal = trendEquationResult.Derivatives;
-                        var preprocessedSignal = _modeHandler.Process(derivatedSignal);
-                        RecordDataForExport(derivatedSignal, currentTimeSec);
-
-                        endpointResult = _endpointService.Update(preprocessedSignal, currentTimeMs);
-
-                        WeakReferenceMessenger.Default.Send(new ProcessStepUpdateMessage(
-                            ChannelId,
-                            endpointResult.Status,
-                            currentTimeSec,
-                            preprocessedSignal));
-                    }
-                    else
-                    {
-                        var smoothedSignal = trendEquationResult.Smoothed;
-                        var preprocessedSignal = _modeHandler.Process(smoothedSignal);
-                        RecordDataForExport(preprocessedSignal, currentTimeSec);
-
-                        endpointResult = _endpointService.Update(preprocessedSignal, currentTimeMs);
-
-                        WeakReferenceMessenger.Default.Send(new ProcessStepUpdateMessage(
-                            ChannelId,
-                            endpointResult.Status,
-                            currentTimeSec,
-                            preprocessedSignal));
-                    }
-
-                    if (Recipe.PcaEnabled && _pcaHandler != null)
-                    {
-                        var latestFullSpectrum = _fullSpectrumHistory.LastOrDefault();
-                        if (latestFullSpectrum != null)
-                        {
-                            var result = await _pcaHandler.ProcessAsync(latestFullSpectrum);
-                            
-                            if (PcaStatus != _pcaHandler.Status)
-                            {
-                                PcaStatus = _pcaHandler.Status;
-
-                                if (result is PcaAnomalyResult detailed && result.IsAnomaly)
-                                {
-                                    var ranges = _pcaHandler.DetectAnomalyRanges(detailed.Residual);
-
-                                    WeakReferenceMessenger.Default.Send(new PcaAnomalyMapMessage(
-                                        ChannelId,
-                                        ranges));
-                                }
-                                else
-                                {
-                                    WeakReferenceMessenger.Default.Send(new PcaAnomalyMapMessage(
-                                        ChannelId, new List<(int, int)>()));
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        PcaStatus = "PCA disabled";
-                    }
-
-                    if (endpointResult.Status != ProcessStatus)
-                    {
-                        ProcessStatus = endpointResult.Status;
-                    }
-
-                    if (endpointResult.IsDetected)
-                    {
-                        await FinishProcessAsync(endpointResult.IsForced);
-                        break;
-                    }
+                    await ExecuteProcessStepAsync();
                 }
 
-                long behind = Environment.TickCount64 - nextTick;
-                if (behind > intervalMs)
+                nextTick = AdjustForLag(nextTick, intervalMs);
+            }
+        }
+
+        private async Task<bool> WaitForNextTickAsync(long nextTick, CancellationToken ct)
+        {
+            long now = Environment.TickCount64;
+            long sleep = nextTick - now;
+
+            if (sleep > 0)
+            {
+                try
                 {
-                    long skipped = behind / intervalMs;
-                    nextTick += skipped * intervalMs;
+                    await Task.Delay((int)sleep, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    return true;
                 }
             }
+            return false;
+        }
+
+        private bool ShouldProcess()
+        {
+            return !_isPaused && _isRunning && Recipe != null;
+        }
+
+        private long AdjustForLag(long nextTick, int intervalMs)
+        {
+            long now = Environment.TickCount64;
+            long behind = now - nextTick;
+
+            if (behind > intervalMs)
+            {
+                long skipped = behind / intervalMs;
+                return nextTick + (skipped * intervalMs);
+            }
+
+            return nextTick;
+        }
+
+        private void BroadcastWindowBounds()
+        {
+            var windowBounds = _endpointService.GetCurrentWindowBounds();
+            WeakReferenceMessenger.Default.Send(new DrawWindowBoundsMessage(ChannelId, windowBounds));
+        }
+
+        private async Task ExecuteProcessStepAsync()
+        {
+            double currentTimeMs = _stopwatch.Elapsed.TotalMilliseconds;
+            double currentTimeSec = currentTimeMs / 1000.0;
+
+            BroadcastWindowBounds();
+
+            double[] signal = PrepareSignal(currentTimeMs, currentTimeSec);
+
+            var endpointResult = _endpointService.Update(signal, currentTimeMs);
+            UpdateStatusAndNotify(endpointResult, signal, currentTimeSec);
+
+            if (Recipe.PcaEnabled)
+            {
+                await ProcessPcaAnalyticsAsync();
+            }
+
+            if (endpointResult.IsDetected)
+            {
+                await FinishProcessAsync(endpointResult.IsForced);
+            }
+        }
+
+
+        private double[] PrepareSignal(double currentTimeMs, double currentTimeSec)
+        {
+            var trendResult = _trendHandler.Process(currentTimeMs);
+
+            double[] baseSignal = Recipe.DerivativeEnabled
+                ? trendResult.Derivatives
+                : trendResult.Smoothed;
+
+            var processedSignal = _modeHandler.Process(baseSignal);
+
+            RecordDataForExport(baseSignal, currentTimeSec);
+            return processedSignal;
+        }
+
+        private async Task ProcessPcaAnalyticsAsync()
+        {
+            var latestFullSpectrum = _fullSpectrumHistory.LastOrDefault();
+
+            if (latestFullSpectrum == null || _pcaHandler == null)
+            {
+                return;
+            }
+
+            var result = await _pcaHandler.ProcessAsync(latestFullSpectrum);
+
+            if (PcaStatus != _pcaHandler.Status)
+            {
+                PcaStatus = _pcaHandler.Status;
+                HandlePcaResult(result);
+            }
+        }
+
+        private void HandlePcaResult(Result result)
+        {
+            var ranges = (result is PcaAnomalyResult detailed && result.IsAnomaly)
+                ? _pcaHandler.DetectAnomalyRanges(detailed.Residual)
+                : new List<(int, int)>();
+
+            WeakReferenceMessenger.Default.Send(new PcaAnomalyMapMessage(ChannelId, ranges));
+        }
+
+        private void UpdateStatusAndNotify(EndpointResult endpointResult, double[] signal, double timeSec)
+        {
+            if (endpointResult.Status != ProcessStatus)
+            {
+                ProcessStatus = endpointResult.Status;
+            }
+
+            WeakReferenceMessenger.Default.Send(new ProcessStepUpdateMessage(
+                ChannelId, endpointResult.Status, timeSec, signal));
         }
 
         private async Task FinishProcessAsync(bool forced)
@@ -491,7 +510,7 @@ namespace OpticEMS.Orchestrator
                 wavelengths: Recipe.Wavelengths,
                 points: _exportData);
 
-            ReleaseExportBuffers();
+            //ReleaseExportBuffers();
         }
 
         public void ExportToExcel(string path, string channelName)
@@ -518,7 +537,7 @@ namespace OpticEMS.Orchestrator
                 wavelengths: Recipe.Wavelengths,
                 points: _exportData);
 
-            ReleaseExportBuffers();
+            //ReleaseExportBuffers();
         }
 
         public void ExportToTxt(string path, string channelName)
@@ -545,7 +564,7 @@ namespace OpticEMS.Orchestrator
                 wavelengths: Recipe.Wavelengths,
                 points: _exportData);
 
-            ReleaseExportBuffers();
+            //ReleaseExportBuffers();
         }
 
         private void RegisterMessages()
@@ -713,6 +732,7 @@ namespace OpticEMS.Orchestrator
             _exportData.Add(timePoint);
         }
 
+        /*
         private void ReleaseExportBuffers()
         {
             foreach (var tp in _exportData)
@@ -721,7 +741,7 @@ namespace OpticEMS.Orchestrator
             }
 
             _exportData.Clear();
-        }
+        }*/
 
         #endregion
     }

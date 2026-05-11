@@ -161,7 +161,6 @@ namespace OpticEMS.Services.Etching
             return new EndpointResult(false, $"Overetching", false);
         }
 
-        // OK
         private bool IsInsideDetectionLimits(double[] signal)
         {
             for (int i = 0; i < signal.Length; i++)
@@ -189,7 +188,6 @@ namespace OpticEMS.Services.Etching
             return trendResult?.Smoothed;
         }
 
-        // OK
         private bool CheckAndSlideWindows(double[] signal, double elapsedMs)
         {
             bool anyMoved = false;
@@ -207,7 +205,6 @@ namespace OpticEMS.Services.Etching
             return anyMoved;
         }
 
-        // OK
         private void ResetWindows(double[] signal, double elapsedMs)
         {
             for (int i = 0; i < signal.Length; i++)
@@ -217,7 +214,6 @@ namespace OpticEMS.Services.Etching
             }
         }
 
-        // OK
         private bool IsOutsideDetectionWindow(double[] currentSignal, double elapsedMs)
         {
             bool anyLineViolatedThisCycle = false;
@@ -253,7 +249,6 @@ namespace OpticEMS.Services.Etching
             return anyLineViolatedThisCycle;
         }
 
-        // OK
         private void InitializeWindows(double[] signal, double elapsedMs)
         {
             int count = signal.Length;
