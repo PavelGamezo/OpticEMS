@@ -2,81 +2,48 @@
 {
     public class MagneticFieldSmoother
     {
-        private readonly double _periodMs;
-        private readonly int _periodsToAverage;
-        private readonly Queue<double[]> _mfBuffer = new();
-        private double _lastUpdateTime = 0;
+        private readonly double _targetIntervalMs;
+        private readonly Queue<(double[] Signal, double Timestamp)> _buffer = new();
 
         public MagneticFieldSmoother(double magneticFieldPeriodMs, int periodsToAverage = 1)
         {
-            _periodMs = magneticFieldPeriodMs;
-            _periodsToAverage = Math.Max(1, periodsToAverage);
+            _targetIntervalMs = magneticFieldPeriodMs * periodsToAverage;
         }
-
-        public string Name => "Magnetic Field Smoother";
-
-        public string Description => $"MF smoothing over {_periodsToAverage} periods";
 
         public double[] ComputeAvg(double[] inputSignal, double elapsedMs)
         {
-            double periodMs = _periodMs;
-            int avgCount = Math.Max(1, _periodsToAverage);
+            _buffer.Enqueue(((double[])inputSignal.Clone(), elapsedMs));
 
-            if (elapsedMs - _lastUpdateTime >= periodMs / avgCount)
+            while (_buffer.Count > 0 && (elapsedMs - _buffer.Peek().Timestamp > _targetIntervalMs))
             {
-                _mfBuffer.Enqueue(Array.ConvertAll(inputSignal, x => (double)x));
-                if (_mfBuffer.Count > avgCount)
-                {
-                    _mfBuffer.Dequeue();
-                }
-
-                _lastUpdateTime = elapsedMs;
+                _buffer.Dequeue();
             }
 
-            if (_mfBuffer.Count == 0)
-            {
-                return inputSignal;
-            }
+            int len = inputSignal.Length;
+            var result = new double[len];
+            double totalWeight = 0;
 
-            var averaged = new double[inputSignal.Length];
-            foreach (var frame in _mfBuffer)
+            int i = 0;
+            foreach (var frame in _buffer)
             {
-                for (int i = 0; i < inputSignal.Length; i++)
+                i++;
+                double weight = i;
+                totalWeight += weight;
+
+                for (int j = 0; j < len; j++)
                 {
-                    averaged[i] += (frame[i] / _mfBuffer.Count);
+                    result[j] += frame.Signal[j] * weight;
                 }
             }
 
-            return averaged;
+            for (int j = 0; j < len; j++)
+            {
+                result[j] /= totalWeight;
+            }
+
+            return result;
         }
 
-        /// <summary>
-        /// Not implemented in this operation version
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public double ComputeDer(uint value)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Not implemented in this operation version
-        /// </summary>
-        /// <param name="values"></param>
-        /// <param name="elapsedMs"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public double[] ComputeDer(uint[] values, double elapsedMs)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Reset()
-        {
-            _mfBuffer.Clear();
-            _lastUpdateTime = 0;
-        }
+        public void Reset() => _buffer.Clear();
     }
 }

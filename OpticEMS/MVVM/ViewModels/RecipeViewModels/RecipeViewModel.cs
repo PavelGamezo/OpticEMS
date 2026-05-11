@@ -519,6 +519,14 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             }
         }
 
+        partial void OnSelectedPcaTextChanged(string value)
+        {
+            if (SelectedRecipe != null)
+            {
+                SelectedRecipe.PcaEnabled = (value == "Yes");
+            }
+        }
+
         partial void OnSelectedAutocalibrationTextChanged(string value)
         {
             if (SelectedRecipe != null)

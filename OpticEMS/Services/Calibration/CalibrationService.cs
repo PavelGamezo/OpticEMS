@@ -6,6 +6,8 @@ namespace OpticEMS.Services.Calibration
     public class CalibrationService : ICalibrationService
     {
         private const int CORRECTION_PIXELS_WINDOW = 2;
+        private const double MIN_INTENSITY_THRESHOLD = 500;
+        private const double MIN_PEAK_PROMINENCE = 1.2;
 
         public double[] CalculateCoefficients(IEnumerable<CalibrationPoint> calibrationPoints)
         {
@@ -28,26 +30,33 @@ namespace OpticEMS.Services.Calibration
                 return;
             }
 
+            int startIdx = Math.Max(0, nominalPixel - CORRECTION_PIXELS_WINDOW);
+            int endIdx = Math.Min(intensities.Length - 1, nominalPixel + CORRECTION_PIXELS_WINDOW);
+
             int bestPixel = nominalPixel;
             double maxIntensity = intensities[nominalPixel];
+            bool foundValidPeak = false;
 
-            for (int offset = -CORRECTION_PIXELS_WINDOW; offset <= CORRECTION_PIXELS_WINDOW; offset++)
+            for (int offset = startIdx; offset <= endIdx; offset++)
             {
-                int idx = nominalPixel + offset;
-                if (idx < 0 || idx >= intensities.Length) 
+                if (intensities[offset] > maxIntensity)
                 {
-                    continue;
+                    double leftNeighbor = (offset > 0) ? intensities[offset - 1] : 0;
+                    double rightNeighbor = (offset < intensities.Length - 1) ? intensities[offset + 1] : 0;
+                    if (intensities[offset] > leftNeighbor && intensities[offset] > rightNeighbor)
+                    {
+                        maxIntensity = intensities[offset];
+                        bestPixel = offset;
+                        foundValidPeak = true;
+                    }
                 }
+            }
 
-                bool isLocalMax = intensities[idx] > maxIntensity &&
-                                  (idx == 0 || intensities[idx] > intensities[idx - 1]) &&
-                                  (idx == intensities.Length - 1 || intensities[idx] > intensities[idx + 1]);
+            double background = (intensities[startIdx] + intensities[endIdx]) / 2.0;
 
-                if (isLocalMax)
-                {
-                    maxIntensity = intensities[idx];
-                    bestPixel = idx;
-                }
+            if (maxIntensity < MIN_INTENSITY_THRESHOLD || maxIntensity < background * MIN_PEAK_PROMINENCE)
+            {
+                return;
             }
 
             nominalPixel = bestPixel;

@@ -319,6 +319,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
+        /*
         [RelayCommand]
         private async Task ExecuteAnalizingTrain()
         {
@@ -330,7 +331,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 _dialogService.ShowError(exception.Message);
             }
-        }
+        }*/
 
         #endregion
 

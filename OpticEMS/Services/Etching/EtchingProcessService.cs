@@ -7,7 +7,6 @@ namespace OpticEMS.Services.Etching
     public class EtchingProcessService : IEtchingProcessService
     {
         private Recipe? _recipe;
-        private TrendEquationsHandler? _trendHandler;
 
         private double[] _windowStartTimes = Array.Empty<double>();
         private double[] _referenceValues = Array.Empty<double>(); 
@@ -24,11 +23,6 @@ namespace OpticEMS.Services.Etching
         public double DetectedAtSeconds => _detectedAtMs / 1000.0;
         public double TotalDurationSeconds => _finishedAtMs / 1000.0;
         public double OverEtchDurationSeconds => (_finishedAtMs - _detectedAtMs) / 1000.0;
-
-        public void PushIntensities(double[] currentIntensities)
-        {
-            _trendHandler?.PushIntensities(currentIntensities);
-        }
 
         public EndpointResult Update(double[] signal, double elapsedMs)
         {
@@ -81,34 +75,37 @@ namespace OpticEMS.Services.Etching
 
         private EndpointResult ProcessWindowOutState(double[] signal, double elapsedMs)
         {
-            bool violated = IsOutsideDetectionWindow(signal, elapsedMs);
-            if (violated)
+            bool hasJustViolated = IsOutsideDetectionWindow(signal, elapsedMs);
+
+            if (hasJustViolated)
             {
                 _consecutiveWindowsOut++;
+
                 if (_consecutiveWindowsOut >= _recipe.WindowOutCount)
                 {
                     _state = ProcessState.WindowIn;
                     _consecutiveWindowsIn = 0;
-
+                    _consecutiveWindowsOut = 0;
                     return new EndpointResult(false, "Monitoring", false);
                 }
+
+                return new EndpointResult(false, "Monitoring", false);
             }
             else
             {
-                bool allWindowsExpired = true;
-                for (int i = 0; i < _windowStartTimes.Length; i++)
+                for (int i = 0; i < signal.Length; i++)
                 {
-                    if (elapsedMs - _windowStartTimes[i] < _recipe.DetectionWindowTime)
+                    if (elapsedMs - _windowStartTimes[i] >= _recipe.DetectionWindowTime)
                     {
-                        allWindowsExpired = false;
-                        break;
+                        _consecutiveWindowsOut = 0;
+
+                        _windowStartTimes[i] = elapsedMs;
+                        _referenceValues[i] = signal[i];
                     }
                 }
-                if (allWindowsExpired)
-                    _consecutiveWindowsOut = 0;
-            }
 
-            return new EndpointResult(false, $"Monitoring", false);
+                return new EndpointResult(false, "Monitoring", false);
+            }
         }
 
         private EndpointResult ProcessWindowInState(double[] signal, double elapsedMs)
@@ -181,28 +178,30 @@ namespace OpticEMS.Services.Etching
             return true;
         }
 
-        private double[]? GetProcessedSignal(double elapsedMs)
-        {
-            var trendResult = _trendHandler?.Process(elapsedMs);
-
-            return trendResult?.Smoothed;
-        }
-
         private bool CheckAndSlideWindows(double[] signal, double elapsedMs)
         {
-            bool anyMoved = false;
+            if (signal.Length == 0) return false;
+
+            int movedCount = 0;
 
             for (int i = 0; i < signal.Length; i++)
             {
+                if (_referenceValues[i] <= 0)
+                {
+                    continue;
+                }
+
                 if (elapsedMs - _windowStartTimes[i] >= _recipe.DetectionWindowTime)
                 {
                     _windowStartTimes[i] = elapsedMs;
                     _referenceValues[i] = signal[i];
-                    anyMoved = true;
+                    movedCount++;
                 }
             }
 
-            return anyMoved;
+            bool allMoved = movedCount == signal.Length;
+
+            return allMoved;
         }
 
         private void ResetWindows(double[] signal, double elapsedMs)
@@ -273,9 +272,6 @@ namespace OpticEMS.Services.Etching
         public void Start(Recipe recipe, double[] startIntensities)
         {
             _recipe = recipe;
-            
-            _trendHandler = new TrendEquationsHandler(recipe.DerivativeEnabled);
-            _trendHandler.Set(recipe.MagneticFieldPeriodMs, recipe.FieldPeriodsToAverage);
 
             _state = ProcessState.InitialDeadTime;
 

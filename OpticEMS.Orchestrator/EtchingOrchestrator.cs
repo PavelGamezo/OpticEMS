@@ -252,9 +252,14 @@ namespace OpticEMS.Orchestrator
             {
                 _deviceProcessing?.NotifyVirtualProcessStopped();
             }
+
+            if (Recipe.PcaEnabled)
+            {
+                await ExecuteAnalyzingTrainingAsync();
+            }
         }
 
-        public async Task ExecuteAnalyzingTrainingAsync()
+        private async Task ExecuteAnalyzingTrainingAsync()
         {
             if (_isRunning)
             {
@@ -374,7 +379,10 @@ namespace OpticEMS.Orchestrator
         private void BroadcastWindowBounds()
         {
             var windowBounds = _endpointService.GetCurrentWindowBounds();
-            WeakReferenceMessenger.Default.Send(new DrawWindowBoundsMessage(ChannelId, windowBounds));
+
+            WeakReferenceMessenger.Default.Send(new DrawWindowBoundsMessage(
+                ChannelId, 
+                windowBounds));
         }
 
         private async Task ExecuteProcessStepAsync()
@@ -647,23 +655,33 @@ namespace OpticEMS.Orchestrator
                 return;
             }
 
+            var anyChanged = false;
+
             for (int i = 0; i < _wavelengthsIndices.Length; i++)
             {
+                int oldIndex = _wavelengthsIndices[i];
                 _calibrationService.CorrectWavelengthIndices(intensities, ref _wavelengthsIndices[i]);
+
+                if (oldIndex != _wavelengthsIndices[i])
+                {
+                    anyChanged = true;
+                    _isIndicesCorrected = true;
+                }
             }
 
-            _isIndicesCorrected = true;
-
-            _currentIntensities = new double[_wavelengthsIndices.Length];
-            for (int i = 0; i < _wavelengthsIndices.Length; i++)
+            if (anyChanged)
             {
-                int idx = _wavelengthsIndices[i];
-                _currentIntensities[i] = (idx >= 0 && idx < intensities.Length) ? intensities[idx] : 0;
+                _currentIntensities = new double[_wavelengthsIndices.Length];
+                for (int i = 0; i < _wavelengthsIndices.Length; i++)
+                {
+                    int idx = _wavelengthsIndices[i];
+                    _currentIntensities[i] = (idx >= 0 && idx < intensities.Length) ? intensities[idx] : 0;
+                }
+
+                SaveUpdatedWavelengths();
+
+                WeakReferenceMessenger.Default.Send(new RecipeAppliedMessage(ChannelId, Recipe.Wavelengths, Recipe.WavelengthColors));
             }
-
-            SaveUpdatedWavelengths();
-
-            WeakReferenceMessenger.Default.Send(new RecipeAppliedMessage(ChannelId, Recipe.Wavelengths, Recipe.WavelengthColors));
         }
 
         public void UpdateWavelengthManually()

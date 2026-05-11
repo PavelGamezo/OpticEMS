@@ -14,34 +14,50 @@
 
         public double[] ComputeAveraged()
         {
+            List<double[]> framesToProcess;
+
             lock (_swapLock)
             {
+
                 if (_writeBuffer.Count == 0)
                 {
-                    return _lastAveraged;
+                    return Array.Empty<double>();
                 }
 
+                framesToProcess = _writeBuffer;
+                _writeBuffer = new List<double[]>();
+
+                /*
                 var tmp = _readBuffer;
                 _readBuffer = _writeBuffer;
                 _writeBuffer = tmp;
-                _writeBuffer.Clear();
+                _writeBuffer.Clear();*/
             }
-
+            /*
             int length = _readBuffer[0].Length;
             double[] sum = new double[length];
 
             foreach (var frame in _readBuffer)
             {
                 for (int i = 0; i < length; i++) sum[i] += frame[i];
-            }
+            }*/
 
-            double[] avg = new double[length];
-            for (int i = 0; i < length; i++)
+            int frameCount = framesToProcess.Count;
+            int dataLength = framesToProcess[0].Length;
+            double[] avg = new double[dataLength];
+
+            foreach (var frame in framesToProcess)
             {
-                avg[i] = (sum[i] / _readBuffer.Count);
+                for (int i = 0; i < dataLength; i++)
+                {
+                    avg[i] += frame[i];
+                }
             }
 
-            _lastAveraged = avg;
+            for (int i = 0; i < dataLength; i++)
+            {
+                avg[i] /= frameCount;
+            }
 
             return avg;
         }

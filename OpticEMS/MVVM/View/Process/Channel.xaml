@@ -121,7 +121,7 @@
                     </StackPanel>
                 </Button>
 
-                <Button Command="{Binding ExecuteAnalizingTrainCommand}"
+                <!--<Button Command="{Binding ExecuteAnalizingTrainCommand}"
                         Style="{StaticResource ActionButtonStyle}"
                         Background="#222120"
                         HorizontalAlignment="Stretch">
@@ -131,7 +131,7 @@
                                    Foreground="White"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
-                </Button>
+                </Button>-->
 
             </StackPanel>
 

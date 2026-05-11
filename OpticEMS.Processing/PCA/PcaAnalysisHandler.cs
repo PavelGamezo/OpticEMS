@@ -73,18 +73,15 @@
             if (residual == null || residual.Length == 0)
                 return ranges;
 
-            // Абсолютные значения
             double[] abs = new double[residual.Length];
             for (int i = 0; i < residual.Length; i++)
                 abs[i] = Math.Abs(residual[i]);
 
-            // Среднее
             double sum = 0;
             for (int i = 0; i < abs.Length; i++)
                 sum += abs[i];
             double mean = sum / abs.Length;
 
-            // Стандартное отклонение
             double var = 0;
             for (int i = 0; i < abs.Length; i++)
             {
@@ -96,7 +93,6 @@
             if (std == 0)
                 return ranges;
 
-            // Динамический порог PCA
             double threshold = mean + k * std;
 
             int start = -1;
@@ -120,7 +116,6 @@
                 }
             }
 
-            // Если диапазон закончился в конце массива
             if (start != -1)
                 ranges.Add((start, abs.Length - 1));
 
@@ -135,7 +130,7 @@
 
                 if (data.Length < _minTrainingSize)
                 {
-                    Status = $"Not enough data for PCA training (need ≥ {_minTrainingSize}, got {data.Length})";
+                    Status = $"Not enough data for PCA training";
                     return new Result(false, Status);
                 }
 
