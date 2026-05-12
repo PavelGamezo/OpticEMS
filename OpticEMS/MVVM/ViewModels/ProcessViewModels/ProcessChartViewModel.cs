@@ -11,6 +11,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {
     public partial class ProcessChartViewModel : ObservableObject
     {
+        private readonly HashSet<string> _drawnConfirmedKeys = new();
+
         private readonly DateTime _epoch = new DateTime(2000, 1, 1);
         private bool _isMonitoringAreaActive;
         private bool _isOverEtchAreaActive;
@@ -251,7 +253,90 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             PlotModel.InvalidatePlot(false);
         }
 
-        
+        public void DrawWindowBounds(
+            List<WindowBounds> currentWindows,
+            List<WindowBounds> confirmedInWindows,
+            List<WindowBounds> confirmedOutWindows)
+        {
+            if (PlotModel == null)
+            {
+                return;
+            }
+
+            lock (PlotModel.SyncRoot)
+            {
+                var oldDynamic = PlotModel.Annotations
+                    .Where(a => a.Tag?.ToString() == "DynamicWindow")
+                    .ToList();
+
+                foreach (var old in oldDynamic)
+                {
+                    PlotModel.Annotations.Remove(old);
+                }
+
+                foreach (var b in currentWindows)
+                {
+                    double startX = DateTimeAxis.ToDouble(_epoch.AddSeconds(b.StartTime));
+                    double endX = DateTimeAxis.ToDouble(_epoch.AddSeconds(b.EndTime));
+
+                    var rect = new RectangleAnnotation
+                    {
+                        Tag = "DynamicWindow",
+                        MinimumX = startX,
+                        MaximumX = endX,
+                        MinimumY = b.Bottom,
+                        MaximumY = b.Top,
+                        Fill = OxyColor.FromAColor(35, OxyColors.White),
+                        Stroke = OxyColor.FromAColor(100, OxyColors.LightGray),
+                        StrokeThickness = 1,
+                        Layer = AnnotationLayer.AboveSeries
+                    };
+                    PlotModel.Annotations.Add(rect);
+                }
+
+                AddNewConfirmedWindows(confirmedInWindows, "WindowIn", OxyColors.Yellow);
+                AddNewConfirmedWindows(confirmedOutWindows, "WindowOut", OxyColors.LimeGreen);
+            }
+
+            PlotModel.InvalidatePlot(false);
+        }
+
+        private void AddNewConfirmedWindows(List<WindowBounds> confirmedList, string tagPrefix, OxyColor color)
+        {
+            foreach (var b in confirmedList)
+            {
+                string key = $"{tagPrefix}_{b.WavelengthIndex}_{b.EndTime:F3}";
+
+                if (_drawnConfirmedKeys.Contains(key))
+                {
+                    continue;
+                }
+
+                double startX = DateTimeAxis.ToDouble(_epoch.AddSeconds(b.StartTime));
+                double endX = DateTimeAxis.ToDouble(_epoch.AddSeconds(b.EndTime));
+
+                var rect = new RectangleAnnotation
+                {
+                    Tag = tagPrefix,
+                    MinimumX = startX,
+                    MaximumX = endX,
+                    MinimumY = b.Bottom,
+                    MaximumY = b.Top,
+                    Fill = OxyColor.FromAColor(45, color),
+                    Stroke = color,
+                    StrokeThickness = 1.5,
+                    Layer = AnnotationLayer.AboveSeries,
+                    Text = $"{tagPrefix} {b.WavelengthIndex + 1}",
+                    TextColor = color,
+                    FontSize = 9
+                };
+
+                PlotModel.Annotations.Add(rect);
+                _drawnConfirmedKeys.Add(key);
+            }
+        }
+
+        /*
         public void DrawWindowBounds(List<WindowBounds> windowBounds)
         {
             if (PlotModel == null)
@@ -292,7 +377,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
 
             PlotModel.InvalidatePlot(false);
-        }
+        }*/
 
         private void UpdateRectMaximumX(ref RectangleAnnotation? area, TimeSpan currentTime)
         {

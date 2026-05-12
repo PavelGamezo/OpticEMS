@@ -2,6 +2,7 @@
 {
     public enum EndpointStatus
     {
+        Idle,
         NoRecipe,
         SignalWaiting,
         Timeout,
@@ -9,5 +10,6 @@
         Monitoring,
         Endpoint,
         Overetching,
+        Completed
     }
 }

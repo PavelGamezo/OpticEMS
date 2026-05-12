@@ -17,7 +17,7 @@ using System.Windows.Threading;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {
-    public partial class ChannelViewModel : ObservableObject
+    public partial class ChannelViewModel : ObservableObject, IDisposable
     {
         #region services
 
@@ -107,7 +107,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         #endregion
 
-        #region command register
+        #region messages register
 
         private void RegisterMessages()
         {
@@ -124,7 +124,10 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 if (message.ChannelId == ChannelId)
                 {
-                    ProcessChartViewModel.DrawWindowBounds(message.WindowBounds);
+                    ProcessChartViewModel.DrawWindowBounds(
+                        message.WindowBounds, 
+                        message.ConfirmedWindowsIn, 
+                        message.ConfirmedWindowsOut);
                 }
             });
 
@@ -369,6 +372,15 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 SpectrumChartViewModel.UpdateAnnotations(wavelengths, colors);
             }, DispatcherPriority.Render);
+        }
+
+        #endregion
+
+        #region disposing
+
+        public void Dispose()
+        {
+            _orchestrator?.Dispose();
         }
 
         #endregion

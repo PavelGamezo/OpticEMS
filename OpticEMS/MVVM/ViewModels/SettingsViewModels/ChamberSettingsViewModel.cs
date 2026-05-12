@@ -1,11 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using OpticEMS.Common.Enums;
 using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices.Devices.Avantes;
 using OpticEMS.Devices.Devices.Solar;
 using OpticEMS.MVVM.Models;
+using OpticEMS.Notifications.Messages;
 using OpticEMS.Services.Settings;
 using OpticEMS.Services.Spectrometers;
 using Serilog;
@@ -183,6 +185,8 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 
                 AppSettings.Default.Devices = devices;
                 AppSettings.Default.Save();
+
+                WeakReferenceMessenger.Default.Send(new ChannelsUpdatedMessage());
 
                 Log.Warning("AppSettings for {count} channels saved successfully.", channelId + 1);
                 _dialogService.ShowInformation("Settings saved successfully.");

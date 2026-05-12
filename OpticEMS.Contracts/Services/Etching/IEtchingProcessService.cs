@@ -12,6 +12,14 @@ namespace OpticEMS.Contracts.Services.Etching
 
         void Start(Recipe.Recipe recipe, double[] startIntensities);
 
+        List<WindowBounds> GetConfirmedWindowsIn();
+
+        List<WindowBounds> GetConfirmedWindowsOut();
+
+        void ClearConfirmedWindowsIn();
+
+        void ClearConfirmedWindowsOut();
+
         List<WindowBounds> GetCurrentWindowBounds();
 
         //void Pause();

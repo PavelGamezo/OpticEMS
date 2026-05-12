@@ -1,12 +1,14 @@
 ﻿using OpticEMS.Contracts.Services.Etching;
 using OpticEMS.Contracts.Services.Recipe;
-using OpticEMS.Preprocessing;
 
 namespace OpticEMS.Services.Etching
 {
     public class EtchingProcessService : IEtchingProcessService
     {
         private Recipe? _recipe;
+
+        private readonly List<WindowBounds> _confirmedWindowsIn = new();
+        private readonly List<WindowBounds> _confirmedWindowsOut = new();
 
         private double[] _windowStartTimes = Array.Empty<double>();
         private double[] _referenceValues = Array.Empty<double>(); 
@@ -23,6 +25,38 @@ namespace OpticEMS.Services.Etching
         public double DetectedAtSeconds => _detectedAtMs / 1000.0;
         public double TotalDurationSeconds => _finishedAtMs / 1000.0;
         public double OverEtchDurationSeconds => (_finishedAtMs - _detectedAtMs) / 1000.0;
+
+        public List<WindowBounds> GetConfirmedWindowsIn()
+        {
+            lock (_confirmedWindowsIn)
+            {
+                return _confirmedWindowsIn.ToList();
+            }
+        }
+
+        public void ClearConfirmedWindowsIn()
+        {
+            lock (_confirmedWindowsIn)
+            {
+                _confirmedWindowsIn.Clear();
+            }
+        }
+
+        public List<WindowBounds> GetConfirmedWindowsOut()
+        {
+            lock (_confirmedWindowsOut)
+            {
+                return _confirmedWindowsOut.ToList();
+            }
+        }
+
+        public void ClearConfirmedWindowsOut()
+        {
+            lock (_confirmedWindowsOut)
+            {
+                _confirmedWindowsOut.Clear();
+            }
+        }
 
         public EndpointResult Update(double[] signal, double elapsedMs)
         {
@@ -80,6 +114,7 @@ namespace OpticEMS.Services.Etching
             if (hasJustViolated)
             {
                 _consecutiveWindowsOut++;
+                RecordConfirmedWindowOut(elapsedMs);
 
                 if (_consecutiveWindowsOut >= _recipe.WindowOutCount)
                 {
@@ -98,6 +133,7 @@ namespace OpticEMS.Services.Etching
                     if (elapsedMs - _windowStartTimes[i] >= _recipe.DetectionWindowTime)
                     {
                         _consecutiveWindowsOut = 0;
+                        ClearConfirmedWindowsOut();
 
                         _windowStartTimes[i] = elapsedMs;
                         _referenceValues[i] = signal[i];
@@ -112,6 +148,11 @@ namespace OpticEMS.Services.Etching
         {
             if (IsInsideDetectionLimits(signal))
             {
+                if (CheckIfWindowShouldBeRecorded(elapsedMs))
+                {
+                    RecordConfirmedWindowIn(elapsedMs);
+                }
+
                 if (CheckAndSlideWindows(signal, elapsedMs))
                 {
                     _consecutiveWindowsIn++;
@@ -137,6 +178,7 @@ namespace OpticEMS.Services.Etching
             else
             {
                 _consecutiveWindowsIn = 0;
+                ClearConfirmedWindowsIn();
                 ResetWindows(signal, elapsedMs);
             }
 
@@ -178,6 +220,23 @@ namespace OpticEMS.Services.Etching
             return true;
         }
 
+        private bool CheckIfWindowShouldBeRecorded(double elapsedMs)
+        {
+            for (int i = 0; i < _windowStartTimes.Length; i++)
+            {
+                if (_referenceValues[i] <= 0)
+                {
+                    continue;
+                }
+
+                if (elapsedMs - _windowStartTimes[i] >= _recipe.DetectionWindowTime)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private bool CheckAndSlideWindows(double[] signal, double elapsedMs)
         {
             if (signal.Length == 0) return false;
@@ -195,6 +254,7 @@ namespace OpticEMS.Services.Etching
                 {
                     _windowStartTimes[i] = elapsedMs;
                     _referenceValues[i] = signal[i];
+
                     movedCount++;
                 }
             }
@@ -278,6 +338,8 @@ namespace OpticEMS.Services.Etching
             _consecutiveWindowsIn = 0;
             _consecutiveWindowsOut = 0;
 
+            ClearConfirmedWindowsIn();
+            ClearConfirmedWindowsOut();
             InitializeWindows(startIntensities, 0);
 
             _detectedAtMs = 0;
@@ -287,6 +349,45 @@ namespace OpticEMS.Services.Etching
 
         public void Stop() => _state = ProcessState.Idle;
 
+        private void RecordConfirmedWindowIn(double elapsedMs)
+        {
+            double timeSec = elapsedMs / 1000.0;
+
+            for (int i = 0; i < _referenceValues.Length; i++)
+            {
+                double half = _fixedThresholds[i];
+
+                _confirmedWindowsIn.Add(new WindowBounds
+                {
+                    WavelengthIndex = i,
+                    StartTime = _windowStartTimes[i] / 1000.0,
+                    EndTime = (_windowStartTimes[i] + _recipe.DetectionWindowTime) / 1000.0,
+                    Top = _referenceValues[i] + half,
+                    Bottom = _referenceValues[i] - half,
+                    Reference = _referenceValues[i]
+                });
+            }
+        }
+
+        private void RecordConfirmedWindowOut(double elapsedMs)
+        {
+            double timeSec = elapsedMs / 1000.0;
+
+            for (int i = 0; i < _referenceValues.Length; i++)
+            {
+                double half = _fixedThresholds[i];
+
+                _confirmedWindowsOut.Add(new WindowBounds
+                {
+                    WavelengthIndex = i,
+                    StartTime = _windowStartTimes[i] / 1000.0,
+                    EndTime = (_windowStartTimes[i] + _recipe.DetectionWindowTime) / 1000.0,
+                    Top = _referenceValues[i] + half,
+                    Bottom = _referenceValues[i] - half,
+                    Reference = _referenceValues[i]
+                });
+            }
+        }
 
         public List<WindowBounds> GetCurrentWindowBounds()
         {

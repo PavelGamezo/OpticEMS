@@ -4,10 +4,12 @@ using OpticEMS.Devices.Devices.Avantes;
 using OpticEMS.Devices.Devices.Solar;
 using OpticEMS.Devices.Devices.VirtualSpec;
 using OpticEMS.Notifications.Messages;
+using Serilog;
+using System.Windows.Documents;
 
 namespace OpticEMS.Devices
 {
-    public class DeviceProcessing
+    public class DeviceProcessing : IDisposable
     {
         private ISettingsProvider _configProvider;
 
@@ -16,6 +18,8 @@ namespace OpticEMS.Devices
         private DeviceType _deviceType;
 
         private bool _scanning;
+
+        private bool _disposed = false;
 
         public int ChannelId { get; private set; }
 
@@ -115,6 +119,13 @@ namespace OpticEMS.Devices
                     WeakReferenceMessenger.Default.Send(new SpectrumUpdatedMessage(ChannelId, Intensities, Wavelengths));
                 }
             }
+            catch (Exception exception)
+            {
+                Log.Error(
+                    exception, 
+                    "[MEASURING]: Error during scanning for Device {DeviceName}",
+                    _device?.DeviceInfo?.Name ?? "Unknown");
+            }
             finally
             {
                 _scanning = false;
@@ -130,9 +141,24 @@ namespace OpticEMS.Devices
             SetParameters(id, ExposureTime, ScanNum);
             InitWavelengths();
 
-            if (!_device.Scan(id, Intensities, cancellationToken))
+            try
             {
-                return;
+                if (!_device.Scan(id, Intensities, cancellationToken))
+                {
+                    return;
+                }
+            }
+            catch (Exception exception)
+            {
+                Log.Error(
+                    exception, 
+                    "[MEASURING]: Error during {Method} for Device {DeviceName}",
+                    nameof(_device.Scan), 
+                    _device?.DeviceInfo?.Name ?? "Unknown");
+            }
+            finally
+            {
+                _scanning = false;
             }
 
             WeakReferenceMessenger.Default.Send(new CalibrationChartUpdatedMessage(id, Intensities));
@@ -170,6 +196,29 @@ namespace OpticEMS.Devices
             {
                 vSpec.StopProcess();
             }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _scanning = false;
+
+            try
+            {
+                _device?.StopMeasurement();
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception, "[MEASURING]: Error during {Method} for Device {DeviceName}",
+                  nameof(Dispose), _device?.DeviceInfo?.Name ?? "Unknown");
+            }
+
+            _device = null;
+            _disposed = true;
         }
     }
 }

@@ -2,5 +2,9 @@
 
 namespace OpticEMS.Notifications.Messages
 {
-    public record DrawWindowBoundsMessage(int ChannelId, List<WindowBounds> WindowBounds);
+    public record DrawWindowBoundsMessage(
+        int ChannelId, 
+        List<WindowBounds> WindowBounds, 
+        List<WindowBounds> ConfirmedWindowsIn,
+        List<WindowBounds> ConfirmedWindowsOut);
 }

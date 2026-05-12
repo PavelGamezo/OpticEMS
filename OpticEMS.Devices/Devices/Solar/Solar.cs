@@ -153,7 +153,7 @@ namespace OpticEMS.Devices.Devices.Solar
 
         public override void StopMeasurement()
         {
-            throw new NotImplementedException();
+            var result = SolarCCD.CCD_CameraReset(_deviceId);
         }
     }
 }

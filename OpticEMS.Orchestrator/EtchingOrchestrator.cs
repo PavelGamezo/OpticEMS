@@ -18,7 +18,7 @@ using System.Diagnostics;
 
 namespace OpticEMS.Orchestrator
 {
-    public class EtchingOrchestrator
+    public class EtchingOrchestrator : IDisposable
     {
         private const double CALIBRATION_INTERVAL_MS = 5000;
 
@@ -188,6 +188,9 @@ namespace OpticEMS.Orchestrator
             _cancellationTokenStart.Cancel();
             _cancellationTokenStart = new CancellationTokenSource();
 
+            _endpointService.ClearConfirmedWindowsIn();
+            _endpointService.ClearConfirmedWindowsOut();
+
             _isRunning = true;
             _isPaused = false;
             _stopwatch.Restart();
@@ -246,6 +249,8 @@ namespace OpticEMS.Orchestrator
             _isIndicesCorrected = false;
             _stopwatch.Stop();
             _endpointService.Stop();
+            _endpointService.ClearConfirmedWindowsIn();
+            _endpointService.ClearConfirmedWindowsOut();
             _cancellationTokenStart.Cancel();
             _trendHandler.Reset();
 
@@ -386,10 +391,14 @@ namespace OpticEMS.Orchestrator
         private void BroadcastWindowBounds()
         {
             var windowBounds = _endpointService.GetCurrentWindowBounds();
+            var confirmedWindowsIn = _endpointService.GetConfirmedWindowsIn();
+            var confirmedWindowsOut = _endpointService.GetConfirmedWindowsOut();
 
             WeakReferenceMessenger.Default.Send(new DrawWindowBoundsMessage(
                 ChannelId, 
-                windowBounds));
+                windowBounds,
+                confirmedWindowsIn,
+                confirmedWindowsOut));
         }
 
         private async Task ExecuteProcessStepAsync()
@@ -756,6 +765,65 @@ namespace OpticEMS.Orchestrator
 
             _exportData.Clear();
         }*/
+
+        #endregion
+
+        #region disposing
+
+        private bool _disposed = false;
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+
+            if (disposing)
+            {
+                try
+                {
+                    if (_isRunning)
+                    {
+                        _ = StopProcessAsync();
+                    }
+
+                    _cancellationToken?.Cancel();
+
+                    Task.Delay(300).Wait(500);
+
+                    _deviceProcessing?.Dispose();
+
+                    _trendHandler?.Reset();
+                    _pcaHandler = null;
+
+                    WeakReferenceMessenger.Default.UnregisterAll(this);
+
+                    _exportData.Clear();
+                    _fullSpectrumHistory.Clear();
+
+                    _endpointService?.ClearConfirmedWindowsIn();
+                    _endpointService?.ClearConfirmedWindowsOut();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error in EtchingOrchestrator.Dispose: {ex.Message}");
+                }
+            }
+
+            _cancellationToken?.Dispose();
+            _cancellationTokenStart?.Dispose();
+
+            _disposed = true;
+        }
+
+        ~EtchingOrchestrator()
+        {
+            Dispose(false);
+        }
 
         #endregion
     }

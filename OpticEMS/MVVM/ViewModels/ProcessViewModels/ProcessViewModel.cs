@@ -1,8 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Factories.Channels;
 using OpticEMS.MVVM.ViewModels.RecipeViewModels;
+using OpticEMS.Notifications.Messages;
 using System.Collections.ObjectModel;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
@@ -29,6 +31,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             InitializeChannels();
             _recipeViewModel = recipeViewModel;
             SubscribeToRecipeChanges();
+
+            RegistedMessages();
         }
 
         private void SubscribeToRecipeChanges()
@@ -49,8 +53,25 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
+        private void RegistedMessages()
+        {
+            WeakReferenceMessenger.Default.Register<ChannelsUpdatedMessage>(this, (recipient, message) =>
+            {
+                foreach (var channel in Channels)
+                {
+                    channel.Dispose();
+                }
+
+                Channels.Clear();
+
+                InitializeChannels();
+            });
+        }
+
         private void InitializeChannels()
         {
+            _settingsProvider.Reload();
+
             var allDevices = _settingsProvider.GetAll();
 
             int limit = _settingsProvider.MaxAllowedChannels;
