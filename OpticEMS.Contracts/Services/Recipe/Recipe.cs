@@ -83,5 +83,7 @@ namespace OpticEMS.Contracts.Services.Recipe
         }
 
         public bool CanUseCombinedMode => Wavelengths.Count >= 3;
+
+        public bool CanUseRatioMode => Wavelengths.Count == 2;
     }
 }

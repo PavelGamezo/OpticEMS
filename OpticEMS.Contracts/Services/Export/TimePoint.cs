@@ -4,6 +4,10 @@
     {
         public double TimeSeconds { get; set; }
 
-        public double[] Intensities { get; set; } = Array.Empty<double>();    
+        public double[] Trend { get; set; } = Array.Empty<double>();
+        
+        public double[] Preprocessed { get; set; } = Array.Empty<double>(); 
+        
+        public double[] Processed { get; set; } = Array.Empty<double>();    
     }
 }

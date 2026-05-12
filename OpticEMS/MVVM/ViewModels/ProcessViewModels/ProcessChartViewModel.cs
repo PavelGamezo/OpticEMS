@@ -240,14 +240,21 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         private void AddAnnotationSafe(Annotation annotation)
         {
-            if (PlotModel == null)
+            var model = PlotModel;
+            if (model == null)
             {
                 return;
             }
 
             lock (PlotModel.SyncRoot)
             {
-                PlotModel.Annotations.Add(annotation);
+                if (model.Axes.Count >= 2)
+                {
+                    annotation.XAxisKey = model.Axes[0].Key;
+                    annotation.YAxisKey = model.Axes[1].Key;
+                }
+
+                model.Annotations.Add(annotation);
             }
 
             PlotModel.InvalidatePlot(false);

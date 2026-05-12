@@ -7,6 +7,7 @@ using OpticEMS.Contracts.Services.Export;
 using OpticEMS.Contracts.Services.Mapper;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
+using OpticEMS.Contracts.Services.SignalPreprocessing;
 using OpticEMS.Devices;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Preprocessing;
@@ -429,13 +430,16 @@ namespace OpticEMS.Orchestrator
         {
             var trendResult = _trendHandler.Process(currentTimeMs);
 
-            double[] baseSignal = Recipe.DerivativeEnabled
+            double[] averagedSignal = trendResult.FrameAveraged;
+
+            double[] preprocessedSignal = Recipe.DerivativeEnabled
                 ? trendResult.Derivatives
                 : trendResult.Smoothed;
 
-            var processedSignal = _modeHandler.Process(baseSignal);
+            var processedSignal = _modeHandler.Process(preprocessedSignal);
 
-            RecordDataForExport(baseSignal, currentTimeSec);
+            RecordDataForExport(averagedSignal, preprocessedSignal, processedSignal, currentTimeSec);
+
             return processedSignal;
         }
 
@@ -744,14 +748,34 @@ namespace OpticEMS.Orchestrator
 
         #region export
 
-        private void RecordDataForExport(double[] intensities, double currentTime)
+        private void RecordProcessedDataForExport(double[] trend, double currentTime)
+        {
+            if (Recipe.CanUseCombinedMode || Recipe.CanUseRatioMode)
+            {
+                var processedTimePoint = new TimePoint
+                {
+                    TimeSeconds = currentTime,
+                    Trend = trend
+                };
+
+                _exportData.Add(processedTimePoint);
+            }
+        }
+
+        private void RecordDataForExport(
+            double[] averaged,
+            double[] preprocessed,
+            double[] processed,
+            double currentTime)
         {
             var timePoint = new TimePoint
             {
                 TimeSeconds = currentTime,
-                Intensities = intensities
+                Trend = averaged,
+                Preprocessed = preprocessed,
+                Processed = processed
             };
-
+            
             _exportData.Add(timePoint);
         }
 

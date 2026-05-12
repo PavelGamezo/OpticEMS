@@ -121,8 +121,7 @@ namespace OpticEMS.Devices
             }
             catch (Exception exception)
             {
-                Log.Error(
-                    exception, 
+                Log.Error(exception, 
                     "[MEASURING]: Error during scanning for Device {DeviceName}",
                     _device?.DeviceInfo?.Name ?? "Unknown");
             }
@@ -150,8 +149,7 @@ namespace OpticEMS.Devices
             }
             catch (Exception exception)
             {
-                Log.Error(
-                    exception, 
+                Log.Error(exception, 
                     "[MEASURING]: Error during {Method} for Device {DeviceName}",
                     nameof(_device.Scan), 
                     _device?.DeviceInfo?.Name ?? "Unknown");
@@ -213,8 +211,10 @@ namespace OpticEMS.Devices
             }
             catch (Exception exception)
             {
-                Log.Error(exception, "[MEASURING]: Error during {Method} for Device {DeviceName}",
-                  nameof(Dispose), _device?.DeviceInfo?.Name ?? "Unknown");
+                Log.Error(exception, 
+                    "[MEASURING]: Error during {Method} for Device {DeviceName}",
+                  nameof(Dispose), 
+                  _device?.DeviceInfo?.Name ?? "Unknown");
             }
 
             _device = null;
