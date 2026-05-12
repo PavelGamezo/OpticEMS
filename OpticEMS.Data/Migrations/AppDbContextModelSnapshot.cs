@@ -42,7 +42,7 @@ namespace OpticEMS.Data.Migrations
 
                     b.HasIndex("Wavelength");
 
-                    b.ToTable("SpectralLines");
+                    b.ToTable("SpectralLines", (string)null);
                 });
 
             modelBuilder.Entity("OpticEMS.Contracts.Services.Recipe.Recipe", b =>
@@ -156,7 +156,7 @@ namespace OpticEMS.Data.Migrations
 
                     b.HasIndex("RecipeId");
 
-                    b.ToTable("Recipes");
+                    b.ToTable("Recipes", (string)null);
                 });
 #pragma warning restore 612, 618
         }

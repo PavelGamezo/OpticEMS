@@ -20,6 +20,8 @@ namespace OpticEMS.Orchestrator
 {
     public class EtchingOrchestrator
     {
+        private const double CALIBRATION_INTERVAL_MS = 5000;
+
         private readonly List<TimePoint> _exportData = new();
         private CancellationTokenSource _cancellationToken = new();
         private CancellationTokenSource _cancellationTokenStart = new();
@@ -35,6 +37,7 @@ namespace OpticEMS.Orchestrator
         private readonly List<double[]> _fullSpectrumHistory = new();
         private bool _isPcaBusy = false;
         private DateTime _lastPcaAnalysisTime = DateTime.MinValue;
+        private DateTime _lastAutocalibrationTime = DateTime.MinValue;
 
         private readonly IEtchingProcessService _endpointService;
         private readonly IRecipeRepository _recipeRepository;
@@ -247,6 +250,10 @@ namespace OpticEMS.Orchestrator
             _trendHandler.Reset();
 
             WeakReferenceMessenger.Default.Send(new ExportAvailabilityChangedMessage(ChannelId, true));
+
+            await SaveUpdatedWavelengthsAsync();
+
+            //WeakReferenceMessenger.Default.Send(new RecipeAppliedMessage(ChannelId, Recipe.Wavelengths, Recipe.WavelengthColors));
 
             if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec)
             {
@@ -478,7 +485,7 @@ namespace OpticEMS.Orchestrator
 
             ProcessStatus = "Endpoint detected";
 
-            StopProcessAsync();
+            await StopProcessAsync();
 
             WeakReferenceMessenger.Default.Send(new ProcessFinishedMessage(ChannelId, report, forced));
         }
@@ -630,10 +637,15 @@ namespace OpticEMS.Orchestrator
 
         private void UpdateInternalIntensities(double[] intensities, double[] wavelengths)
         {
-            if (!_isIndicesCorrected && _isRunning && intensities.Length > 0 && Recipe.AutocalibrationEnabled)
+            if (_isRunning && intensities.Length > 0 && Recipe.AutocalibrationEnabled)
             {
-                CorrectIndices(intensities);
-                return;
+                var elapsed = (DateTime.Now - _lastAutocalibrationTime).TotalMilliseconds;
+                if (elapsed >= CALIBRATION_INTERVAL_MS)
+                {
+                    CorrectIndices(intensities);
+                    _lastAutocalibrationTime = DateTime.Now;
+                    return;
+                }
             }
 
             for (int i = 0; i < _wavelengthsIndices.Length; i++)
@@ -655,39 +667,23 @@ namespace OpticEMS.Orchestrator
                 return;
             }
 
-            var anyChanged = false;
-
             for (int i = 0; i < _wavelengthsIndices.Length; i++)
             {
-                int oldIndex = _wavelengthsIndices[i];
                 _calibrationService.CorrectWavelengthIndices(intensities, ref _wavelengthsIndices[i]);
-
-                if (oldIndex != _wavelengthsIndices[i])
-                {
-                    anyChanged = true;
-                    _isIndicesCorrected = true;
-                }
             }
 
-            if (anyChanged)
+            _currentIntensities = new double[_wavelengthsIndices.Length];
+            for (int i = 0; i < _wavelengthsIndices.Length; i++)
             {
-                _currentIntensities = new double[_wavelengthsIndices.Length];
-                for (int i = 0; i < _wavelengthsIndices.Length; i++)
-                {
-                    int idx = _wavelengthsIndices[i];
-                    _currentIntensities[i] = (idx >= 0 && idx < intensities.Length) ? intensities[idx] : 0;
-                }
-
-                SaveUpdatedWavelengths();
-
-                WeakReferenceMessenger.Default.Send(new RecipeAppliedMessage(ChannelId, Recipe.Wavelengths, Recipe.WavelengthColors));
+                int idx = _wavelengthsIndices[i];
+                _currentIntensities[i] = (idx >= 0 && idx < intensities.Length) ? intensities[idx] : 0;
             }
         }
 
-        public void UpdateWavelengthManually()
+        public async Task UpdateWavelengthManually()
         {
             UpdateInternalIndexes();
-            SaveUpdatedWavelengths();
+            await SaveUpdatedWavelengthsAsync();
         }
 
         private void UpdateInternalIndexes()
@@ -702,7 +698,7 @@ namespace OpticEMS.Orchestrator
             }
         }
 
-        private void SaveUpdatedWavelengths()
+        private async Task SaveUpdatedWavelengthsAsync()
         {
             Recipe.Wavelengths.Clear();
 
@@ -725,8 +721,8 @@ namespace OpticEMS.Orchestrator
 
             try
             {
-                _recipeRepository.UpdateRecipeAsync(Recipe);
-                _recipeRepository.SaveChangesAsync();
+                await _recipeRepository.UpdateRecipeAsync(Recipe);
+                await _recipeRepository.SaveChangesAsync();
             }
             catch (Exception exception)
             {
