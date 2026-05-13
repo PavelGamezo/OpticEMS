@@ -11,6 +11,7 @@
       Title="Recipe">
 
     <Page.Resources>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:BoolToBrushConverter x:Key="BoolToBrushConverter"/>
     </Page.Resources>

@@ -59,6 +59,9 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         private bool _isCombinedMode;
 
         [ObservableProperty]
+        private bool _isSingleWindowMode;
+
+        [ObservableProperty]
         private bool _isCombinedExpressionValid;
 
         [ObservableProperty]
@@ -104,6 +107,20 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         public Action<Recipe>? ApplyRecipeRequested { get; set; }
 
         private bool HasSelectedRecipe => SelectedRecipe != null;
+
+        public double CommonSignalHigh
+        {
+            get => WavelengthItems.FirstOrDefault()?.SignalHigh ?? 0;
+            set
+            {
+                foreach (var item in WavelengthItems)
+                {
+                    item.SignalHigh = value;
+                }
+
+                OnPropertyChanged(nameof(CommonSignalHigh));
+            }
+        }
 
         public RecipeViewModel(
             IRecipeRepository recipeRepository, 
@@ -436,16 +453,33 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         partial void OnProcessingModeChanged(ProcessingMode value)
         {
             UpdateModeVisibility();
+            UpdateWindowMode();
         }
 
         partial void OnMultiSubModeChanged(MultiChannelSubMode value)
         {
             UpdateModeVisibility();
+            UpdateWindowMode();
         }
 
         partial void OnDualSubModeChanged(DualChannelSubMode value)
         {
             UpdateModeVisibility();
+            UpdateWindowMode();
+        }
+
+        private void UpdateWindowMode()
+        {
+            bool isCombinedOrRatio =
+                (ProcessingMode == ProcessingMode.DualChannel && DualSubMode == DualChannelSubMode.Ratio) ||
+                (ProcessingMode == ProcessingMode.MultiChannel && MultiSubMode == MultiChannelSubMode.Combined);
+
+            IsSingleWindowMode = isCombinedOrRatio;
+
+            if (isCombinedOrRatio && SelectedRecipe?.DetectionWindowHighs.Count > 0)
+            {
+                CommonSignalHigh = SelectedRecipe.DetectionWindowHighs.FirstOrDefault();
+            }
         }
 
         private void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)

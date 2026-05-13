@@ -4,9 +4,15 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:OpticEMS.MVVM.View.Recipe"
+             xmlns:converters="clr-namespace:OpticEMS.Common.Helpers"
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
+
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+    </UserControl.Resources>
     
     <Border Padding="15,0,15,15">
 
@@ -197,15 +203,106 @@
                                                   Height="30" Margin="0,5,0,0"
                                                   Style="{StaticResource DarkColorPicker}" 
                                                   UsingAlphaChannel="False"/>
+                                
+                                <StackPanel Visibility="{Binding DataContext.IsSingleWindowMode, 
+                                                        RelativeSource={RelativeSource AncestorType=ItemsControl}, 
+                                                        Converter={StaticResource InverseBooleanToVisibilityConverter}}">
 
-                                <StackPanel Orientation="Horizontal">
+                                    <StackPanel Orientation="Horizontal">
 
-                                    <TextBlock Text="Detection window high"
+                                        <TextBlock Text="Detection window high"
+                                                   FontSize="11"
+                                                   Margin="0,10,0,0"
+                                                   Foreground="#999999"/>
+
+                                        <Border Margin="6,10,0,0" 
+                                                Width="14" 
+                                                Height="14" 
+                                                CornerRadius="7" 
+                                                Background="#444444" 
+                                                Cursor="Help"
+                                                VerticalAlignment="Center"
+                                                ToolTipService.InitialShowDelay="100">
+
+                                            <TextBlock Text="?" 
+                                                       FontSize="10" 
+                                                       FontWeight="Bold"
+                                                       Foreground="#AAAAAA" 
+                                                       HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,0,1"/>
+
+                                            <Border.ToolTip>
+
+                                                <ToolTip Background="#252526" 
+                                                         Foreground="White" 
+                                                         BorderBrush="#454545"
+                                                         Padding="10"
+                                                         HasDropShadow="True">
+
+                                                    <StackPanel Width="200">
+                                                        <TextBlock Text="Detection window high" 
+                                                                   FontWeight="Bold" 
+                                                                   Foreground="White"/>
+
+                                                        <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                               Height="108"
+                                                               Width="192"
+                                                               Stretch="Uniform" 
+                                                               Margin="0,5"
+                                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                        <TextBlock Text="Upper intensity thresholds for each wavelength that define the boundary of the detection window.
+                                                                     When the measured signal crosses these limits, the algorithm evaluates stability and may transition between Window‑In, Monitoring, and Window‑Out states.
+                                                                     Used to detect significant rises in intensity that indicate process transitions or endpoint behavior." 
+                                                                   Foreground="#CCCCCC" 
+                                                                   FontSize="11" 
+                                                                   TextWrapping="Wrap"/>
+                                                    </StackPanel>
+
+                                                </ToolTip>
+
+                                            </Border.ToolTip>
+
+                                        </Border>
+
+                                    </StackPanel>
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBox Grid.Column="0" 
+                                                 Text="{Binding SignalHigh, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Background="#3E3E40"
+                                                 BorderThickness="0"
+                                                 Foreground="White"
+                                                 Padding="8"
+                                                 Margin="0,5,0,0"/>
+
+                                        <Border Grid.Column="1" 
+                                                Background="#3E3E40"
+                                                CornerRadius="0,1,1,0"
+                                                Margin="0,5,0,0"
+                                                Padding="8,8,7,0">
+
+                                            <TextBlock Text="%" 
+                                                       Foreground="White"/>
+
+                                        </Border>
+
+                                    </Grid>
+
+                                    <StackPanel Orientation="Horizontal">
+
+                                        <TextBlock Text="Detection wavelength name"
                                                FontSize="11"
                                                Margin="0,10,0,0"
                                                Foreground="#999999"/>
 
-                                    <Border Margin="6,10,0,0" 
+                                        <Border Margin="6,10,0,0" 
                                             Width="14" 
                                             Height="14" 
                                             CornerRadius="7" 
@@ -214,7 +311,7 @@
                                             VerticalAlignment="Center"
                                             ToolTipService.InitialShowDelay="100">
 
-                                        <TextBlock Text="?" 
+                                            <TextBlock Text="?" 
                                                    FontSize="10" 
                                                    FontWeight="Bold"
                                                    Foreground="#AAAAAA" 
@@ -222,130 +319,43 @@
                                                    VerticalAlignment="Center"
                                                    Margin="0,0,0,1"/>
 
-                                        <Border.ToolTip>
+                                            <Border.ToolTip>
 
-                                            <ToolTip Background="#252526" 
+                                                <ToolTip Background="#252526" 
                                                      Foreground="White" 
                                                      BorderBrush="#454545"
                                                      Padding="10"
                                                      HasDropShadow="True">
 
-                                                <StackPanel Width="200">
-                                                    <TextBlock Text="Detection window high" 
+                                                    <StackPanel Width="200">
+                                                        <TextBlock Text="Detection wavelength name" 
                                                                FontWeight="Bold" 
                                                                Foreground="White"/>
 
-                                                    <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                                        <Image Source="pack://application:,,,/Common/Images/splash.png"
                                                            Height="108"
                                                            Width="192"
                                                            Stretch="Uniform" 
                                                            Margin="0,5"
                                                            RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                                    <TextBlock Text="Upper intensity thresholds for each wavelength that define the boundary of the detection window.
+                                                        <TextBlock Text="Upper intensity thresholds for each wavelength that define the boundary of the detection window.
                                                                  When the measured signal crosses these limits, the algorithm evaluates stability and may transition between Window‑In, Monitoring, and Window‑Out states.
                                                                  Used to detect significant rises in intensity that indicate process transitions or endpoint behavior." 
                                                                Foreground="#CCCCCC" 
                                                                FontSize="11" 
                                                                TextWrapping="Wrap"/>
-                                                </StackPanel>
+                                                    </StackPanel>
 
-                                            </ToolTip>
+                                                </ToolTip>
 
-                                        </Border.ToolTip>
+                                            </Border.ToolTip>
 
-                                    </Border>
+                                        </Border>
 
-                                </StackPanel>
-
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
+                                    </StackPanel>
 
                                     <TextBox Grid.Column="0" 
-                                             Text="{Binding SignalHigh, UpdateSourceTrigger=PropertyChanged}" 
-                                             Background="#3E3E40"
-                                             BorderThickness="0"
-                                             Foreground="White"
-                                             Padding="8"
-                                             Margin="0,5,0,0"/>
-
-                                    <Border Grid.Column="1" 
-                                            Background="#3E3E40"
-                                            CornerRadius="0,1,1,0"
-                                            Margin="0,5,0,0"
-                                            Padding="8,8,7,0">
-
-                                        <TextBlock Text="%" 
-                                                   Foreground="White"/>
-
-                                    </Border>
-
-                                </Grid>
-
-                                <StackPanel Orientation="Horizontal">
-
-                                    <TextBlock Text="Detection wavelength name"
-                                               FontSize="11"
-                                               Margin="0,10,0,0"
-                                               Foreground="#999999"/>
-
-                                    <Border Margin="6,10,0,0" 
-                                            Width="14" 
-                                            Height="14" 
-                                            CornerRadius="7" 
-                                            Background="#444444" 
-                                            Cursor="Help"
-                                            VerticalAlignment="Center"
-                                            ToolTipService.InitialShowDelay="100">
-
-                                        <TextBlock Text="?" 
-                                                   FontSize="10" 
-                                                   FontWeight="Bold"
-                                                   Foreground="#AAAAAA" 
-                                                   HorizontalAlignment="Center" 
-                                                   VerticalAlignment="Center"
-                                                   Margin="0,0,0,1"/>
-
-                                        <Border.ToolTip>
-
-                                            <ToolTip Background="#252526" 
-                                                     Foreground="White" 
-                                                     BorderBrush="#454545"
-                                                     Padding="10"
-                                                     HasDropShadow="True">
-
-                                                <StackPanel Width="200">
-                                                    <TextBlock Text="Detection wavelength name" 
-                                                               FontWeight="Bold" 
-                                                               Foreground="White"/>
-
-                                                    <Image Source="pack://application:,,,/Common/Images/splash.png"
-                                                           Height="108"
-                                                           Width="192"
-                                                           Stretch="Uniform" 
-                                                           Margin="0,5"
-                                                           RenderOptions.BitmapScalingMode="HighQuality"/>
-
-                                                    <TextBlock Text="Upper intensity thresholds for each wavelength that define the boundary of the detection window.
-                                                                 When the measured signal crosses these limits, the algorithm evaluates stability and may transition between Window‑In, Monitoring, and Window‑Out states.
-                                                                 Used to detect significant rises in intensity that indicate process transitions or endpoint behavior." 
-                                                               Foreground="#CCCCCC" 
-                                                               FontSize="11" 
-                                                               TextWrapping="Wrap"/>
-                                                </StackPanel>
-
-                                            </ToolTip>
-
-                                        </Border.ToolTip>
-
-                                    </Border>
-
-                                </StackPanel>
-
-                                <TextBox Grid.Column="0" 
                                          Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
                                          Background="#3E3E40"
                                          BorderThickness="0"
@@ -354,11 +364,104 @@
                                          Margin="0,5,0,0"/>
 
 
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+
+            <StackPanel Visibility="{Binding IsSingleWindowMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                <StackPanel Orientation="Horizontal">
+
+                    <TextBlock Text="Detection window high"
+                               FontSize="11"
+                               Margin="0,10,0,0"
+                               Foreground="#999999"/>
+
+                    <Border Margin="6,10,0,0" 
+                            Width="14" 
+                            Height="14" 
+                            CornerRadius="7" 
+                            Background="#444444" 
+                            Cursor="Help"
+                            VerticalAlignment="Center"
+                            ToolTipService.InitialShowDelay="100">
+
+                        <TextBlock Text="?" 
+                                   FontSize="10" 
+                                   FontWeight="Bold"
+                                   Foreground="#AAAAAA" 
+                                   HorizontalAlignment="Center" 
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,0,1"/>
+
+                        <Border.ToolTip>
+
+                            <ToolTip Background="#252526" 
+                                     Foreground="White" 
+                                     BorderBrush="#454545"
+                                     Padding="10"
+                                     HasDropShadow="True">
+
+                                <StackPanel Width="200">
+                                    <TextBlock Text="Detection window high" 
+                                               FontWeight="Bold" 
+                                               Foreground="White"/>
+
+                                    <Image Source="pack://application:,,,/Common/Images/splash.png"
+                                           Height="108"
+                                           Width="192"
+                                           Stretch="Uniform" 
+                                           Margin="0,5"
+                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                    <TextBlock Text="Upper intensity thresholds for each wavelength that define the boundary of the detection window.
+                                                 When the measured signal crosses these limits, the algorithm evaluates stability and may transition between Window‑In, Monitoring, and Window‑Out states.
+                                                 Used to detect significant rises in intensity that indicate process transitions or endpoint behavior." 
+                                               Foreground="#CCCCCC" 
+                                               FontSize="11" 
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+
+                            </ToolTip>
+
+                        </Border.ToolTip>
+
+                    </Border>
+
+                </StackPanel>
+
+                <Grid Visibility="{Binding IsSingleWindowMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0" 
+                             Text="{Binding CommonSignalHigh, UpdateSourceTrigger=PropertyChanged}" 
+                             Background="#3E3E40"
+                             BorderThickness="0"
+                             Foreground="White"
+                             Padding="8"
+                             Margin="0,5,0,0"/>
+
+                    <Border Grid.Column="1" 
+                            Background="#3E3E40"
+                            CornerRadius="0,1,1,0"
+                            Margin="0,5,0,0"
+                            Padding="8,8,7,0">
+
+                        <TextBlock Text="%" 
+                                   Foreground="White"/>
+
+                    </Border>
+
+                </Grid>
+                
+            </StackPanel>
 
             <StackPanel Orientation="Horizontal" 
                         VerticalAlignment="Center">
