@@ -9,7 +9,7 @@ using System.Windows.Media;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {
-    public partial class ProcessChartViewModel : ObservableObject
+    public partial class ProcessChartViewModel : ObservableObject, IDisposable
     {
         private readonly HashSet<string> _drawnConfirmedKeys = new();
 
@@ -420,6 +420,45 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             };
 
             AddAnnotationSafe(line);
+        }
+
+        #endregion
+
+        #region disposing
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_plotModel != null)
+                {
+                    lock (_plotModel.SyncRoot)
+                    {
+                        foreach (var series in _plotModel.Series)
+                        {
+                            if (series is LineSeries lineSeries)
+                            {
+                                lineSeries.Points.Clear();
+                            }
+                        }
+                        _plotModel.Series.Clear();
+                        _plotModel.Annotations.Clear();
+                    }
+
+                    PlotModel = null!;
+                }
+
+                _drawnConfirmedKeys.Clear();
+                _activeOverEtchArea = null;
+                _activeMonitoringArea = null;
+                _activeDelayArea = null;
+            }
         }
 
         #endregion

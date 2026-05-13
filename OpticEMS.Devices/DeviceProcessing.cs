@@ -213,8 +213,8 @@ namespace OpticEMS.Devices
             {
                 Log.Error(exception, 
                     "[MEASURING]: Error during {Method} for Device {DeviceName}",
-                  nameof(Dispose), 
-                  _device?.DeviceInfo?.Name ?? "Unknown");
+                    nameof(Dispose), 
+                    _device?.DeviceInfo?.Name ?? "Unknown");
             }
 
             _device = null;

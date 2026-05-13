@@ -85,6 +85,8 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         [ObservableProperty]
         private bool _isMultiChannelMode;
 
+        private bool _isSuppressingSync = false;
+
         public List<ProcessingMode> AvailableProcessingModes { get; private set; } = new();
 
         public ObservableCollection<string> AvailableChannelNames { get; } = new();
@@ -149,6 +151,11 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
         private void UpdateModesAfterWavelengthChange()
         {
+            if (_isSuppressingSync)
+            {
+                return;
+            }
+
             SyncToModel();
 
             if (SelectedRecipe == null)
@@ -387,34 +394,43 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
         private void LoadWavelengthsToUI()
         {
-            foreach (var item in WavelengthItems)
+            _isSuppressingSync = true;
+
+            try
             {
-                item.PropertyChanged -= OnItemPropertyChanged;
+                foreach (var item in WavelengthItems)
+                {
+                    item.PropertyChanged -= OnItemPropertyChanged;
+                }
+
+                WavelengthItems.Clear();
+
+                if (SelectedRecipe == null)
+                {
+                    return;
+                }
+
+                for (int i = 0; i < SelectedRecipe.Wavelengths.Count; i++)
+                {
+                    var color = SelectedRecipe.WavelengthColors.Count > i
+                                ? SelectedRecipe.WavelengthColors[i]
+                                : Colors.White;
+
+                    var high = SelectedRecipe.DetectionWindowHighs.Count > i ? SelectedRecipe.DetectionWindowHighs[i] : 0;
+
+                    var name = SelectedRecipe.WavelengthNames.Count > i
+                               ? SelectedRecipe.WavelengthNames[i]
+                               : $"CH{i}";
+
+                    var newItem = new WavelengthMonitorItem(name, SelectedRecipe.Wavelengths[i], color, high);
+
+                    newItem.PropertyChanged += OnItemPropertyChanged;
+                    WavelengthItems.Add(newItem);
+                }
             }
-
-            WavelengthItems.Clear();
-
-            if (SelectedRecipe == null)
+            finally
             {
-                return;
-            }
-
-            for (int i = 0; i < SelectedRecipe.Wavelengths.Count; i++)
-            {
-                var color = SelectedRecipe.WavelengthColors.Count > i
-                            ? SelectedRecipe.WavelengthColors[i]
-                            : Colors.White;
-
-                var high = SelectedRecipe.DetectionWindowHighs.Count > i ? SelectedRecipe.DetectionWindowHighs[i] : 0;
-
-                var name = SelectedRecipe.WavelengthNames.Count > i
-                           ? SelectedRecipe.WavelengthNames[i]
-                           : $"CH{i}";
-
-                var newItem = new WavelengthMonitorItem(name, SelectedRecipe.Wavelengths[i], color, high);
-
-                newItem.PropertyChanged += OnItemPropertyChanged;
-                WavelengthItems.Add(newItem);
+                _isSuppressingSync = false;
             }
         }
 

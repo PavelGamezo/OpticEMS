@@ -860,7 +860,7 @@ namespace OpticEMS.Orchestrator
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Error in EtchingOrchestrator.Dispose: {ex.Message}");
+                    Log.Error($"[ORCHESTRATOR]: Error in Orchestrator.Dispose: {ex.Message}");
                 }
             }
 

@@ -380,9 +380,21 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         public void Dispose()
         {
-            SpectrumChartViewModel.Dispose();
-            ProcessChartViewModel.Dispose();
-            _orchestrator?.Dispose();
+            WeakReferenceMessenger.Default.UnregisterAll(this);
+
+            if (_orchestrator is not null && 
+                ProcessChartViewModel is not null &&
+                SpectrumChartViewModel is not null)
+            {
+                SpectrumChartViewModel.Dispose();
+                ProcessChartViewModel.Dispose();
+                SpectrumChartViewModel.OnWavelengthMoved -= () =>
+                {
+                    _orchestrator?.UpdateWavelengthManually();
+                };
+
+                _orchestrator?.Dispose();
+            }
         }
 
         #endregion

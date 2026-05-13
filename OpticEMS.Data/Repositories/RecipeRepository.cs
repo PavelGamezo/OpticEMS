@@ -53,7 +53,7 @@ namespace OpticEMS.Data.Repositories
                 existingRecipe.WavelengthColors = updatedRecipe.WavelengthColors.ToList();
                 existingRecipe.WavelengthNames = updatedRecipe.WavelengthNames.ToList();
 
-                existingRecipe.LastModifiedAt = DateTime.UtcNow;
+                existingRecipe.LastModifiedAt = DateTime.Now;
             }
         }
 
