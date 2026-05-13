@@ -7,13 +7,13 @@ using OpticEMS.Contracts.Services.Export;
 using OpticEMS.Contracts.Services.Mapper;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
-using OpticEMS.Contracts.Services.SignalPreprocessing;
 using OpticEMS.Devices;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Preprocessing;
 using OpticEMS.Preprocessing.Modes;
 using OpticEMS.Processing;
 using OpticEMS.Processing.PCA;
+using Serilog;
 using System.Buffers;
 using System.Diagnostics;
 
@@ -209,6 +209,9 @@ namespace OpticEMS.Orchestrator
             _ = Task.Run(() => RunProcessLoopAsync(_cancellationTokenStart.Token));
 
             _endpointService.Start(Recipe, _currentIntensities);
+
+            Log.Information("Process START requested. Recipe: {RecipeName}, Device: {DeviceType}",
+                Recipe?.Name, _configureProvider.GetByChannelId(ChannelId)?.DeviceType);
         }
 
         public void PauseProcess()
@@ -270,6 +273,9 @@ namespace OpticEMS.Orchestrator
             {
                 await ExecuteAnalyzingTrainingAsync();
             }
+
+            Log.Information("Process STOPPED. Duration: {Duration}s", 
+                _stopwatch.Elapsed.TotalSeconds);
         }
 
         private async Task ExecuteAnalyzingTrainingAsync()
@@ -292,6 +298,9 @@ namespace OpticEMS.Orchestrator
             _isPcaBusy = true;
             PcaStatus = "Training PCA...";
 
+            Log.Information("[ORCHESTRATOR]: PCA Training started for recipe {RecipeName}. History size: {Count}",
+                Recipe.Name, _fullSpectrumHistory.Count);
+
             double[][] spectra = null;
 
             try
@@ -310,6 +319,13 @@ namespace OpticEMS.Orchestrator
                 PcaStatus = result.IsAnomaly
                     ? _pcaHandler.Status
                     : $"PCA Error | {result.Message}";
+
+                Log.Information("[ORCHESTRATOR]: PCA Training completed");
+            }
+            catch(Exception exception)
+            {
+                Log.Error(exception, "[ORCHESTRATOR]: Critical error during PCA training");
+                throw;
             }
             finally
             {
@@ -338,7 +354,10 @@ namespace OpticEMS.Orchestrator
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                if (await WaitForNextTickAsync(nextTick, cancellationToken)) break;
+                if (await WaitForNextTickAsync(nextTick, cancellationToken))
+                {
+                    break;
+                }
 
                 nextTick += intervalMs;
 
@@ -364,6 +383,7 @@ namespace OpticEMS.Orchestrator
                 }
                 catch (OperationCanceledException)
                 {
+                    Log.Information("[ORCHESTRATOR]: Operation cancellation requested");
                     return true;
                 }
             }
@@ -695,6 +715,8 @@ namespace OpticEMS.Orchestrator
 
         public async Task UpdateWavelengthManually()
         {
+            Log.Information("[ORCHESTRATOR]: Wavelength update requested");
+
             UpdateInternalIndexes();
             await SaveUpdatedWavelengthsAsync();
         }
@@ -725,7 +747,7 @@ namespace OpticEMS.Orchestrator
 
             foreach (var wavelengthIndex in _wavelengthsIndices)
             {
-                var wavelength = _wavelengthMapper.FindWavelengthByPixel((double)wavelengthIndex, calibrationCoefficients);
+                var wavelength = _wavelengthMapper.FindWavelengthByPixel(wavelengthIndex, calibrationCoefficients);
 
                 double roundedWavelength = Math.Round(wavelength, 2);
 
@@ -736,10 +758,14 @@ namespace OpticEMS.Orchestrator
             {
                 await _recipeRepository.UpdateRecipeAsync(Recipe);
                 await _recipeRepository.SaveChangesAsync();
+
+                Log.Information("[ORCHESTRATOR]: Recipe {RecipeName} wavelengths updated in database",
+                    Recipe.Name);
             }
             catch (Exception exception)
             {
-                // Logging
+                Log.Error("[ORCHESTRATOR]: Failed to save updated wavelength to database for {Name} with ID {RecipeId}",
+                    Recipe.Name, Recipe.DatabaseId);
             }
 
             WeakReferenceMessenger.Default.Send(

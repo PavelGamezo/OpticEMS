@@ -1,5 +1,6 @@
 ﻿using OpticEMS.Contracts.Services.Etching;
 using OpticEMS.Contracts.Services.Recipe;
+using Serilog;
 
 namespace OpticEMS.Services.Etching
 {
@@ -102,6 +103,7 @@ namespace OpticEMS.Services.Etching
             {
                 InitializeWindows(signal, elapsedMs);
                 _state = ProcessState.WindowOut;
+                Log.Information("[PROCESS]:InitialDeadTime -> WindowOut at {Elapsed}ms", elapsedMs);
             }
 
             return new EndpointResult(false, "Initial Dead Time", false);
@@ -118,6 +120,7 @@ namespace OpticEMS.Services.Etching
 
                 if (_consecutiveWindowsOut >= _recipe.WindowOutCount)
                 {
+                    Log.Information("[PROCESS]: \"WindowOut\" -> \"WindowIn\" at {ElapsedMs}", elapsedMs);
                     _state = ProcessState.WindowIn;
                     _consecutiveWindowsIn = 0;
                     _consecutiveWindowsOut = 0;
@@ -165,12 +168,14 @@ namespace OpticEMS.Services.Etching
                     {
                         _state = ProcessState.Overetch;
                         _overEtchStartTime = elapsedMs;
+                        Log.Information("[PROCESS]: WindowIn -> Overetching at {ElapsedMs}", elapsedMs);
                         return new EndpointResult(false, "Endpoint Found. Starting Overetch...", false);
                     }
                     else
                     {
                         _finishedAtMs = elapsedMs;
                         _state = ProcessState.Idle;
+                        Log.Information("[PROCESS]: WindowIn -> Completed without overetching at {ElapsedMs}", elapsedMs);
                         return new EndpointResult(true, "Endpoint Detected", false);
                     }
                 }
@@ -193,6 +198,7 @@ namespace OpticEMS.Services.Etching
             {
                 _finishedAtMs = _overEtchStartTime + _recipe.OverEtchValue;
                 _state = ProcessState.Idle;
+                Log.Information("[PROCESS]: Overetching -> Completed overetching at {ElapsedMs}", elapsedMs);
 
                 return new EndpointResult(true, "Process Completed", false);
             }
@@ -345,9 +351,15 @@ namespace OpticEMS.Services.Etching
             _detectedAtMs = 0;
             _finishedAtMs = 0;
             _overEtchStartTime = 0;
+
+            Serilog.Log.Information("[PROCESS]: Process started");
         }
 
-        public void Stop() => _state = ProcessState.Idle;
+        public void Stop()
+        {
+            _state = ProcessState.Idle;
+            Serilog.Log.Information("[PROCESS]: Process stopped by system or user");
+        }
 
         private void RecordConfirmedWindowIn(double elapsedMs)
         {

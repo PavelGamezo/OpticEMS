@@ -1,4 +1,6 @@
-﻿namespace OpticEMS.Preprocessing.Operations.Averaging
+﻿using Serilog;
+
+namespace OpticEMS.Preprocessing.Operations.Averaging
 {
     public class MagneticFieldSmoother
     {

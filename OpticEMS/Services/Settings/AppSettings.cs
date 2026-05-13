@@ -1,4 +1,5 @@
 ﻿using OpticEMS.Contracts.Services.Settings;
+using Serilog;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Configuration;
@@ -39,8 +40,9 @@ namespace OpticEMS.Services.Settings
                     var collection = serializer.Deserialize(reader) as ObservableCollection<DeviceInfo>;
                     return collection ?? new ObservableCollection<DeviceInfo>();
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
+                    Log.Warning(exception, "[SETTINGS]: Problems during settings import");
                     return new ObservableCollection<DeviceInfo>();
                 }
             }
@@ -59,8 +61,9 @@ namespace OpticEMS.Services.Settings
                     serializer.Serialize(writer, value);
                     DevicesXml = writer.ToString();
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
+                    Log.Warning(exception, "[SETTINGS]: Problems during settings export");
                 }
             }
         }

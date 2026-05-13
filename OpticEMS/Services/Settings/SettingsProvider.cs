@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Xml.Serialization;
+using Serilog;
 
 namespace OpticEMS.Services.Settings
 {
@@ -14,6 +15,8 @@ namespace OpticEMS.Services.Settings
         {
             _settings = AppSettings.Default;
             _devices = LoadDevices();
+
+            Log.Information("[SETTINGS]: Settings configured successfully");
         }
 
         public int MaxAllowedChannels { get; set; } = 1;
@@ -23,17 +26,23 @@ namespace OpticEMS.Services.Settings
         private ObservableCollection<DeviceInfo> LoadDevices()
         {
             if (string.IsNullOrWhiteSpace(_settings.DevicesXml))
+            {
                 return new ObservableCollection<DeviceInfo>();
+            }
 
             try
             {
                 using var reader = new StringReader(_settings.DevicesXml);
                 var serializer = new XmlSerializer(typeof(ObservableCollection<DeviceInfo>));
                 var collection = serializer.Deserialize(reader) as ObservableCollection<DeviceInfo>;
+
+                Log.Information("[SETTINGS]: Channel settings loaded successfully");
+
                 return collection ?? new ObservableCollection<DeviceInfo>();
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
+                Log.Warning(exception, "[SETTINGS]: Problems during channel settings loading");
                 return new ObservableCollection<DeviceInfo>();
             }
         }
@@ -53,9 +62,9 @@ namespace OpticEMS.Services.Settings
                 serializer.Serialize(writer, _devices);
                 _settings.DevicesXml = writer.ToString();
             }
-            catch (Exception ex)
-            { 
-
+            catch (Exception exception)
+            {
+                Log.Error(exception, "[SETTINGS]: Problems during saving channel settings");
             }
         }
 
@@ -67,6 +76,7 @@ namespace OpticEMS.Services.Settings
         public void Reload()
         {
             _devices = LoadDevices();
+            Log.Information("[SETTINGS]: Settings reloaded successfully");
         }
 
         public bool RemoveByChannelId(int channelId)

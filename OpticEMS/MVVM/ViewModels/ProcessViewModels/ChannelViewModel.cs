@@ -380,6 +380,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         public void Dispose()
         {
+            SpectrumChartViewModel.Dispose();
+            ProcessChartViewModel.Dispose();
             _orchestrator?.Dispose();
         }
 

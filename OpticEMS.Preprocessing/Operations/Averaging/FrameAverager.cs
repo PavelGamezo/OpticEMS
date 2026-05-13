@@ -26,21 +26,7 @@
 
                 framesToProcess = _writeBuffer;
                 _writeBuffer = new List<double[]>();
-
-                /*
-                var tmp = _readBuffer;
-                _readBuffer = _writeBuffer;
-                _writeBuffer = tmp;
-                _writeBuffer.Clear();*/
             }
-            /*
-            int length = _readBuffer[0].Length;
-            double[] sum = new double[length];
-
-            foreach (var frame in _readBuffer)
-            {
-                for (int i = 0; i < length; i++) sum[i] += frame[i];
-            }*/
 
             int frameCount = framesToProcess.Count;
             int dataLength = framesToProcess[0].Length;

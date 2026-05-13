@@ -22,10 +22,6 @@ namespace OpticEMS.Contracts.Services.Etching
 
         List<WindowBounds> GetCurrentWindowBounds();
 
-        //void Pause();
-
-        //void Resume();
-
         void Stop();
 
         EndpointResult Update(double[] signal, double elapsedMs);

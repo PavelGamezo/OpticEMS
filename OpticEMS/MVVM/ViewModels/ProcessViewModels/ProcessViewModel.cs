@@ -5,6 +5,7 @@ using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Factories.Channels;
 using OpticEMS.MVVM.ViewModels.RecipeViewModels;
 using OpticEMS.Notifications.Messages;
+using Serilog;
 using System.Collections.ObjectModel;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
@@ -25,14 +26,23 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             ISettingsProvider settingsProvider,
             RecipeViewModel recipeViewModel)
         {
-            _channelViewModelFactory = channelViewModelFactory;
-            _settingsProvider = settingsProvider;
+            try
+            {
+                _channelViewModelFactory = channelViewModelFactory;
+                _settingsProvider = settingsProvider;
 
-            InitializeChannels();
-            _recipeViewModel = recipeViewModel;
-            SubscribeToRecipeChanges();
+                InitializeChannels();
+                _recipeViewModel = recipeViewModel;
+                SubscribeToRecipeChanges();
 
-            RegistedMessages();
+                RegistedMessages();
+
+                Log.Information("[PROCESS_CONTROL]: Process control compiled");
+            }
+            catch (Exception exception)
+            {
+                Log.Fatal(exception, "[PROCESS_CONTROL]: Fatal error during process control starting up");
+            }
         }
 
         private void SubscribeToRecipeChanges()

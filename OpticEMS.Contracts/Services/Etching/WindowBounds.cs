@@ -8,16 +8,13 @@ namespace OpticEMS.Services.Etching
     {
         public int WavelengthIndex { get; set; }
 
-        // Координаты по оси времени (X)
-        public double StartTime { get; set; } // В секундах
-        public double EndTime { get; set; }   // StartTime + WindowWidth
+        public double StartTime { get; set; }
+        public double EndTime { get; set; }
 
-        // Координаты по оси интенсивности (Y)
-        public double Top { get; set; }       // Reference + WindowHeight
-        public double Bottom { get; set; }    // Reference - WindowHeight
-        public double Reference { get; set; } // Центральная линия окна
+        public double Top { get; set; }
+        public double Bottom { get; set; }
+        public double Reference { get; set; }
 
-        // Цвет для отрисовки (можно привязать к цвету линии графика)
         public string ColorHex { get; set; }
     }
 }

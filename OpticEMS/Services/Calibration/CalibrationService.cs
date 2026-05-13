@@ -1,5 +1,6 @@
 ﻿using MathNet.Numerics;
 using OpticEMS.Contracts.Services.Calibration;
+using Serilog;
 
 namespace OpticEMS.Services.Calibration
 {
@@ -11,55 +12,71 @@ namespace OpticEMS.Services.Calibration
 
         public double[] CalculateCoefficients(IEnumerable<CalibrationPoint> calibrationPoints)
         {
-            var pixels = calibrationPoints.Select(point => (double)point.Pixel).ToArray();
-            var wavelengths = calibrationPoints.Select(point => point.Wavelength).ToArray();
+            try
+            {
+                var pixels = calibrationPoints.Select(point => (double)point.Pixel).ToArray();
+                var wavelengths = calibrationPoints.Select(point => point.Wavelength).ToArray();
 
-            var coefficients = Polynomial.Fit(
-                pixels,
-                wavelengths,
-                3,
-                MathNet.Numerics.LinearRegression.DirectRegressionMethod.QR).Coefficients;
-            
-            return coefficients;
+                var coefficients = Polynomial.Fit(
+                    pixels,
+                    wavelengths,
+                    3,
+                    MathNet.Numerics.LinearRegression.DirectRegressionMethod.QR).Coefficients;
+
+                return coefficients;
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception, "[CALIBRATION_COEFFICIENTS]: Failed to calculate calibration coefficients");
+                throw;
+            }
         }
 
         public void CorrectWavelengthIndices(double[] intensities, ref int nominalPixel)
         {
-            if (intensities == null || nominalPixel < 0 || nominalPixel >= intensities.Length)
+            try
             {
-                return;
-            }
-
-            int startIdx = Math.Max(0, nominalPixel - CORRECTION_PIXELS_WINDOW);
-            int endIdx = Math.Min(intensities.Length - 1, nominalPixel + CORRECTION_PIXELS_WINDOW);
-
-            int bestPixel = nominalPixel;
-            double maxIntensity = intensities[nominalPixel];
-            bool foundValidPeak = false;
-
-            for (int offset = startIdx; offset <= endIdx; offset++)
-            {
-                if (intensities[offset] > maxIntensity)
+                if (intensities == null || nominalPixel < 0 || nominalPixel >= intensities.Length)
                 {
-                    double leftNeighbor = (offset > 0) ? intensities[offset - 1] : 0;
-                    double rightNeighbor = (offset < intensities.Length - 1) ? intensities[offset + 1] : 0;
-                    if (intensities[offset] > leftNeighbor && intensities[offset] > rightNeighbor)
+                    return;
+                }
+
+                int startIdx = Math.Max(0, nominalPixel - CORRECTION_PIXELS_WINDOW);
+                int endIdx = Math.Min(intensities.Length - 1, nominalPixel + CORRECTION_PIXELS_WINDOW);
+
+                int bestPixel = nominalPixel;
+                double maxIntensity = intensities[nominalPixel];
+                bool foundValidPeak = false;
+
+                for (int offset = startIdx; offset <= endIdx; offset++)
+                {
+                    if (intensities[offset] > maxIntensity)
                     {
-                        maxIntensity = intensities[offset];
-                        bestPixel = offset;
-                        foundValidPeak = true;
+                        double leftNeighbor = (offset > 0) ? intensities[offset - 1] : 0;
+                        double rightNeighbor = (offset < intensities.Length - 1) ? intensities[offset + 1] : 0;
+                        if (intensities[offset] > leftNeighbor && intensities[offset] > rightNeighbor)
+                        {
+                            maxIntensity = intensities[offset];
+                            bestPixel = offset;
+                            foundValidPeak = true;
+                        }
                     }
                 }
+
+                double background = (intensities[startIdx] + intensities[endIdx]) / 2.0;
+
+                if (maxIntensity < MIN_INTENSITY_THRESHOLD || maxIntensity < background * MIN_PEAK_PROMINENCE)
+                {
+                    return;
+                }
+
+                nominalPixel = bestPixel;
             }
-
-            double background = (intensities[startIdx] + intensities[endIdx]) / 2.0;
-
-            if (maxIntensity < MIN_INTENSITY_THRESHOLD || maxIntensity < background * MIN_PEAK_PROMINENCE)
+            catch (Exception exception)
             {
-                return;
+                Log.Error(exception, "[PEAK_SEARCH]: Failed to calculate correction peak");
+                throw;
             }
-
-            nominalPixel = bestPixel;
         }
     }
 }

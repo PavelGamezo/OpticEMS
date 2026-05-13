@@ -1,6 +1,7 @@
 ﻿using DynamicExpresso;
 using OpticEMS.Contracts.ProcessingModes;
 using OpticEMS.Contracts.Services.Recipe;
+using Serilog;
 using System.Text.RegularExpressions;
 
 namespace OpticEMS.Preprocessing.Modes
@@ -19,6 +20,8 @@ namespace OpticEMS.Preprocessing.Modes
             {
                 _compiledExpression = CompileExpression(recipe.CombinedExpression, recipe.WavelengthNames);
             }
+
+            Log.Information("[PREPROCESSING]: Processing handler compiled");
         }
 
         public double[] Process(double[] data)
@@ -91,6 +94,8 @@ namespace OpticEMS.Preprocessing.Modes
                 }
 
                 var result = interpreter.ParseAsDelegate<Func<double[], double>>(finalExpr, "data");
+                Log.Information("[PREPROCESSING]: Compiled expression {FinalExpression} for endpoint tracking",
+                    finalExpr);
 
                 return result;
             }
@@ -103,8 +108,10 @@ namespace OpticEMS.Preprocessing.Modes
                 string pattern = $@"\b{Regex.Escape(name)}\b";
 
                 finalExpr = Regex.Replace(finalExpr, pattern, $"data[0]", RegexOptions.IgnoreCase);
-
+                
                 var result = interpreter.ParseAsDelegate<Func<double[], double>>(finalExpr, "data");
+                Log.Warning("[PREPROCESSING]: Compiled expression {FinalExpression} for endpoint tracking",
+                    finalExpr);
 
                 return result;
             }

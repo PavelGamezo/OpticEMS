@@ -1,6 +1,7 @@
 ﻿using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
 using OpticEMS.Contracts.Services.Export;
+using Serilog;
 using System.IO;
 using System.Text;
 
@@ -11,35 +12,55 @@ namespace OpticEMS.Services.Export
         public void ExportAsTextFormat(string path, DateTime startTime, DateTime endTime, DateTime overEtchStartTime,
             DateTime overEtchEndTime, string recipeName, string channelName, List<double> wavelengths, List<TimePoint> points)
         {
-            using var writer = new StreamWriter(path, false, Encoding.UTF8);
-            var culture = System.Globalization.CultureInfo.InvariantCulture;
+            try
+            {
+                using var writer = new StreamWriter(path, false, Encoding.UTF8);
+                var culture = System.Globalization.CultureInfo.InvariantCulture;
 
-            writer.WriteLine($"Start Process Time: {startTime}");
-            writer.WriteLine($"End Process Time: {endTime}");
-            writer.WriteLine($"Overetching Time: {overEtchStartTime} to {overEtchEndTime}");
-            writer.WriteLine($"Export Date: {DateTime.Now}");
-            writer.WriteLine($"Recipe: {recipeName ?? "N/A"}");
-            writer.WriteLine($"Channel: {channelName}");
+                writer.WriteLine($"Start Process Time: {startTime}");
+                writer.WriteLine($"End Process Time: {endTime}");
+                writer.WriteLine($"Overetching Time: {overEtchStartTime} to {overEtchEndTime}");
+                writer.WriteLine($"Export Date: {DateTime.Now}");
+                writer.WriteLine($"Recipe: {recipeName ?? "N/A"}");
+                writer.WriteLine($"Channel: {channelName}");
 
-            WriteTextSection(writer, "1. RAW DATA (After Averaging + Magnetic Field)", wavelengths, points, points => points.Trend);
+                WriteTextSection(writer, "1. RAW DATA (After Averaging + Magnetic Field)", wavelengths, points, points => points.Trend);
 
-            WriteTextSection(writer, "2. PREPROCESSED DATA (Smoothing / Derivative)", wavelengths, points, points => points.Preprocessed);
+                WriteTextSection(writer, "2. PREPROCESSED DATA (Smoothing / Derivative)", wavelengths, points, points => points.Preprocessed);
 
-            WriteTextSection(writer, "3. FINAL PROCESSED DATA (Ratio / Combined)", wavelengths, points, points => points.Processed);
+                WriteTextSection(writer, "3. FINAL PROCESSED DATA (Ratio / Combined)", wavelengths, points, points => points.Processed);
 
-            writer.WriteLine(new string('=', 80));
-            writer.WriteLine("End of export");
+                writer.WriteLine(new string('=', 80));
+                writer.WriteLine("End of export");
+
+                Log.Information("[EXPORT]: Export completed successfully");
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception, "[EXPORT]: Error during export process");
+                throw;
+            }
         }
 
         public void ExportAsXLS(string path, DateTime startTime, DateTime endTime, DateTime overEtchStartTime,
             DateTime overEtchEndTime, string recipeName, string channelName, List<double> wavelengths, List<TimePoint> points)
         {
-            var excelPackage = GenerateExcelPackage(startTime, endTime, overEtchStartTime,
+            try
+            {
+                var excelPackage = GenerateExcelPackage(startTime, endTime, overEtchStartTime,
                 overEtchEndTime, recipeName, channelName, wavelengths, points);
 
-            if (excelPackage != null)
+                if (excelPackage != null)
+                {
+                    File.WriteAllBytes(path, excelPackage);
+                }
+
+                Log.Information("[EXPORT]: Export completed successfully");
+            }
+            catch (Exception exception)
             {
-                File.WriteAllBytes(path, excelPackage);
+                Log.Error(exception, "[EXPORT]: Error during export process");
+                throw;
             }
         }
 

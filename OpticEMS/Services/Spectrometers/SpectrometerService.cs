@@ -1,8 +1,10 @@
-﻿using OpticEMS.Contracts.Services.Settings;
+﻿using OfficeOpenXml.FormulaParsing.Excel.Functions.Math;
+using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
 using OpticEMS.Devices.Devices.Avantes;
 using OpticEMS.Devices.Devices.Solar;
 using System.Runtime.InteropServices;
+using Serilog;
 
 namespace OpticEMS.Services.Spectrometers
 {
@@ -49,23 +51,31 @@ namespace OpticEMS.Services.Spectrometers
 
         public int GetConnectedSpectrometersCount()
         {
-            int total = 0;
-
-            for (int i = 0; i < 15; i++)
+            try
             {
-                if (SolarCCD.CCD_HitTest(i))
+                int total = 0;
+
+                for (int i = 0; i < 15; i++)
                 {
-                    total++;
+                    if (SolarCCD.CCD_HitTest(i))
+                    {
+                        total++;
+                    }
                 }
-            }
 
-            int avantesCount = AvantesCCD.AVS_Init(0);
-            if (avantesCount > 0)
+                int avantesCount = AvantesCCD.AVS_Init(0);
+                if (avantesCount > 0)
+                {
+                    total += avantesCount;
+                }
+
+                return total;
+            }
+            catch (Exception exception)
             {
-                total += avantesCount;
+                Serilog.Log.Error(exception, "[SPECTROMETERS]: Error during calculating devices count");
+                throw;
             }
-
-            return total;
         }
 
         public string? GetSerialNumber(int cameraId)
@@ -85,32 +95,42 @@ namespace OpticEMS.Services.Spectrometers
 
         private void RefreshDeviceList()
         {
-            _foundDevices.Clear();
-
-            for (int i = 0; i < 15; i++)
+            try
             {
-                if (SolarCCD.CCD_HitTest(i))
+                _foundDevices.Clear();
+
+                for (int i = 0; i < 15; i++)
                 {
-                    IntPtr ptr = SolarCCD.CCD_GetSerialNumber(i);
-                    string sn = ptr != IntPtr.Zero ? Marshal.PtrToStringAnsi(ptr) : $"Solar-{i}";
-                    _foundDevices.Add(new DeviceInfo { Name = sn, DeviceId = i, DeviceType = DeviceType.Solar });
+                    if (SolarCCD.CCD_HitTest(i))
+                    {
+                        IntPtr ptr = SolarCCD.CCD_GetSerialNumber(i);
+                        string sn = ptr != IntPtr.Zero ? Marshal.PtrToStringAnsi(ptr) : $"Solar-{i}";
+                        _foundDevices.Add(new DeviceInfo { Name = sn, DeviceId = i, DeviceType = DeviceType.Solar });
+                    }
                 }
+
+                int avsCount = AvantesCCD.AVS_Init(0);
+                if (avsCount > 0)
+                {
+                    uint reqSize = 0;
+                    var list = new AvantesCCD.AvsIdentityType[avsCount];
+                    AvantesCCD.AVS_GetList((uint)(avsCount * Marshal.SizeOf(typeof(AvantesCCD.AvsIdentityType))), ref reqSize, list);
+
+                    foreach (var avs in list)
+                    {
+                        _foundDevices.Add(new DeviceInfo { Name = avs.m_SerialNumber, DeviceType = DeviceType.Avantes });
+                    }
+                }
+
+                Serilog.Log.Information("[SPECTROMETERS]: Devices was refreshed");
             }
-
-            int avsCount = AvantesCCD.AVS_Init(0);
-            if (avsCount > 0)
+            catch (Exception exception)
             {
-                uint reqSize = 0;
-                var list = new AvantesCCD.AvsIdentityType[avsCount];
-                AvantesCCD.AVS_GetList((uint)(avsCount * Marshal.SizeOf(typeof(AvantesCCD.AvsIdentityType))), ref reqSize, list);
-
-                foreach (var avs in list)
-                {
-                    _foundDevices.Add(new DeviceInfo { Name = avs.m_SerialNumber, DeviceType = DeviceType.Avantes });
-                }
+                Serilog.Log.Error(exception, "[SPECTROMETERS]: Error during devices refreshing");
+                throw;
             }
         }
-
+        /*
         public uint[]? GetSpectrometerData(int cameraId, float exposureMs)
         {
             if (!SolarCCD.CCD_HitTest(cameraId)) return null;
@@ -161,7 +181,7 @@ namespace OpticEMS.Services.Spectrometers
                     Marshal.FreeHGlobal(buffer);
                 }
             }
-        }
+        }*/
 
         public bool IsSpectrometerInitialized() => _isInitialized;
     }

@@ -1,4 +1,6 @@
-﻿namespace OpticEMS.Processing.PCA
+﻿using Serilog;
+
+namespace OpticEMS.Processing.PCA
 {
     public class PcaAnalysisHandler : AnalysisHandlerBase<PcaSpectrumAnalyzer>
     {
@@ -19,13 +21,16 @@
             int components,
             int minTrainingSize = 15) : base(analyzer)
         {
-            _modelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Models", $"{recipeName}.pca");
+            _modelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, 
+                "Models", 
+                $"{recipeName}.pca");
             _components = components;
             _minTrainingSize = minTrainingSize;
 
             Analyzer.NComponents = _components;
 
             TryLoadExistingModel();
+            Log.Information("[PROCESSING]: PCA processing handler compiled");
         }
 
         public override async Task<Result> ProcessAsync(double[] spectrum)
@@ -128,8 +133,15 @@
             {
                 var data = spectra.Select(s => s.ToArray()).ToArray();
 
+                Log.Information("[PROCESSING]: Starting PCA training. Samples: {Samples}, Features: {Features}, Target Components: {Components}",
+                    data.Length, data.Length > 0 ? data[0].Length : 0, _components);
+
                 if (data.Length < _minTrainingSize)
                 {
+                    Log.Warning("[PROCESSING]: PCA training aborted: insufficient data ({Samples} < {MinSize})", 
+                        data.Length, 
+                        _minTrainingSize);
+
                     Status = $"Not enough data for PCA training";
                     return new Result(false, Status);
                 }
@@ -137,13 +149,17 @@
                 Analyzer.Train(data);
                 Analyzer.SaveModel(_modelPath);
 
+                Log.Information("[PROCESSING]: PCA model successfully trained and saved to {Path}", _modelPath);
+
                 Status = "PCA trained";
                 return new Result(true, Status);
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
+                Log.Error(exception, "[PROCESSING]: PCA error during training");
+
                 Status = "PCA Error";
-                return new Result(false, ex.Message);
+                return new Result(false, exception.Message);
             }
         }
 
@@ -181,10 +197,12 @@
 
                 return new Result(true, Status);
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
+                Log.Error(exception, "[PROCESSING]: PCA error during training");
+
                 Status = "PCA Error";
-                return new Result(false, ex.Message);
+                return new Result(false, exception.Message);
             }
         }
 
@@ -200,10 +218,13 @@
                 Analyzer.LoadModel(_modelPath);
                 _modelLoaded = true;
                 Status = "PCA model loaded";
+                Log.Information("[PROCESSING]: PCA model loaded");
+
             }
-            catch
+            catch (Exception exception)
             {
                 Status = "PCA model load error";
+                Log.Error(exception, "[PROCESSING]: PCA error during training");
             }
         }
     }

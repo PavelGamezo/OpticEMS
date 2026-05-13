@@ -1,6 +1,7 @@
 ﻿using OpticEMS.Contracts.Services.SignalPreprocessing;
 using OpticEMS.Preprocessing.Operations.Averaging;
 using OpticEMS.Preprocessing.Operations.Derivation;
+using Serilog;
 
 namespace OpticEMS.Preprocessing
 {
@@ -15,21 +16,34 @@ namespace OpticEMS.Preprocessing
         public TrendEquationsHandler(bool useDerivating)
         {
             _useDerivating = useDerivating;
+
+            Log.Information("[PREPROCESSING]: Initialized preprocessing handler");
         }
 
         public void PushIntensities(double[] intensities)
         {
+            
             _frameAverager.PushIntensities(intensities);
         }
 
         public void Set(double magneticFieldPeriodMs = 0, int mfPeriodsToAverage = 1, int derivationTime = 5)
         {
-            _frameAverager = new FrameAverager();
-            _mfSmoother = new MagneticFieldSmoother(magneticFieldPeriodMs, mfPeriodsToAverage);
-
-            if (_useDerivating)
+            try
             {
-                _derivativeCalculator = new DerivativeCalculator(derivationTime);
+                _frameAverager = new FrameAverager();
+                _mfSmoother = new MagneticFieldSmoother(magneticFieldPeriodMs, mfPeriodsToAverage);
+
+                if (_useDerivating)
+                {
+                    _derivativeCalculator = new DerivativeCalculator(derivationTime);
+                }
+
+                Log.Information("[PREPROCESSING]: Preprocessing handler compiled");
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception, "[PREPROCESSING]: Error during setup preprocessing handler");
+                throw;
             }
         }
 
@@ -67,6 +81,8 @@ namespace OpticEMS.Preprocessing
             {
                 _derivativeCalculator.Reset();
             }
+
+            Log.Information("[PREPROCESSING]: Preprocessing handler reseted");
         }
     }
 }

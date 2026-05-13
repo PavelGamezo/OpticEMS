@@ -1,5 +1,6 @@
 ﻿using OpticEMS.License.Common;
 using OpticEMS.License.Helpers;
+using Serilog;
 using System.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -17,7 +18,8 @@ namespace OpticEMS.License.Handlers
             return LicenseHelper.GenerateUid();
         }
 
-        public static string GenerateLicense(Common.License license,
+        public static string GenerateLicense(
+            Common.License license,
             byte[] certificatePrivateKeyData,
             SecureString certificatePassword)
         {

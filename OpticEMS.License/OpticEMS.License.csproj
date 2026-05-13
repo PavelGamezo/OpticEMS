@@ -9,6 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Serilog" Version="4.3.2-dev-02419" />
+    <PackageReference Include="Serilog.Sinks.File" Version="8.0.0-nblumhardt-02322" />
     <PackageReference Include="System.Management" Version="10.0.5" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.5" />
     <PackageReference Include="XAct.Core.PCL" Version="0.0.5014" />

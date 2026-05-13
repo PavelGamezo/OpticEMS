@@ -10,6 +10,6 @@
 
         bool IsSpectrometerInitialized();
 
-        uint[]? GetSpectrometerData(int cameraId, float exposureMs = 5f);
+        //uint[]? GetSpectrometerData(int cameraId, float exposureMs = 5f);
     }
 }

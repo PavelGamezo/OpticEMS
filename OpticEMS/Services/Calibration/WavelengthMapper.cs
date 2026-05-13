@@ -1,4 +1,5 @@
 ﻿using OpticEMS.Contracts.Services.Mapper;
+using Serilog;
 
 namespace OpticEMS.Services.Calibration
 {
@@ -8,21 +9,29 @@ namespace OpticEMS.Services.Calibration
 
         public int FindNearestIndex(double[] array, double target)
         {
-            var bestIndex = 0;
-            var minDiff = double.MaxValue;
-
-            for (int i = 0; i < array.Length; i++)
+            try
             {
-                var diff = Math.Abs(array[i] - target);
+                var bestIndex = 0;
+                var minDiff = double.MaxValue;
 
-                if (diff < minDiff)
+                for (int i = 0; i < array.Length; i++)
                 {
-                    minDiff = diff;
-                    bestIndex = i;
-                }
-            }
+                    var diff = Math.Abs(array[i] - target);
 
-            return bestIndex;
+                    if (diff < minDiff)
+                    {
+                        minDiff = diff;
+                        bestIndex = i;
+                    }
+                }
+
+                return bestIndex;
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception, "[CORRECTION_INDEX]: Error searching target {Target}", target);
+                throw;
+            }
         }
 
         public double[] ConvertPixelsToWavelengths(double[] spectrum, double[]? coefficients)
@@ -45,18 +54,29 @@ namespace OpticEMS.Services.Calibration
             }
             else
             {
+                Log.Warning("[WAVELENGTH_CONVERTION]: Wavelengths are invalid");
                 return Wavelengths;
             }
         }
 
         public double FindWavelengthByPixel(double pixel, double[]? coefficients)
         {
-            var wavelength = coefficients[3]
+            try
+            {
+                var wavelength = coefficients[3]
                     + coefficients[2] * pixel
                     + coefficients[1] * Math.Pow(pixel, 2)
                     + coefficients[0] * Math.Pow(pixel, 3);
 
-            return wavelength;
+                Log.Information("[WAVELENGTH_CALCULATION]: Pixel {Pixel} -> {Wavelength} nm", pixel, wavelength);
+                
+                return wavelength;
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception, "[WAVELENGTH_CALCULATION]: Error to find wavelength by pixel");
+                throw;
+            }
         }
     }
 }
