@@ -1,5 +1,5 @@
 ﻿using DynamicExpresso;
-using OpticEMS.Contracts.ProcessingModes;
+using OpticEMS.Contracts.Services.ProcessingModes;
 using OpticEMS.Contracts.Services.Recipe;
 using Serilog;
 using System.Text.RegularExpressions;

@@ -1,4 +1,4 @@
-﻿namespace OpticEMS.Contracts.ProcessingModes
+﻿namespace OpticEMS.Contracts.Services.ProcessingModes
 {
     public enum ProcessingMode
     {

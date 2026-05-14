@@ -7,17 +7,12 @@ namespace OpticEMS.Services.Etching
     public class EtchingProcessService : IEtchingProcessService
     {
         private Recipe? _recipe;
-
+        private List<State> WavelengthStates = new();
+        
         private readonly List<WindowBounds> _confirmedWindowsIn = new();
         private readonly List<WindowBounds> _confirmedWindowsOut = new();
 
-        private double[] _windowStartTimes = Array.Empty<double>();
-        private double[] _referenceValues = Array.Empty<double>(); 
-        private double[] _fixedThresholds = Array.Empty<double>();
-
         private ProcessState _state = ProcessState.Idle;
-        private int _consecutiveWindowsIn = 0;
-        private int _consecutiveWindowsOut = 0;
 
         private double _detectedAtMs;
         private double _finishedAtMs;
@@ -79,122 +74,132 @@ namespace OpticEMS.Services.Etching
                 return new EndpointResult(true, "Force Stop (Timeout)", true);
             }
 
-            switch (_state)
+            if (_state == ProcessState.InitialDeadTime)
             {
-                case ProcessState.InitialDeadTime:
-                    return ProcessInitialDeadTime(signal, elapsedMs);
+                if (elapsedMs >= _recipe.InitialDelay)
+                {
+                    InitializeWindows(signal, elapsedMs);
+                    _state = ProcessState.WindowOut;
+                    Log.Information("[PROCESS]: InitialDeadTime -> WindowOut at {Elapsed}ms", elapsedMs);
+                }
 
+                return new EndpointResult(false, "Initial Dead Time", false);
+            }
+
+            foreach (var state in WavelengthStates)
+            {
+                ProcessSingleWavelength(state, signal[state.Index], elapsedMs);
+            }
+
+            if (_state == ProcessState.WindowOut && AllChannelsReachedWindowIn())
+            {
+                foreach (var state in WavelengthStates)
+                {
+                    state.HasReachedWindowIn = false;
+                }
+
+                _detectedAtMs = elapsedMs;
+                Log.Information("[PROCESS] All channels reached WindowIn → Endpoint at {0:F2}s", elapsedMs / 1000.0);
+
+                if (_recipe.OverEtchEnabled && _recipe.OverEtchValue > 0)
+                {
+                    _overEtchStartTime = elapsedMs;
+                    _state = ProcessState.Overetch;
+                    return new EndpointResult(false, "Overetching", false);
+                }
+                else
+                {
+                    _finishedAtMs = elapsedMs;
+                    _state = ProcessState.Idle;
+                    return new EndpointResult(true, "Endpoint Detected", false);
+                }
+            }
+
+            if (_state == ProcessState.Overetch)
+            {
+                return ProcessOveretchState(elapsedMs);
+            }
+
+            return new EndpointResult(false, "Monitoring", false);
+        }
+
+        private void ProcessSingleWavelength(State state, double signal, double elapsedMs)
+        {
+            switch (state.ProcessState)
+            {
                 case ProcessState.WindowOut:
-                    return ProcessWindowOutState(signal, elapsedMs);
+                    ProcessWindowOutState(state, signal, elapsedMs);
+                    break;
 
                 case ProcessState.WindowIn:
-                    return ProcessWindowInState(signal, elapsedMs);
-
-                case ProcessState.Overetch:
-                    return ProcessOveretchState(elapsedMs);
+                    ProcessWindowInState(state, signal, elapsedMs);
+                    break;
             }
-
-            return new EndpointResult(false, "Idle", false);
         }
 
-        private EndpointResult ProcessInitialDeadTime(double[] signal, double elapsedMs)
+        private void ProcessWindowOutState(State state, double signal, double elapsedMs)
         {
-            if (elapsedMs >= _recipe.InitialDelay)
-            {
-                InitializeWindows(signal, elapsedMs);
-                _state = ProcessState.WindowOut;
-                Log.Information("[PROCESS]:InitialDeadTime -> WindowOut at {Elapsed}ms", elapsedMs);
-            }
-
-            return new EndpointResult(false, "Initial Dead Time", false);
-        }
-
-        private EndpointResult ProcessWindowOutState(double[] signal, double elapsedMs)
-        {
-            bool hasJustViolated = IsOutsideDetectionWindow(signal, elapsedMs);
+            bool hasJustViolated = IsOutsideDetectionWindow(state, signal, elapsedMs);
 
             if (hasJustViolated)
             {
-                _consecutiveWindowsOut++;
-                RecordConfirmedWindowOut(elapsedMs);
+                state.ConsecutiveOut++;
+                RecordConfirmedWindowOut(state, elapsedMs);
 
-                if (_consecutiveWindowsOut >= _recipe.WindowOutCount)
+                if (state.ConsecutiveOut >= _recipe.WindowOutCount)
                 {
                     Log.Information("[PROCESS]: \"WindowOut\" -> \"WindowIn\" at {ElapsedMs}", elapsedMs);
-                    _state = ProcessState.WindowIn;
-                    _consecutiveWindowsIn = 0;
-                    _consecutiveWindowsOut = 0;
-                    return new EndpointResult(false, "Monitoring", false);
+                    state.ProcessState = ProcessState.WindowIn;
+                    state.ConsecutiveIn = 0;
+                    state.ConsecutiveOut = 0;
                 }
-
-                return new EndpointResult(false, "Monitoring", false);
             }
             else
             {
-                for (int i = 0; i < signal.Length; i++)
+                if (elapsedMs - state.WindowStartTime >= _recipe.DetectionWindowTime)
                 {
-                    if (elapsedMs - _windowStartTimes[i] >= _recipe.DetectionWindowTime)
-                    {
-                        _consecutiveWindowsOut = 0;
-                        ClearConfirmedWindowsOut();
+                    state.ConsecutiveOut = 0;
+                    ClearConfirmedWindowsOut();
 
-                        _windowStartTimes[i] = elapsedMs;
-                        _referenceValues[i] = signal[i];
-                    }
+                    state.WindowStartTime = elapsedMs;
+                    state.Reference = signal;
                 }
-
-                return new EndpointResult(false, "Monitoring", false);
             }
         }
 
-        private EndpointResult ProcessWindowInState(double[] signal, double elapsedMs)
+        private void ProcessWindowInState(State state, double signal, double elapsedMs)
         {
-            if (IsInsideDetectionLimits(signal))
+            if (IsInsideDetectionLimits(state, signal))
             {
-                if (CheckIfWindowShouldBeRecorded(elapsedMs))
+                if (CheckIfWindowShouldBeRecorded(state, elapsedMs))
                 {
-                    RecordConfirmedWindowIn(elapsedMs);
+                    RecordConfirmedWindowIn(state, elapsedMs);
                 }
 
-                if (CheckAndSlideWindows(signal, elapsedMs))
+                if (CheckAndSlideWindows(state, signal, elapsedMs))
                 {
-                    _consecutiveWindowsIn++;
+                    state.ConsecutiveIn++;
                 }
 
-                if (_consecutiveWindowsIn >= _recipe.WindowInCount)
+                if (state.ConsecutiveIn >= _recipe.WindowInCount)
                 {
-                    _detectedAtMs = elapsedMs;
-                    if (_recipe.OverEtchEnabled && _recipe.OverEtchValue > 0)
-                    {
-                        _state = ProcessState.Overetch;
-                        _overEtchStartTime = elapsedMs;
-                        Log.Information("[PROCESS]: WindowIn -> Overetching at {ElapsedMs}", elapsedMs);
-                        return new EndpointResult(false, "Endpoint Found. Starting Overetch...", false);
-                    }
-                    else
-                    {
-                        _finishedAtMs = elapsedMs;
-                        _state = ProcessState.Idle;
-                        Log.Information("[PROCESS]: WindowIn -> Completed without overetching at {ElapsedMs}", elapsedMs);
-                        return new EndpointResult(true, "Endpoint Detected", false);
-                    }
+                    state.HasReachedWindowIn = true;
+                    state.ProcessState = ProcessState.Overetch;
                 }
             }
             else
             {
-                _consecutiveWindowsIn = 0;
+                state.ConsecutiveIn = 0;
                 ClearConfirmedWindowsIn();
-                ResetWindows(signal, elapsedMs);
+                ResetWindows(state, signal, elapsedMs);
             }
-
-            return new EndpointResult(false, $"Monitoring", false);
         }
 
         private EndpointResult ProcessOveretchState(double elapsedMs)
         {
             double currentOE = elapsedMs - _overEtchStartTime;
 
-            if (currentOE >= _recipe.OverEtchValue)
+            if (currentOE >= _recipe!.OverEtchValue)
             {
                 _finishedAtMs = _overEtchStartTime + _recipe.OverEtchValue;
                 _state = ProcessState.Idle;
@@ -206,109 +211,92 @@ namespace OpticEMS.Services.Etching
             return new EndpointResult(false, $"Overetching", false);
         }
 
-        private bool IsInsideDetectionLimits(double[] signal)
+        private bool AllChannelsReachedWindowIn() => 
+            WavelengthStates.All(state => state.HasReachedWindowIn);
+
+        private bool IsInsideDetectionLimits(State state, double signal)
         {
-            for (int i = 0; i < signal.Length; i++)
+            if (state.Reference <= 0)
             {
-                if (_referenceValues[i] <= 0)
-                {
-                    continue;
-                }
+                return true;
+            }
 
-                double threshold = _fixedThresholds[i];
+            double threshold = state.Threshold;
 
-                if (Math.Abs(signal[i] - _referenceValues[i]) > threshold)
-                {
-                    return false;
-                }
+            if (Math.Abs(signal - state.Reference) > threshold)
+            {
+                return false;
             }
 
             return true;
         }
 
-        private bool CheckIfWindowShouldBeRecorded(double elapsedMs)
+        private bool CheckIfWindowShouldBeRecorded(State state, double elapsedMs)
         {
-            for (int i = 0; i < _windowStartTimes.Length; i++)
+            if (state.Reference <= 0)
             {
-                if (_referenceValues[i] <= 0)
-                {
-                    continue;
-                }
-
-                if (elapsedMs - _windowStartTimes[i] >= _recipe.DetectionWindowTime)
-                {
-                    return true;
-                }
+                return true;
             }
+
+            if (elapsedMs - state.WindowStartTime >= _recipe.DetectionWindowTime)
+            {
+                return true;
+            }
+
             return false;
         }
 
-        private bool CheckAndSlideWindows(double[] signal, double elapsedMs)
+        private bool CheckAndSlideWindows(State state, double signal, double elapsedMs)
         {
-            if (signal.Length == 0) return false;
-
-            int movedCount = 0;
-
-            for (int i = 0; i < signal.Length; i++)
+            if (state.Reference <= 0)
             {
-                if (_referenceValues[i] <= 0)
-                {
-                    continue;
-                }
-
-                if (elapsedMs - _windowStartTimes[i] >= _recipe.DetectionWindowTime)
-                {
-                    _windowStartTimes[i] = elapsedMs;
-                    _referenceValues[i] = signal[i];
-
-                    movedCount++;
-                }
+                return true;
             }
 
-            bool allMoved = movedCount == signal.Length;
-
-            return allMoved;
-        }
-
-        private void ResetWindows(double[] signal, double elapsedMs)
-        {
-            for (int i = 0; i < signal.Length; i++)
+            if (elapsedMs - state.WindowStartTime >= _recipe.DetectionWindowTime)
             {
-                _windowStartTimes[i] = elapsedMs;
-                _referenceValues[i] = signal[i];
+                state.WindowStartTime = elapsedMs;
+                state.Reference = signal;
+
+                return true;
             }
+
+            return false;
         }
 
-        private bool IsOutsideDetectionWindow(double[] currentSignal, double elapsedMs)
+        private void ResetWindows(State state, double signal, double elapsedMs)
+        {
+            state.WindowStartTime = elapsedMs;
+            state.Reference = signal;
+        }
+
+        private bool IsOutsideDetectionWindow(State state, double currentSignal, double elapsedMs)
         {
             bool anyLineViolatedThisCycle = false;
 
-            for (int i = 0; i < currentSignal.Length; i++)
+            if (state.Reference <= 0)
             {
-                if (_referenceValues[i] <= 0)
-                {
-                    continue;
-                }
+                return true;
+            }
 
-                double threshold = _fixedThresholds[i];
-                double delta = currentSignal[i] - _referenceValues[i];
+            double threshold = state.Threshold;
+            double delta = currentSignal - state.Reference;
 
-                bool violated = _recipe!.DetectionWindowHighs[i] >= 0
-                    ? delta >= threshold
-                    : delta <= -threshold;
+            bool violated = _recipe!.DetectionWindowHighs[state.Index] >= 0
+                ? delta >= threshold
+                : delta <= -threshold;
 
-                if (violated)
-                {
-                    anyLineViolatedThisCycle = true;
+            if (violated)
+            {
+                anyLineViolatedThisCycle = true;
 
-                    _windowStartTimes[i] = elapsedMs;
-                    _referenceValues[i] = currentSignal[i];
-                }
-                else if(elapsedMs - _windowStartTimes[i] >= _recipe.DetectionWindowTime)
-                {
-                    _windowStartTimes[i] = elapsedMs;
-                    _referenceValues[i] = currentSignal[i];
-                }
+                state.WindowStartTime = elapsedMs;
+                state.Reference = currentSignal;
+            }
+            else if (elapsedMs - state.WindowStartTime >= _recipe.DetectionWindowTime)
+            {
+                state.WindowStartTime = elapsedMs;
+                state.Reference = currentSignal;
             }
 
             return anyLineViolatedThisCycle;
@@ -316,22 +304,13 @@ namespace OpticEMS.Services.Etching
 
         private void InitializeWindows(double[] signal, double elapsedMs)
         {
-            int count = signal.Length;
-
-            if (_windowStartTimes.Length != count)
+            for (int i = 0; i < signal.Length; i++)
             {
-                _windowStartTimes = new double[count];
-                _referenceValues = new double[count];
-                _fixedThresholds = new double[count];
-            }
-
-            for (int i = 0; i < count; i++)
-            {
-                _windowStartTimes[i] = elapsedMs;
-                _referenceValues[i] = signal[i];
+                WavelengthStates[i].WindowStartTime = elapsedMs;
+                WavelengthStates[i].Reference = signal[i];
 
                 double percent = Math.Abs(_recipe!.DetectionWindowHighs[i]);
-                _fixedThresholds[i] = signal[i] * percent / 100.0;
+                WavelengthStates[i].Threshold = signal[i] * percent / 100.0;
             }
         }
 
@@ -341,8 +320,17 @@ namespace OpticEMS.Services.Etching
 
             _state = ProcessState.InitialDeadTime;
 
-            _consecutiveWindowsIn = 0;
-            _consecutiveWindowsOut = 0;
+            WavelengthStates = new List<State>();
+            for (int i = 0; i < startIntensities.Length; i++)
+            {
+                var state = new State()
+                {
+                    Index = i,
+                    ProcessState = ProcessState.WindowOut
+                };
+
+                WavelengthStates.Add(state);
+            }
 
             ClearConfirmedWindowsIn();
             ClearConfirmedWindowsOut();
@@ -352,75 +340,73 @@ namespace OpticEMS.Services.Etching
             _finishedAtMs = 0;
             _overEtchStartTime = 0;
 
-            Serilog.Log.Information("[PROCESS]: Process started");
+            Log.Information("[PROCESS]: Process started");
         }
 
         public void Stop()
         {
             _state = ProcessState.Idle;
-            Serilog.Log.Information("[PROCESS]: Process stopped by system or user");
+            Log.Information("[PROCESS]: Process stopped by system or user");
         }
 
-        private void RecordConfirmedWindowIn(double elapsedMs)
+        private void RecordConfirmedWindowIn(State state, double elapsedMs)
         {
             double timeSec = elapsedMs / 1000.0;
 
-            for (int i = 0; i < _referenceValues.Length; i++)
-            {
-                double half = _fixedThresholds[i];
+            double half = state.Threshold;
 
-                _confirmedWindowsIn.Add(new WindowBounds
-                {
-                    WavelengthIndex = i,
-                    StartTime = _windowStartTimes[i] / 1000.0,
-                    EndTime = (_windowStartTimes[i] + _recipe.DetectionWindowTime) / 1000.0,
-                    Top = _referenceValues[i] + half,
-                    Bottom = _referenceValues[i] - half,
-                    Reference = _referenceValues[i]
-                });
-            }
+            _confirmedWindowsIn.Add(new WindowBounds
+            {
+                WavelengthIndex = state.Index,
+                StartTime = state.WindowStartTime / 1000.0,
+                EndTime = (state.WindowStartTime + _recipe.DetectionWindowTime) / 1000.0,
+                Top = state.Reference + half,
+                Bottom = state.Reference - half,
+                Reference = state.Reference
+            });
         }
 
-        private void RecordConfirmedWindowOut(double elapsedMs)
+        private void RecordConfirmedWindowOut(State state, double elapsedMs)
         {
             double timeSec = elapsedMs / 1000.0;
 
-            for (int i = 0; i < _referenceValues.Length; i++)
-            {
-                double half = _fixedThresholds[i];
+            double half = state.Threshold;
 
-                _confirmedWindowsOut.Add(new WindowBounds
-                {
-                    WavelengthIndex = i,
-                    StartTime = _windowStartTimes[i] / 1000.0,
-                    EndTime = (_windowStartTimes[i] + _recipe.DetectionWindowTime) / 1000.0,
-                    Top = _referenceValues[i] + half,
-                    Bottom = _referenceValues[i] - half,
-                    Reference = _referenceValues[i]
-                });
-            }
+            _confirmedWindowsOut.Add(new WindowBounds
+            {
+                WavelengthIndex = state.Index,
+                StartTime = state.WindowStartTime / 1000.0,
+                EndTime = (state.WindowStartTime + _recipe.DetectionWindowTime) / 1000.0,
+                Top = state.Reference + half,
+                Bottom = state.Reference - half,
+                Reference = state.Reference
+            });
         }
 
         public List<WindowBounds> GetCurrentWindowBounds()
         {
             var bounds = new List<WindowBounds>();
-            if (_recipe == null || _referenceValues.Length == 0)
-                return bounds;
 
-            for (int i = 0; i < _referenceValues.Length; i++)
+            foreach (var state in WavelengthStates)
             {
-                double half = _fixedThresholds[i];
+                if (_recipe == null || state.Reference == 0)
+                {
+                    return bounds;
+                }
+
+                double half = state.Threshold;
 
                 bounds.Add(new WindowBounds
                 {
-                    WavelengthIndex = i,
-                    StartTime = _windowStartTimes[i] / 1000.0,
-                    EndTime = (_windowStartTimes[i] + _recipe.DetectionWindowTime) / 1000.0,
-                    Top = _referenceValues[i] + half,
-                    Bottom = _referenceValues[i] - half,
-                    Reference = _referenceValues[i]
+                    WavelengthIndex = state.Index,
+                    StartTime = state.WindowStartTime / 1000.0,
+                    EndTime = (state.WindowStartTime + _recipe.DetectionWindowTime) / 1000.0,
+                    Top = state.Reference + half,
+                    Bottom = state.Reference - half,
+                    Reference = state.Reference
                 });
             }
+
             return bounds;
         }
     }

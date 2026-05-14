@@ -1,4 +1,4 @@
-﻿using OpticEMS.Contracts.ProcessingModes;
+﻿using OpticEMS.Contracts.Services.ProcessingModes;
 using System.Windows.Media;
 
 namespace OpticEMS.Contracts.Services.Recipe

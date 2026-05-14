@@ -52,7 +52,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         private void OnApplyRecipeRequested(Recipe recipe)
         {
-            var targetChannel = Channels.FirstOrDefault(c => c.ChannelId == recipe.DatabaseId - 1);
+            var targetChannel = Channels.FirstOrDefault(c => c.ChannelId == recipe.RecipeId - 1);
 
             if (targetChannel != null)
             {

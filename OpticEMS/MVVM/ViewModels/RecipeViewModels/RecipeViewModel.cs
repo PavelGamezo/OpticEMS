@@ -1,8 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using OpticEMS.Contracts.ProcessingModes;
 using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Dialog;
+using OpticEMS.Contracts.Services.ProcessingModes;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.MVVM.Models;
 using OpticEMS.Services.Validators;
