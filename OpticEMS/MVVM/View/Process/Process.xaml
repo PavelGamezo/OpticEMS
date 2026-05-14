@@ -43,7 +43,7 @@
 
                     <xcad:LayoutPanel Orientation="Vertical" DockWidth="360">
 
-                        <xcad:LayoutAnchorablePane DockHeight="5*">
+                        <xcad:LayoutAnchorablePane DockHeight="3*">
 
                             <xcad:LayoutAnchorable Title="Spectral Line's Explorer"
                                                    ContentId="RecipeExplorer"
@@ -53,6 +53,21 @@
                                                    CanFloat="True">
 
                                 <ContentControl Content="{Binding SelectedChannel.SpectralLinesCatalogViewModel}" />
+
+                            </xcad:LayoutAnchorable>
+
+                        </xcad:LayoutAnchorablePane>
+
+                        <xcad:LayoutAnchorablePane DockHeight="1.5*">
+
+                            <xcad:LayoutAnchorable Title="Spectrometer Control"
+                                                   ContentId="SpectralExplorer"
+                                                   CanClose="False"
+                                                   CanHide="True"
+                                                   CanAutoHide="True"
+                                                   CanFloat="True">
+
+                                <ContentControl Content="{Binding SelectedChannel.SpectrometerControlViewModel}" />
 
                             </xcad:LayoutAnchorable>
 

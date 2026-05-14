@@ -112,14 +112,6 @@ namespace OpticEMS.Orchestrator
             _trendHandler = new TrendEquationsHandler(Recipe.DerivativeEnabled);
             _trendHandler.Set(Recipe.MagneticFieldPeriodMs, Recipe.FieldPeriodsToAverage, Recipe.DerivativePoints);
 
-            _cancellationToken.Cancel();
-            _cancellationToken = new CancellationTokenSource();
-
-            _ = Task.Run(() =>
-            {
-                _deviceProcessing.StartContinueScan(Recipe.ExposureMs, Recipe.ScansNum, _cancellationToken.Token);
-            });
-
             WeakReferenceMessenger.Default.Send(new RecipeAppliedMessage(
                 ChannelId, Recipe.Wavelengths,
                 Recipe.WavelengthColors));
@@ -135,6 +127,17 @@ namespace OpticEMS.Orchestrator
                 Recipe.PcaComponents);
         }
 
+        public void ApplySpecParams(float exposureMs, int scansNum)
+        {
+            _cancellationToken.Cancel();
+            _cancellationToken = new CancellationTokenSource();
+
+            _ = Task.Run(() =>
+            {
+                _deviceProcessing.StartContinueScan(exposureMs, scansNum, _cancellationToken.Token);
+            });
+        }
+
         public async Task ApplyRecipe(int recipeId)
         {
             if (_isRunning)
@@ -145,14 +148,6 @@ namespace OpticEMS.Orchestrator
             Recipe = await _recipeRepository.GetRecipeByRecipeIdAsync(recipeId);
             _modeHandler = new ModePreprocessorHandler(Recipe);
             _trendHandler = new TrendEquationsHandler(Recipe.DerivativeEnabled);
-
-            _cancellationToken.Cancel();
-            _cancellationToken = new CancellationTokenSource();
-                
-            _ = Task.Run(() =>
-            {
-                _deviceProcessing.StartContinueScan(Recipe.ExposureMs, Recipe.ScansNum, _cancellationToken.Token);
-            });
 
             WeakReferenceMessenger.Default.Send(new RecipeAppliedMessage(
                 ChannelId, Recipe.Wavelengths,

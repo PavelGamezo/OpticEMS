@@ -49,6 +49,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         public ChannelDetailsViewModel ChannelDetailsViewModel { get; }
 
+        public SpectrometerControlViewModel SpectrometerControlViewModel { get; }
+
         #endregion
 
         #region props
@@ -91,6 +93,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             SpectralLinesCatalogViewModel = new SpectralLinesCatalogViewModel(
                 ChannelId, spectralLineRepository, dialogService);
             ChannelDetailsViewModel = new ChannelDetailsViewModel(this);
+            SpectrometerControlViewModel = new SpectrometerControlViewModel(_orchestrator, 1, 1);
 
             RegisterMessages();
 

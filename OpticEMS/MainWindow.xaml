@@ -41,6 +41,9 @@
         <DataTemplate DataType="{x:Type vmproc:ChannelDetailsViewModel}">
             <pproc:ChannelDetails/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vmproc:SpectrometerControlViewModel}">
+            <pproc:SpectrometerControl/>
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vmset:SettingsViewModel}">
             <pset:Settings/>
         </DataTemplate>
