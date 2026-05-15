@@ -53,6 +53,38 @@ namespace OpticEMS.Contracts.Services.Recipe
         public DateTime CreatedAt { get; set; }
         public DateTime LastModifiedAt { get; set; }
 
+        public string ProcessingModeDisplay => ProcessingMode switch
+        {
+            ProcessingMode.SingleChannel => "Single Channel",
+            ProcessingMode.DualChannel => DualSubMode switch
+            {
+                DualChannelSubMode.Simultaneous => "Dual Channel (Simultaneous)",
+                DualChannelSubMode.Ratio => "Dual Channel (Ratio)",
+                _ => "Dual Channel"
+            },
+            ProcessingMode.MultiChannel => MultiSubMode switch
+            {
+                MultiChannelSubMode.Simultaneous => "Multi Channel (Simultaneous)",
+                MultiChannelSubMode.Combined => $"Multi Channel (Combined: {CombinedExpression})",
+                _ => "Multi Channel"
+            },
+            _ => "Unknown Mode"
+        };
+
+        public string ActiveModeShort => ProcessingMode switch
+        {
+            ProcessingMode.SingleChannel => "Single",
+            ProcessingMode.DualChannel => DualSubMode == DualChannelSubMode.Ratio ? "Ratio" : "Dual",
+            ProcessingMode.MultiChannel => MultiSubMode == MultiChannelSubMode.Combined ? "Combined" : "Multi",
+            _ => "Unknown"
+        };
+
+        public bool IsCombinedMode => ProcessingMode == ProcessingMode.MultiChannel &&
+                              MultiSubMode == MultiChannelSubMode.Combined;
+
+        public bool IsRatioMode => ProcessingMode == ProcessingMode.DualChannel &&
+                                   DualSubMode == DualChannelSubMode.Ratio;
+
         public void AutoConfigureMode()
         {
             if (Wavelengths.Count <= 1)

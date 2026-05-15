@@ -67,7 +67,7 @@
 
                                     <StackPanel Width="200">
 
-                                        <TextBlock Text="Enable Over-etch Phase" 
+                                        <TextBlock Text="Enable PCA Analysis" 
                                                    FontWeight="Bold" 
                                                    Foreground="White" 
                                                    Margin="0,0,0,5"/>
@@ -79,7 +79,7 @@
                                                Margin="0,5"
                                                RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                        <TextBlock Text="Toggle to allow additional etching after the primary Endpoint is detected." 
+                                        <TextBlock Text="Enables Principal Component Analysis for advanced anomaly detection during etching."
                                                    Foreground="#CCCCCC" 
                                                    FontSize="11" 
                                                    TextWrapping="Wrap"/>
@@ -139,19 +139,12 @@
 
                                     <StackPanel Width="200">
 
-                                        <TextBlock Text="Over-etch Duration (ms)" 
+                                        <TextBlock Text="PCA Components" 
                                                    FontWeight="Bold" 
                                                    Foreground="White" 
                                                    Margin="0,0,0,5"/>
 
-                                        <Image Source="pack://application:,,,/Common/Images/splash.png"
-                                               Height="108"
-                                               Width="192"
-                                               Stretch="Uniform" 
-                                               Margin="0,5"
-                                               RenderOptions.BitmapScalingMode="HighQuality"/>
-
-                                        <TextBlock Text="The precise amount of extra time the process continues to ensure complete removal of the layer." 
+                                        <TextBlock Text="Number of principal components to use in the PCA model. Higher values capture more process variance but may increase sensitivity to noise." 
                                                    Foreground="#CCCCCC" 
                                                    FontSize="11" 
                                                    TextWrapping="Wrap"/>

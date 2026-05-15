@@ -4,8 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:OpticEMS.MVVM.View.Recipe"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             mc:Ignorable="d"
+             d:DesignWidth="800">
     
     <Border CornerRadius="5"
             Padding="15,15,15,0">
@@ -79,7 +79,7 @@
                                                Margin="0,5"
                                                RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                        <TextBlock Text="Toggle to allow additional etching after the primary Endpoint is detected." 
+                                        <TextBlock Text="Enables the over-etch phase after endpoint detection." 
                                                    Foreground="#CCCCCC" 
                                                    FontSize="11" 
                                                    TextWrapping="Wrap"/>
@@ -151,7 +151,7 @@
                                                Margin="0,5"
                                                RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                        <TextBlock Text="The precise amount of extra time the process continues to ensure complete removal of the layer." 
+                                        <TextBlock Text="Duration of the over-etch phase in seconds after endpoint has been detected." 
                                                    Foreground="#CCCCCC" 
                                                    FontSize="11" 
                                                    TextWrapping="Wrap"/>

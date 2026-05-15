@@ -58,14 +58,7 @@
                                            Foreground="White" 
                                            Margin="0,0,0,5"/>
 
-                                <Image Source="pack://application:,,,/Common/Images/splash.png"
-                                       Height="108"
-                                       Width="192"
-                                       Stretch="Uniform" 
-                                       Margin="0,5"
-                                       RenderOptions.BitmapScalingMode="HighQuality"/>
-
-                                <TextBlock Text="Unique identifier for the current process configuration." 
+                                <TextBlock Text="The unique name of the etching recipe. Used for identification, logging, and data export." 
                                            Foreground="#CCCCCC" 
                                            FontSize="11" 
                                            TextWrapping="Wrap"/>

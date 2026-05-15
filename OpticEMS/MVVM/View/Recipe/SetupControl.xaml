@@ -21,15 +21,11 @@
                        FontSize="12" 
                        FontWeight="Bold"
                        Foreground="White"
-                       Margin="0,0,0,5"/>
+                       Margin="0,0,0,10"/>
 
             <Grid Grid.Row="1">
 
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0">
+                <StackPanel>
 
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Recipe ID" 
@@ -63,22 +59,17 @@
                                          HasDropShadow="True">
 
                                     <StackPanel Width="200">
+                                        
                                         <TextBlock Text="Recipe ID" 
                                                    FontWeight="Bold" 
                                                    Foreground="White" 
                                                    Margin="0,0,0,5"/>
 
-                                        <Image Source="pack://application:,,,/Common/Images/splash.png"
-                                               Height="108"
-                                               Width="192"
-                                               Stretch="Uniform" 
-                                               Margin="0,5"
-                                               RenderOptions.BitmapScalingMode="HighQuality"/>
-
                                         <TextBlock Text="Identifier used for communication with external equipment."
                                                    Foreground="#CCCCCC"
                                                    FontSize="11"
                                                    TextWrapping="Wrap"/>
+                                        
                                     </StackPanel>
 
                                 </ToolTip>

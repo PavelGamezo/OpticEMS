@@ -58,7 +58,7 @@
 
                         </xcad:LayoutAnchorablePane>
 
-                        <xcad:LayoutAnchorablePane DockHeight="1.5*">
+                        <xcad:LayoutAnchorablePane DockHeight="1.7*">
 
                             <xcad:LayoutAnchorable Title="Spectrometer Control"
                                                    ContentId="SpectralExplorer"

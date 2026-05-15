@@ -12,6 +12,7 @@
             Margin="5,0,5,0">
 
         <Grid>
+            
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -22,7 +23,9 @@
             <Border Grid.Row="0" 
                     Background="#1f1f1f"
                     Padding="10">
+                
                 <StackPanel>
+                    
                     <TextBlock Text="Recipe database"
                                FontWeight="Bold"
                                FontSize="12" 
@@ -60,18 +63,13 @@
                                          Margin="0,0,8,0"
                                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
                             </Grid>
-                        </Border>
 
-                        <Button Grid.Column="1" 
-                                Content="📁" 
-                                Width="28" 
-                                Height="28"
-                                Margin="5,0,0,0"
-                                Background="#3E3E40"
-                                BorderThickness="0"
-                                Foreground="White"/>
+                        </Border>
+                        
                     </Grid>
+                    
                 </StackPanel>
+                
             </Border>
 
             <ListView Grid.Row="2" 
@@ -83,6 +81,7 @@
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
 
                 <ListView.ItemContainerStyle>
+                    
                     <Style TargetType="ListViewItem">
                         <Setter Property="Background" Value="Transparent"/>
                         <Setter Property="Template">
@@ -114,11 +113,15 @@
                             </Setter.Value>
                         </Setter>
                     </Style>
+                    
                 </ListView.ItemContainerStyle>
 
                 <ListView.ItemTemplate>
+                    
                     <DataTemplate>
+                        
                         <Grid Margin="10,10,10,10">
+                            
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
@@ -150,9 +153,13 @@
                                        FontSize="11"
                                        VerticalAlignment="Center"
                                        Foreground="#999999"/>
+                            
                         </Grid>
+                        
                     </DataTemplate>
+                    
                 </ListView.ItemTemplate>
+                
             </ListView>
 
             <Border Grid.Row="3" 

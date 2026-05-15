@@ -126,8 +126,7 @@ namespace OpticEMS.Devices.Devices.Avantes
         public const int WM_USER = 0x400;
         public const int WM_MEAS_READY = WM_USER + 1;
 
-        private const string CCD_PATH = @"D:\Работа\Izovac\SDK\x64\";
-        private const string DLLNAME = CCD_PATH + "avaspecx64.dll";
+        private const string DLLNAME = "Libraries\\avaspecx64.dll";
 #endif
         public const int WM_CONN_STATUS = WM_APP + 15;
         public const int WM_DSTR_STATUS = WM_APP + 16;

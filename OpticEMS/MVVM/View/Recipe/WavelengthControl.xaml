@@ -42,7 +42,9 @@
                         <UniformGrid Columns="3"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
+                
                 <ItemsControl.ItemTemplate>
+                    
                     <DataTemplate>
 
                         <Border BorderBrush="#3E3E40" 
@@ -97,6 +99,7 @@
                                                          HasDropShadow="True">
 
                                                     <StackPanel Width="200">
+                                                        
                                                         <TextBlock Text="Target Wavelengths (nm)" 
                                                                    FontWeight="Bold" 
                                                                    Foreground="White" 
@@ -241,6 +244,7 @@
                                                          HasDropShadow="True">
 
                                                     <StackPanel Width="200">
+                                                        
                                                         <TextBlock Text="Detection window high" 
                                                                    FontWeight="Bold" 
                                                                    Foreground="White"/>
@@ -252,12 +256,13 @@
                                                                Margin="0,5"
                                                                RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                                        <TextBlock Text="Upper intensity thresholds for each wavelength that define the boundary of the detection window.
-                                                                     When the measured signal crosses these limits, the algorithm evaluates stability and may transition between Window‑In, Monitoring, and Window‑Out states.
-                                                                     Used to detect significant rises in intensity that indicate process transitions or endpoint behavior." 
+                                                        <TextBlock Text="The height of the detection window as a percentage of the reference intensity (±%). 
+                                                                        Defines the tolerance band around the reference signal. If the intensity moves outside this band, 
+                                                                        it is considered a significant change." 
                                                                    Foreground="#CCCCCC" 
                                                                    FontSize="11" 
                                                                    TextWrapping="Wrap"/>
+                                                        
                                                     </StackPanel>
 
                                                 </ToolTip>
@@ -299,6 +304,7 @@
                                 <StackPanel Visibility="{Binding DataContext.IsMultiChannelMode, 
                                                         RelativeSource={RelativeSource AncestorType=ItemsControl}, 
                                                         Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    
                                     <StackPanel Orientation="Horizontal">
 
                                         <TextBlock Text="Detection wavelength name"
@@ -332,6 +338,7 @@
                                                          HasDropShadow="True">
 
                                                     <StackPanel Width="200">
+                                                        
                                                         <TextBlock Text="Detection wavelength name" 
                                                                    FontWeight="Bold" 
                                                                    Foreground="White"/>
@@ -343,12 +350,12 @@
                                                                Margin="0,5"
                                                                RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                                        <TextBlock Text="Upper intensity thresholds for each wavelength that define the boundary of the detection window.
-                                                                     When the measured signal crosses these limits, the algorithm evaluates stability and may transition between Window‑In, Monitoring, and Window‑Out states.
-                                                                     Used to detect significant rises in intensity that indicate process transitions or endpoint behavior." 
+                                                        <TextBlock Text="Channel alias (e.g. CH0, A, Poly, Main). This name is used as a variable in mathematical expressions for Combined mode. 
+                                                                        Example: (CH0 - CH2) / (CH1 - CH2)." 
                                                                    Foreground="#CCCCCC" 
                                                                    FontSize="11" 
                                                                    TextWrapping="Wrap"/>
+                                                        
                                                     </StackPanel>
 
                                                 </ToolTip>
@@ -420,9 +427,9 @@
                                            Margin="0,5"
                                            RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                    <TextBlock Text="Upper intensity thresholds for each wavelength that define the boundary of the detection window.
-                                                 When the measured signal crosses these limits, the algorithm evaluates stability and may transition between Window‑In, Monitoring, and Window‑Out states.
-                                                 Used to detect significant rises in intensity that indicate process transitions or endpoint behavior." 
+                                    <TextBlock Text="The height of the detection window as a percentage of the reference intensity (±%). 
+                                                    Defines the tolerance band around the reference signal. If the intensity moves outside this band, 
+                                                    it is considered a significant change."
                                                Foreground="#CCCCCC" 
                                                FontSize="11" 
                                                TextWrapping="Wrap"/>
@@ -475,7 +482,7 @@
                            Foreground="White"
                            Margin="0,15,0,0"/>
 
-                <Border Margin="6,5,0,0" 
+                <Border Margin="6,17,0,0" 
                         Width="14" 
                         Height="14" 
                         CornerRadius="7" 
@@ -501,6 +508,7 @@
                                  HasDropShadow="True">
 
                             <StackPanel Width="220">
+                                
                                 <TextBlock Text="Automatic Peak Alignment" 
                                            FontWeight="Bold" 
                                            Foreground="White"
@@ -523,6 +531,7 @@
                                            FontSize="10" 
                                            TextWrapping="Wrap" 
                                            Margin="0,10,0,0"/>
+                                
                             </StackPanel>
 
                         </ToolTip>

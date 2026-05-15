@@ -89,9 +89,9 @@
                                                    FontSize="11" 
                                                    TextWrapping="Wrap"/>
 
-                                        <TextBlock Text="•  The signal processing algorithm must be synchronized with the magnetic field period of the Centura 
+                                        <TextBlock Text="•  The signal processing algorithm must be synchronized with the magnetic field period of the external equipment 
                                                     magnetically enhanced RIE Chamber, which is typically 2.0 seconds. This number must be the same as the field period of the 
-                                                    Centura. If it isn’t the same, the signal will show a periodic wave-like trace. " 
+                                                    external equipment. If it isn’t the same, the signal will show a periodic wave-like trace. " 
                                                    Foreground="#AAAAAA" 
                                                    FontSize="10" 
                                                    TextWrapping="Wrap"/>

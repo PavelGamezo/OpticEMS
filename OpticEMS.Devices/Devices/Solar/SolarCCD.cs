@@ -13,12 +13,11 @@ namespace OpticEMS.Devices.Devices.Solar
         public const int PRM_SYNCHR = 6;
         public const int PRM_NUMPIXELS = 3;
         public const int PRM_DEVICEMODE = 10;
-        public const int DEVICEMODES = 3; // Спектроскопический режим
-        public const int SYNCHR_NONE = 1; // Без синхронизации
-        public const uint STATUS_DATA_READY = 3; // Пример, уточните по PDF
+        public const int DEVICEMODES = 3;
+        public const int SYNCHR_NONE = 1;
+        public const uint STATUS_DATA_READY = 3;
 
-        private const string CCD_PATH = @"D:\Работа\Izovac\SDK\x64\";
-        private const string CCD_DLL = CCD_PATH + "CCDUSBDCOM01.dll";
+        private const string CCD_DLL = "Libraries\\CCDUSBDCOM01.dll";
 
         #endregion
 

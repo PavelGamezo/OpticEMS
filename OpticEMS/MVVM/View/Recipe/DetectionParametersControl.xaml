@@ -83,7 +83,7 @@
                                                Margin="0,5"
                                                RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                        <TextBlock Text="Number of consecutive stable measurements required to enter the detection window." 
+                                        <TextBlock Text="The number of consecutive detection windows that must show the signal inside the detection band to confirm endpoint detection (stability after the drop)." 
                                                    Foreground="#CCCCCC" 
                                                    FontSize="11" 
                                                    TextWrapping="Wrap"/>
@@ -154,7 +154,7 @@
                                                Margin="0,5"
                                                RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                        <TextBlock Text="Number of consecutive positive readings required to confirm that the Endpoint has actually been reached (prevents false triggers)." 
+                                        <TextBlock Text="The number of consecutive detection windows that must show the signal outside the detection band to confirm the start of endpoint transition." 
                                                    Foreground="#CCCCCC" 
                                                    FontSize="11" 
                                                    TextWrapping="Wrap"/>
