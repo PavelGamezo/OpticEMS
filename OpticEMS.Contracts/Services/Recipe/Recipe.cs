@@ -35,9 +35,6 @@ namespace OpticEMS.Contracts.Services.Recipe
         public bool DerivativeEnabled { get; set; }
         public int DerivativePoints { get; set; } = 1;
 
-        public float ExposureMs { get; set; } = 1;
-        public int ScansNum { get; set; } = 1;
-
         public int WindowInCount { get; set; } = 1;
         public int WindowOutCount { get; set; } = 1;
 

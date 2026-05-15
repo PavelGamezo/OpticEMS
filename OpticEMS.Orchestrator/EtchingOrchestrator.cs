@@ -28,7 +28,7 @@ namespace OpticEMS.Orchestrator
         private CancellationTokenSource _cancellationTokenStart = new();
         private bool _isRunning;
         private bool _isPaused;
-        private bool _isIndicesCorrected;
+        private bool _wavelengthChanged;
         private readonly Stopwatch _stopwatch = new();
         private DateTime _startTime;
         private DateTime _endTime;
@@ -118,7 +118,7 @@ namespace OpticEMS.Orchestrator
 
             UpdateInternalIndexes();
             _currentIntensities = new double[Recipe.Wavelengths.Count];
-            _isIndicesCorrected = false;
+            _wavelengthChanged = false;
 
             _pcaHandler = new PcaAnalysisHandler(
                 new PcaSpectrumAnalyzer(),
@@ -155,7 +155,7 @@ namespace OpticEMS.Orchestrator
             
             UpdateInternalIndexes();
             _currentIntensities = new double[Recipe.Wavelengths.Count];
-            _isIndicesCorrected = false;
+            _wavelengthChanged = false;
 
             _pcaHandler = new PcaAnalysisHandler(
                 new PcaSpectrumAnalyzer(),
@@ -245,7 +245,6 @@ namespace OpticEMS.Orchestrator
 
             _isRunning = false;
             _isPaused = false;
-            _isIndicesCorrected = false;
             _stopwatch.Stop();
             _endpointService.Stop();
             _endpointService.ClearConfirmedWindowsIn();
@@ -255,7 +254,11 @@ namespace OpticEMS.Orchestrator
 
             WeakReferenceMessenger.Default.Send(new ExportAvailabilityChangedMessage(ChannelId, true));
 
-            await SaveUpdatedWavelengthsAsync();
+            if (_wavelengthChanged)
+            {
+                await SaveUpdatedWavelengthsAsync();
+                _wavelengthChanged = false;
+            }
 
             //WeakReferenceMessenger.Default.Send(new RecipeAppliedMessage(ChannelId, Recipe.Wavelengths, Recipe.WavelengthColors));
 
@@ -697,7 +700,13 @@ namespace OpticEMS.Orchestrator
 
             for (int i = 0; i < _wavelengthsIndices.Length; i++)
             {
+                int oldIndex = _wavelengthsIndices[i];
                 _calibrationService.CorrectWavelengthIndices(intensities, ref _wavelengthsIndices[i]);
+
+                if (oldIndex != _wavelengthsIndices[i])
+                {
+                    _wavelengthChanged = true;
+                }
             }
 
             _currentIntensities = new double[_wavelengthsIndices.Length];

@@ -76,6 +76,15 @@
                             Foreground="White"
                             Background="#222120"
                             Style="{StaticResource ActionButtonStyle}"
+                            Command="{Binding DelRecipeCommand}"/>
+
+                    <Button Grid.Column="3" 
+                            Content="Save" 
+                            Width="120"
+                            Height="35"
+                            Foreground="White"
+                            Background="#222120"
+                            Style="{StaticResource ActionButtonStyle}"
                             Command="{Binding ApplySelectedRecipeCommand}"/>
 
                 </StackPanel>

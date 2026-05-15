@@ -163,13 +163,8 @@
                     BorderThickness="0,1,0,0">
 
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0"
-                                Orientation="Horizontal">
+                    <StackPanel Orientation="Horizontal">
 
                         <TextBlock Text="All recipes: " 
                                    Foreground="#999999"/>
@@ -178,20 +173,7 @@
                                    Foreground="#999999"/>
 
                     </StackPanel>
-
-                    <StackPanel Grid.Column="1" 
-                                Orientation="Horizontal">
-
-                        <Button Content="🗑️" 
-                                Command="{Binding DeleteRecipeCommand}"
-                                Style="{StaticResource ActionButtonStyle}"
-                                Width="25" 
-                                Height="25"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Foreground="#999999"/>
-
-                    </StackPanel>
+                    
                 </Grid>
             </Border>
         </Grid>

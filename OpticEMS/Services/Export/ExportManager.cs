@@ -106,9 +106,6 @@ namespace OpticEMS.Services.Export
                 worksheets.Cells[row, 1].Style.Font.Bold = true;
                 worksheets.Cells[row++, 2].Value = channelName;
 
-                worksheets.Cells[row, 1].Value = "Time (s)";
-                worksheets.Cells[row, 1].Style.Font.Bold = true;
-
                 row += 2;
 
                 int rawStart = WriteDataSection(worksheets, ref row, "1. RAW Data (After Averaging + Magnetic Field)", wavelengths, points, points => points.Trend);
