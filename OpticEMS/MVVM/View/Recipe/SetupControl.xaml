@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:OpticEMS.MVVM.View.Recipe"
              mc:Ignorable="d"
              d:DesignWidth="800">
-    
+
     <Border Grid.Row="1"
             Padding="15,15,15,0">
 
@@ -59,7 +59,7 @@
                                          HasDropShadow="True">
 
                                     <StackPanel Width="200">
-                                        
+
                                         <TextBlock Text="Recipe ID" 
                                                    FontWeight="Bold" 
                                                    Foreground="White" 
@@ -69,7 +69,7 @@
                                                    Foreground="#CCCCCC"
                                                    FontSize="11"
                                                    TextWrapping="Wrap"/>
-                                        
+
                                     </StackPanel>
 
                                 </ToolTip>

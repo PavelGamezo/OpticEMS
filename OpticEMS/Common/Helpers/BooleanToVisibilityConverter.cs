@@ -12,6 +12,7 @@ namespace OpticEMS.Common.Helpers
             {
                 return boolValue ? Visibility.Visible : Visibility.Collapsed;
             }
+
             return Visibility.Collapsed;
         }
 

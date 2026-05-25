@@ -11,8 +11,8 @@ using OpticEMS.Data.Database.Context;
 namespace OpticEMS.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260515092432_RemovedRecipeSpecParamsSupport")]
-    partial class RemovedRecipeSpecParamsSupport
+    [Migration("20260525065654_RedesignedRecipeEntity")]
+    partial class RedesignedRecipeEntity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -57,26 +57,8 @@ namespace OpticEMS.Data.Migrations
                     b.Property<bool>("AutocalibrationEnabled")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("CombinedDenominatorIndices")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CombinedExpression")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CombinedNumeratorIndices")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("DerivativeEnabled")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("DerivativePoints")
-                        .HasColumnType("INTEGER");
 
                     b.Property<string>("DetectionWindowHighs")
                         .IsRequired()
@@ -85,11 +67,9 @@ namespace OpticEMS.Data.Migrations
                     b.Property<int>("DetectionWindowTime")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("DualSubMode")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("FieldPeriodsToAverage")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("GraphJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("InitialDelay")
                         .HasColumnType("INTEGER");
@@ -97,13 +77,7 @@ namespace OpticEMS.Data.Migrations
                     b.Property<DateTime>("LastModifiedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<float>("MagneticFieldPeriodMs")
-                        .HasColumnType("REAL");
-
                     b.Property<int>("MaxEndpointTime")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("MultiSubMode")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
@@ -123,9 +97,6 @@ namespace OpticEMS.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("PcaMinTrainingSize")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ProcessingMode")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("RecipeId")

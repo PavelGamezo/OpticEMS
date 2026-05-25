@@ -58,14 +58,23 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             model.Axes.Add(new LinearAxis
             {
                 Position = AxisPosition.Left,
-                Title = "Intensity",
-                TitleColor = OxyColors.White,
-                TextColor = OxyColors.White,
+                Title = "Trend",
+                TitleColor = OxyColors.LightGray,
+                TextColor = OxyColors.LightGray,
                 AxislineColor = OxyColor.FromRgb(50, 51, 56),
                 MajorGridlineColor = OxyColor.FromRgb(50, 51, 56),
                 MajorGridlineStyle = LineStyle.Solid,
-                MaximumPadding = 0.6,
-                Minimum = 0
+                MaximumPadding = 0.2,
+                MinorTickSize = 0,
+                MinorGridlineColor = OxyColor.Parse("#323539"),
+                TicklineColor = OxyColor.Parse("#323539"),
+                MinorGridlineStyle = LineStyle.None,
+                TitleFontSize = 14,
+                IsZoomEnabled = true,
+                AxisTitleDistance = 10,
+                IsPanEnabled = true,
+                FontSize = 12,
+                MinimumPadding = 0.2,
             });
 
             for (int i = 0; i < targetWavelengths.Count; i++)
@@ -78,7 +87,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 model.Series.Add(new LineSeries
                 {
-                    Title = $"Wavelength {i + 1}",
+                    Title = $"Trend {i + 1}",
                     Color = oxyColor,
                     StrokeThickness = 2
                 });

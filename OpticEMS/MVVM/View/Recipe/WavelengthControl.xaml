@@ -13,7 +13,7 @@
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
     </UserControl.Resources>
-    
+
     <Border Padding="15,15,15,0">
 
         <StackPanel>
@@ -36,15 +36,15 @@
             </Grid>
 
             <ItemsControl ItemsSource="{Binding WavelengthItems}">
-                
+
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <UniformGrid Columns="3"/>
+                        <UniformGrid Columns="2"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
-                
+
                 <ItemsControl.ItemTemplate>
-                    
+
                     <DataTemplate>
 
                         <Border BorderBrush="#3E3E40" 
@@ -99,7 +99,7 @@
                                                          HasDropShadow="True">
 
                                                     <StackPanel Width="200">
-                                                        
+
                                                         <TextBlock Text="Target Wavelengths (nm)" 
                                                                    FontWeight="Bold" 
                                                                    Foreground="White" 
@@ -206,7 +206,7 @@
                                                   Height="30" Margin="0,5,0,0"
                                                   Style="{StaticResource DarkColorPicker}" 
                                                   UsingAlphaChannel="False"/>
-                                
+
                                 <StackPanel Visibility="{Binding DataContext.IsSingleWindowMode, 
                                                         RelativeSource={RelativeSource AncestorType=ItemsControl}, 
                                                         Converter={StaticResource InverseBooleanToVisibilityConverter}}">
@@ -244,7 +244,7 @@
                                                          HasDropShadow="True">
 
                                                     <StackPanel Width="200">
-                                                        
+
                                                         <TextBlock Text="Detection window high" 
                                                                    FontWeight="Bold" 
                                                                    Foreground="White"/>
@@ -262,7 +262,7 @@
                                                                    Foreground="#CCCCCC" 
                                                                    FontSize="11" 
                                                                    TextWrapping="Wrap"/>
-                                                        
+
                                                     </StackPanel>
 
                                                 </ToolTip>
@@ -304,7 +304,7 @@
                                 <StackPanel Visibility="{Binding DataContext.IsMultiChannelMode, 
                                                         RelativeSource={RelativeSource AncestorType=ItemsControl}, 
                                                         Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    
+
                                     <StackPanel Orientation="Horizontal">
 
                                         <TextBlock Text="Detection wavelength name"
@@ -338,7 +338,7 @@
                                                          HasDropShadow="True">
 
                                                     <StackPanel Width="200">
-                                                        
+
                                                         <TextBlock Text="Detection wavelength name" 
                                                                    FontWeight="Bold" 
                                                                    Foreground="White"/>
@@ -355,7 +355,7 @@
                                                                    Foreground="#CCCCCC" 
                                                                    FontSize="11" 
                                                                    TextWrapping="Wrap"/>
-                                                        
+
                                                     </StackPanel>
 
                                                 </ToolTip>
@@ -470,7 +470,7 @@
                     </Border>
 
                 </Grid>
-                
+
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" 
@@ -508,7 +508,7 @@
                                  HasDropShadow="True">
 
                             <StackPanel Width="220">
-                                
+
                                 <TextBlock Text="Automatic Peak Alignment" 
                                            FontWeight="Bold" 
                                            Foreground="White"
@@ -531,7 +531,7 @@
                                            FontSize="10" 
                                            TextWrapping="Wrap" 
                                            Margin="0,10,0,0"/>
-                                
+
                             </StackPanel>
 
                         </ToolTip>
@@ -553,7 +553,7 @@
                       Height="32"/>
 
         </StackPanel>
-        
+
     </Border>
-    
+
 </UserControl>

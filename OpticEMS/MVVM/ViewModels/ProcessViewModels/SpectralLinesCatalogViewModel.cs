@@ -13,6 +13,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private readonly int _channelId;
 
         private List<SpectralLineModel> _allLines = new();
+        private readonly Dictionary<int, double> _originalWavelengths = new();
 
         public SpectralLinesCatalogViewModel(
             int channelId,
@@ -39,8 +40,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             ApplyFilters();
         }
 
-        public IEnumerable<SpectralLineModel> SelectedSpectralLines 
-            => SpectralLines.Where(line => line.IsSelected);
+        public IEnumerable<SpectralLineModel> SelectedSpectralLines
+            => _allLines.Where(line => line.IsSelected);
 
         [ObservableProperty]
         private ObservableCollection<SpectralLineModel> spectralLines = new();
@@ -70,13 +71,19 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 var lines = await _spectralLineRepository.GetLinesAsync();
 
-                _allLines = lines.Select(dbLine => new SpectralLineModel(_channelId)
+                _originalWavelengths.Clear();
+
+                _allLines = lines.Select(dbLine =>
                 {
-                    Id = dbLine.Id,
-                    Element = dbLine.Element,
-                    Ionization = dbLine.Ionization,
-                    Wavelength = dbLine.Wavelength,
-                    ColorHex = dbLine.ColorHex ?? "#3498DB"
+                    _originalWavelengths[dbLine.Id] = dbLine.Wavelength;
+                    return new SpectralLineModel(_channelId)
+                    {
+                        Id = dbLine.Id,
+                        Element = dbLine.Element,
+                        Ionization = dbLine.Ionization,
+                        Wavelength = dbLine.Wavelength,
+                        ColorHex = dbLine.ColorHex ?? "#3498DB"
+                    };
                 }).ToList();
             }
             catch (Exception ex)
@@ -88,7 +95,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private void ApplyFilters()
         {
             if (_allLines.Count == 0)
+            {
                 return;
+            }
 
             var filtered = _allLines
                 .Where(l => l.Wavelength >= MinWavelength && l.Wavelength <= MaxWavelength)
@@ -97,8 +106,18 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 .ToList();
 
             SpectralLines.Clear();
+
             foreach (var line in filtered)
+            {
                 SpectralLines.Add(line);
+            }
+        }
+
+        public double GetOriginalWavelength(int lineId)
+        {
+            return _originalWavelengths.TryGetValue(lineId, out double originalValue)
+                ? originalValue
+                : 0;
         }
 
         private void UpdateAvailableElements()

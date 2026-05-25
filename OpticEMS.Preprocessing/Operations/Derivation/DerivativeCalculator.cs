@@ -1,17 +1,13 @@
-﻿using OpticEMS.Contracts.Services.SignalPreprocessing;
+﻿using OpticEMS.Contracts.Preprocessing;
 
 namespace OpticEMS.Preprocessing.Operations.Derivation
 {
-    public class DerivativeCalculator
+    public class DerivativeCalculator : INodeProcessor
     {
         private readonly int _derivationTime;
         private readonly Queue<double> _buffer = new();
         private double _lastValue = 0;
         private bool _isInitialized = false;
-
-        public string Name => "Signal Derivative";
-
-        public string Description => $"Derivative with Derivation Time = {_derivationTime}";
 
         public DerivativeCalculator(int derivationTime = 5)
         {
@@ -65,7 +61,7 @@ namespace OpticEMS.Preprocessing.Operations.Derivation
             return slope;
         }
 
-        public double[] ComputeDer(double[] currentValues, double elapsedMs)
+        public double[] ComputeDer(double[] currentValues)
         {
             if (currentValues == null || currentValues.Length == 0)
             {
@@ -87,6 +83,13 @@ namespace OpticEMS.Preprocessing.Operations.Derivation
             _buffer.Clear();
             _lastValue = 0;
             _isInitialized = false;
+        }
+
+        public double Process(double[] inputs, double currentTimeMs)
+        {
+            var currentValues = inputs[0];
+
+            return ComputeDer(currentValues);
         }
     }
 }

@@ -8,10 +8,6 @@
 
         private double[] _lastAveraged = Array.Empty<double>();
 
-        public string Name => "Frame Averaging";
-
-        public string Description => $"Frame averaging over frames";
-
         public double[] ComputeAveraged()
         {
             List<double[]> framesToProcess;

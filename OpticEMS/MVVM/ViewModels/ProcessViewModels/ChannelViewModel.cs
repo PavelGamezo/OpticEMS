@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using OpticEMS.Contracts.Preprocessing;
 using OpticEMS.Contracts.Services.Calibration;
 using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Dialog;
@@ -28,10 +29,10 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         #region observable props
 
-        [ObservableProperty] 
+        [ObservableProperty]
         private string _processStatus = "Waiting start";
 
-        [ObservableProperty] 
+        [ObservableProperty]
         private Recipe? _recipe;
 
         [ObservableProperty]
@@ -54,7 +55,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         #endregion
 
         #region props
-        
+
         public int ChannelId { get; set; }
 
         public string ChannelName { get; private set; } = "Unknown";
@@ -68,20 +69,22 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             IRecipeRepository recipeRepository,
             IDialogService dialogService,
             IEtchingProcessService endpointService,
-            ISettingsProvider configureProvider, 
+            ISettingsProvider configureProvider,
             IExportManager exportManager,
             ICalibrationService calibrationService,
-            ISpectralLineRepository spectralLineRepository)
+            ISpectralLineRepository spectralLineRepository,
+            IGraphCompiler graphCompiler)
         {
             _dialogService = dialogService;
             _orchestrator = new EtchingOrchestrator(
                 id,
                 endpointService,
                 recipeRepository,
-                calibrationService, 
+                calibrationService,
                 wavelengthMapper,
-                configureProvider, 
-                exportManager);
+                configureProvider,
+                exportManager,
+                graphCompiler);
 
             ChannelId = id;
             ChannelName = $"Chamber {id + 1}";
@@ -100,12 +103,14 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             SpectrumChartViewModel.OnWavelengthMoved += () =>
             {
                 _orchestrator.UpdateWavelengthManually();
+
+                UpdateSpectrumAnnotations();
             };
         }
 
         public ChannelViewModel()
         {
-            
+
         }
 
         #endregion
@@ -122,14 +127,14 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 }
             });
 
-            
+
             WeakReferenceMessenger.Default.Register<DrawWindowBoundsMessage>(this, (recipient, message) =>
             {
                 if (message.ChannelId == ChannelId)
                 {
                     ProcessChartViewModel.DrawWindowBounds(
-                        message.WindowBounds, 
-                        message.ConfirmedWindowsIn, 
+                        message.WindowBounds,
+                        message.ConfirmedWindowsIn,
                         message.ConfirmedWindowsOut);
                 }
             });
@@ -158,10 +163,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 {
                     Recipe = _orchestrator.Recipe;
 
-                    Application.Current.Dispatcher.InvokeAsync(() =>
-                    {
-                        SpectrumChartViewModel.UpdateAnnotations(message.Wavelengths, message.WavelengthColors);
-                    }, DispatcherPriority.Background);
+                    UpdateSpectrumAnnotations();
                 }
             });
 
@@ -191,7 +193,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 if (message.ChannelId == this.ChannelId)
                 {
-                    UpdateSpectrumAnnotations(message.Wavelength, (Color)ColorConverter.ConvertFromString(message.ColorHex));
+                    UpdateSpectrumAnnotations();
                 }
             });
 
@@ -229,18 +231,18 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
-        [RelayCommand]
-        private void PauseProcess()
-        {
-            try
-            {
-                _orchestrator.PauseProcess();
-            }
-            catch (Exception exception)
-            {
-                _dialogService.ShowError(exception.Message);
-            }
-        }
+        //[RelayCommand]
+        //private void PauseProcess()
+        //{
+        //    try
+        //    {
+        //        _orchestrator.PauseProcess();
+        //    }
+        //    catch (Exception exception)
+        //    {
+        //        _dialogService.ShowError(exception.Message);
+        //    }
+        //}
 
         [RelayCommand]
         public async Task StopProcessAsync()
@@ -342,7 +344,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         #endregion
 
         #region methods
-        
+
         public void ApplyRecipe(Recipe recipe)
         {
             try
@@ -356,13 +358,22 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
-        private void UpdateSpectrumAnnotations(double wavelength, Color color)
+        private void UpdateSpectrumAnnotations()
         {
             Application.Current?.Dispatcher?.Invoke(() =>
             {
-                var selectedCatalogLines = SpectralLinesCatalogViewModel.SpectralLines
-                    .Where(line => line.IsSelected)
+                var selectedCatalogLines = SpectralLinesCatalogViewModel
+                    .SelectedSpectralLines
                     .ToList();
+
+                foreach (var line in selectedCatalogLines)
+                {
+                    var originalValue = SpectralLinesCatalogViewModel.GetOriginalWavelength(line.Id);
+                    if (originalValue > 0)
+                    {
+                        line.Wavelength = originalValue;
+                    }
+                }
 
                 var wavelengths = selectedCatalogLines.Select(l => l.Wavelength).ToList();
                 var colors = selectedCatalogLines.Select(l => l.LineColor).ToList();
@@ -385,7 +396,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         {
             WeakReferenceMessenger.Default.UnregisterAll(this);
 
-            if (_orchestrator is not null && 
+            if (_orchestrator is not null &&
                 ProcessChartViewModel is not null &&
                 SpectrumChartViewModel is not null)
             {

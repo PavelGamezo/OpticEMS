@@ -67,22 +67,18 @@ namespace OpticEMS.Devices.Devices.Solar
 
         #region importDLL
 
-        // Инициализация (подключение к SDK)
         [DllImport(CCD_DLL, CallingConvention = CallingConvention.StdCall)]
         public static extern bool CCD_Init(IntPtr ahAppWnd, string Prm, ref int ID);
 
-        // Для C# (скорее всего) не нужен
         [DllImport(CCD_DLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool CCD_GetSerialNum(
             int ID,
             StringBuilder sernum);
 
-        // Получаю серийный номер по ID
         [DllImport(CCD_DLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         public static extern IntPtr CCD_GetSerialNumber(int ID);
 
-        // Обратная операция - получаю ID по серийному номеру
         [DllImport(CCD_DLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool CCD_GetID(string sernum, ref int ID);
@@ -105,11 +101,11 @@ namespace OpticEMS.Devices.Devices.Solar
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool CCD_InitMeasuring(int ID);
 
-        [DllImport(CCD_DLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(CCD_DLL)]
         [return: MarshalAs(UnmanagedType.I1)]
         public static extern bool CCD_StartWaitMeasuring(int ID);
 
-        [DllImport(CCD_DLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(CCD_DLL)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool CCD_StartMeasuring(int ID);
 
@@ -137,6 +133,10 @@ namespace OpticEMS.Devices.Devices.Solar
 
         [DllImport(CCD_DLL, CallingConvention = CallingConvention.StdCall)]
         public static extern bool CCD_GetMeasureStatus(int ID, ref uint adwStatus);
+
+        [DllImport(CCD_DLL, CallingConvention = CallingConvention.StdCall)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool CCD_DoneMeasuring(int id);
 
         #endregion
     }

@@ -24,7 +24,9 @@ namespace OpticEMS.Common.Helpers
                 while (parent != null)
                 {
                     if (parent is LayoutContent lc)
+                    {
                         return lc.Content ?? value;
+                    }
 
                     parent = System.Windows.Media.VisualTreeHelper.GetParent(parent);
                 }

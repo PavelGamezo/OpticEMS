@@ -14,11 +14,11 @@
 
     <Border Background="#1f1f1f" BorderBrush="#2d2d30" BorderThickness="1" Padding="12,12,0,12">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
-            
+
             <ScrollViewer.Resources>
                 <Style TargetType="ScrollBar" BasedOn="{StaticResource ModernScrollBarStyle}"/>
             </ScrollViewer.Resources>
-            
+
             <StackPanel>
 
                 <TextBlock Text="{Binding Channel.Recipe.Name, FallbackValue='No Recipe Selected'}" 
@@ -49,36 +49,6 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-
-                <TextBlock Text="PROCESSING MODE" 
-                           Foreground="#aaaaaa" 
-                           FontSize="10" 
-                           FontWeight="DemiBold" 
-                           Margin="0,16,0,8"/>
-
-                <DockPanel Margin="0,3,10,0">
-                    <TextBlock Text="Active Mode" Style="{StaticResource ParameterLabelStyle}"/>
-                    <TextBlock Text="{Binding Channel.Recipe.ProcessingModeDisplay}" 
-                               Style="{StaticResource ParameterValueStyle}" 
-                               HorizontalAlignment="Right"
-                               FontWeight="Medium"/>
-                </DockPanel>
-
-                <DockPanel Margin="0,3,10,0" Visibility="{Binding Channel.Recipe.IsCombinedMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <TextBlock Text="Combined Expression" Style="{StaticResource ParameterLabelStyle}"/>
-                    <TextBlock Text="{Binding Channel.Recipe.CombinedExpression}" 
-                               Style="{StaticResource ParameterValueStyle}" 
-                               HorizontalAlignment="Right"
-                               Foreground="#50fa7b"/>
-                </DockPanel>
-
-                <DockPanel Margin="0,3,10,0" Visibility="{Binding Channel.Recipe.IsRatioMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <TextBlock Text="Mode Type" Style="{StaticResource ParameterLabelStyle}"/>
-                    <TextBlock Text="Ratio (A/B)" 
-                               Style="{StaticResource ParameterValueStyle}" 
-                               HorizontalAlignment="Right"
-                               Foreground="#50fa7b"/>
-                </DockPanel>
 
                 <TextBlock Text="PROCESS TIMING" 
                            Foreground="#aaaaaa" FontSize="10" FontWeight="DemiBold" Margin="0,16,0,8"/>
@@ -111,46 +81,6 @@
                         <TextBlock Text=" / " Foreground="#666666"/>
                         <TextBlock Text="{Binding Channel.Recipe.WindowOutCount}" Style="{StaticResource ParameterValueStyle}"/>
                     </StackPanel>
-                </DockPanel>
-
-                <TextBlock Text="PREPROCESSING PARAMETERS" 
-                           Foreground="#aaaaaa" FontSize="10" FontWeight="DemiBold" Margin="0,16,0,8"/>
-
-                <DockPanel Margin="0,3,10,0">
-                    <TextBlock Text="Magnetic Field Period" Style="{StaticResource ParameterLabelStyle}"/>
-                    <TextBlock Text="{Binding Channel.Recipe.MagneticFieldPeriodMs, StringFormat='{}{0} ms'}" 
-                               Style="{StaticResource ParameterValueStyle}" HorizontalAlignment="Right"/>
-                </DockPanel>
-
-                <DockPanel Margin="0,3,10,0">
-                    <TextBlock Text="Field Periods To Average" Style="{StaticResource ParameterLabelStyle}"/>
-                    <TextBlock Text="{Binding Channel.Recipe.FieldPeriodsToAverage}" 
-                               Style="{StaticResource ParameterValueStyle}" HorizontalAlignment="Right"/>
-                </DockPanel>
-
-                <DockPanel Margin="0,3,10,0">
-                    <TextBlock Text="Derivative Enabled:" Style="{StaticResource ParameterLabelStyle}"/>
-                    <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource ParameterValueStyle}">
-                                <Setter Property="Text" Value="Disabled"/>
-                                <Setter Property="Foreground" Value="#ff5555"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Channel.Recipe.DerivativeEnabled}" Value="True">
-                                        <Setter Property="Text" Value="Enabled"/>
-                                        <Setter Property="Foreground" Value="#50fa7b"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </DockPanel>
-
-                <DockPanel Margin="0,3,10,0" 
-                           Visibility="{Binding Channel.Recipe.OverEtchEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <TextBlock Text="Derivative Points" Style="{StaticResource ParameterLabelStyle}"/>
-                                    <TextBlock Text="{Binding Channel.Recipe.DerivativePoints}" 
-                                               Style="{StaticResource ParameterValueStyle}" HorizontalAlignment="Right"/>
                 </DockPanel>
 
                 <TextBlock Text="ADDITIONAL FEATURES" 

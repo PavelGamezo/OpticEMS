@@ -8,7 +8,7 @@ namespace OpticEMS.Services.Etching
     {
         private Recipe? _recipe;
         private List<State> WavelengthStates = new();
-        
+
         private readonly List<WindowBounds> _confirmedWindowsIn = new();
         private readonly List<WindowBounds> _confirmedWindowsOut = new();
 
@@ -86,11 +86,6 @@ namespace OpticEMS.Services.Etching
                 return new EndpointResult(false, "Initial Dead Time", false);
             }
 
-            foreach (var state in WavelengthStates)
-            {
-                ProcessSingleWavelength(state, signal[state.Index], elapsedMs);
-            }
-
             if (_state == ProcessState.WindowOut && AllChannelsReachedWindowIn())
             {
                 foreach (var state in WavelengthStates)
@@ -113,6 +108,11 @@ namespace OpticEMS.Services.Etching
                     _state = ProcessState.Idle;
                     return new EndpointResult(true, "Endpoint Detected", false);
                 }
+            }
+
+            foreach (var state in WavelengthStates)
+            {
+                ProcessSingleWavelength(state, signal[state.Index], elapsedMs);
             }
 
             if (_state == ProcessState.Overetch)
@@ -158,8 +158,11 @@ namespace OpticEMS.Services.Etching
             {
                 if (elapsedMs - state.WindowStartTime >= _recipe.DetectionWindowTime)
                 {
-                    state.ConsecutiveOut = 0;
-                    ClearConfirmedWindowsOut();
+                    if (state.ConsecutiveOut > 0)
+                    {
+                        state.ConsecutiveOut = 0;
+                        ClearConfirmedWindowsOut();
+                    }
 
                     state.WindowStartTime = elapsedMs;
                     state.Reference = signal;
@@ -176,7 +179,7 @@ namespace OpticEMS.Services.Etching
                     RecordConfirmedWindowIn(state, elapsedMs);
                 }
 
-                if (CheckAndSlideWindows(state, signal, elapsedMs))
+                if (CheckWindow(state, signal, elapsedMs))
                 {
                     state.ConsecutiveIn++;
                 }
@@ -185,6 +188,11 @@ namespace OpticEMS.Services.Etching
                 {
                     state.HasReachedWindowIn = true;
                     state.ProcessState = ProcessState.Overetch;
+                }
+
+                if (!state.HasReachedWindowIn)
+                {
+                    CheckAndSlideWindows(state, signal, elapsedMs);
                 }
             }
             else
@@ -211,12 +219,12 @@ namespace OpticEMS.Services.Etching
             return new EndpointResult(false, $"Overetching", false);
         }
 
-        private bool AllChannelsReachedWindowIn() => 
+        private bool AllChannelsReachedWindowIn() =>
             WavelengthStates.All(state => state.HasReachedWindowIn);
 
         private bool IsInsideDetectionLimits(State state, double signal)
         {
-            if (state.Reference <= 0)
+            if (state.Threshold <= 0)
             {
                 return true;
             }
@@ -233,7 +241,7 @@ namespace OpticEMS.Services.Etching
 
         private bool CheckIfWindowShouldBeRecorded(State state, double elapsedMs)
         {
-            if (state.Reference <= 0)
+            if (state.Threshold <= 0)
             {
                 return true;
             }
@@ -246,11 +254,16 @@ namespace OpticEMS.Services.Etching
             return false;
         }
 
-        private bool CheckAndSlideWindows(State state, double signal, double elapsedMs)
+        private bool CheckWindow(State state, double signal, double elapsedMs)
         {
-            if (state.Reference <= 0)
+            return CheckIfWindowShouldBeRecorded(state, elapsedMs);
+        }
+
+        private void CheckAndSlideWindows(State state, double signal, double elapsedMs)
+        {
+            if (state.Threshold <= 0)
             {
-                return true;
+                return;
             }
 
             if (elapsedMs - state.WindowStartTime >= _recipe.DetectionWindowTime)
@@ -258,10 +271,8 @@ namespace OpticEMS.Services.Etching
                 state.WindowStartTime = elapsedMs;
                 state.Reference = signal;
 
-                return true;
+                return;
             }
-
-            return false;
         }
 
         private void ResetWindows(State state, double signal, double elapsedMs)
@@ -274,7 +285,7 @@ namespace OpticEMS.Services.Etching
         {
             bool anyLineViolatedThisCycle = false;
 
-            if (state.Reference <= 0)
+            if (state.Threshold <= 0)
             {
                 return true;
             }
@@ -310,7 +321,10 @@ namespace OpticEMS.Services.Etching
                 WavelengthStates[i].Reference = signal[i];
 
                 double percent = Math.Abs(_recipe!.DetectionWindowHighs[i]);
-                WavelengthStates[i].Threshold = signal[i] * percent / 100.0;
+
+                double computedThreshold = Math.Abs(signal[i]) * percent / 100.0;
+
+                WavelengthStates[i].Threshold = computedThreshold > 0 ? computedThreshold : 0.001;
             }
         }
 
@@ -323,10 +337,12 @@ namespace OpticEMS.Services.Etching
             WavelengthStates = new List<State>();
             for (int i = 0; i < startIntensities.Length; i++)
             {
+                var isMonitoringDisabled = _recipe.DetectionWindowHighs[i] == 0;
                 var state = new State()
                 {
                     Index = i,
-                    ProcessState = ProcessState.WindowOut
+                    ProcessState = isMonitoringDisabled ? ProcessState.Overetch : ProcessState.WindowOut,
+                    HasReachedWindowIn = isMonitoringDisabled,
                 };
 
                 WavelengthStates.Add(state);
@@ -334,7 +350,6 @@ namespace OpticEMS.Services.Etching
 
             ClearConfirmedWindowsIn();
             ClearConfirmedWindowsOut();
-            InitializeWindows(startIntensities, 0);
 
             _detectedAtMs = 0;
             _finishedAtMs = 0;
@@ -389,7 +404,7 @@ namespace OpticEMS.Services.Etching
 
             foreach (var state in WavelengthStates)
             {
-                if (_recipe == null || state.Reference == 0)
+                if (_recipe == null || state.Threshold <= 0)
                 {
                     return bounds;
                 }

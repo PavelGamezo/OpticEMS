@@ -5,7 +5,6 @@ using OpticEMS.Devices.Devices.Solar;
 using OpticEMS.Devices.Devices.VirtualSpec;
 using OpticEMS.Notifications.Messages;
 using Serilog;
-using System.Windows.Documents;
 
 namespace OpticEMS.Devices
 {
@@ -113,15 +112,21 @@ namespace OpticEMS.Devices
                 {
                     if (!_device.Scan(deviceId, Intensities, cancellationToken))
                     {
-                        break;
+                        StopScanning();
+                        return;
                     }
 
                     WeakReferenceMessenger.Default.Send(new SpectrumUpdatedMessage(ChannelId, Intensities, Wavelengths));
                 }
+
+                StopScanning();
+                Log.Information("[MEASURING]: Continue scanning finished for Device {DeviceName}",
+                    _device?.DeviceInfo?.Name ?? "Unknown");
             }
             catch (Exception exception)
             {
-                Log.Error(exception, 
+                StopScanning();
+                Log.Error(exception,
                     "[MEASURING]: Error during scanning for Device {DeviceName}",
                     _device?.DeviceInfo?.Name ?? "Unknown");
             }
@@ -144,14 +149,18 @@ namespace OpticEMS.Devices
             {
                 if (!_device.Scan(id, Intensities, cancellationToken))
                 {
+                    StopScanning();
                     return;
                 }
+
+                Log.Information("[MEASURING]: Single scanning finished for Device {DeviceName}",
+                    _device?.DeviceInfo?.Name ?? "Unknown");
             }
             catch (Exception exception)
             {
-                Log.Error(exception, 
-                    "[MEASURING]: Error during {Method} for Device {DeviceName}",
-                    nameof(_device.Scan), 
+                StopScanning();
+                Log.Error(exception,
+                    "[MEASURING]: Error during single scanning for Device {DeviceName}",
                     _device?.DeviceInfo?.Name ?? "Unknown");
             }
             finally
@@ -164,12 +173,29 @@ namespace OpticEMS.Devices
 
         private void SetParameters(int id, float exposureMs, int scansNum)
         {
-            if (_device is null)
+            try
             {
-                throw new Exception("Can't set device parameters because of device init error.");
-            }
+                if (_device is null)
+                {
+                    throw new Exception("Can't set device parameters because of device init error.");
+                }
 
-            _device?.SetParameters(id, exposureMs, scansNum);
+                _device?.SetParameters(id, exposureMs, scansNum);
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception,
+                    "[MEASURING]: Error during setting the parameters for Device {DeviceInfo}",
+                    _device?.DeviceInfo?.Name ?? "Unknown");
+            }
+        }
+
+        public void StopScanning()
+        {
+            Log.Information("[MEASURING]: Stop scanning command requested for Device {DeviceInfo}",
+                    _device?.DeviceInfo?.Name ?? "Unknown");
+            _scanning = false;
+            _device?.StopMeasurement();
         }
 
         public void NotifyVirtualProcessStarted()
@@ -211,9 +237,9 @@ namespace OpticEMS.Devices
             }
             catch (Exception exception)
             {
-                Log.Error(exception, 
+                Log.Error(exception,
                     "[MEASURING]: Error during {Method} for Device {DeviceName}",
-                    nameof(Dispose), 
+                    nameof(Dispose),
                     _device?.DeviceInfo?.Name ?? "Unknown");
             }
 

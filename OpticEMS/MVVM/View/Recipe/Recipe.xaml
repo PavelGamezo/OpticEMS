@@ -26,9 +26,7 @@
         <Border Grid.Row="0" 
                 Background="#1a1a1a"
                 Padding="25,5,5,5">
-            
             <Grid>
-                
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -36,7 +34,7 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0" 
-                           Text="Process Recipes" 
+                           Text="Recipes Configuration" 
                            FontSize="18" 
                            FontWeight="Bold" 
                            Foreground="White"
@@ -45,50 +43,11 @@
                 <StackPanel Grid.Column="2" 
                             Orientation="Horizontal" 
                             HorizontalAlignment="Right">
-
-                    <Button Content="New recipe" 
-                            Width="120"
-                            Height="35"
-                            Foreground="White"
-                            Background="#222120"
-                            Style="{StaticResource ActionButtonStyle}"
-                            Command="{Binding NewRecipeCommand}"/>
-
-                    <Button Content="Rename"
-                            Width="120"
-                            Height="35"
-                            Foreground="White"
-                            Background="#222120"
-                            Style="{StaticResource ActionButtonStyle}"
-                            Command="{Binding RenameRecipeCommand}"/>
-
-                    <Button Grid.Column="3" 
-                            Content="Save" 
-                            Width="120"
-                            Height="35"
-                            Foreground="White"
-                            Background="#222120"
-                            Style="{StaticResource ActionButtonStyle}"
-                            Command="{Binding SaveRecipeCommand}"/>
-
-                    <Button Grid.Column="3" 
-                            Content="Delete" 
-                            Width="120"
-                            Height="35"
-                            Foreground="White"
-                            Background="#222120"
-                            Style="{StaticResource ActionButtonStyle}"
-                            Command="{Binding DeleteRecipeCommand}"/>
-
-                    <Button Grid.Column="3" 
-                            Content="Apply" 
-                            Width="120"
-                            Height="35"
-                            Foreground="White"
-                            Background="#222120"
-                            Style="{StaticResource ActionButtonStyle}"
-                            Command="{Binding ApplySelectedRecipeCommand}"/>
-
+                    <Button Content="New recipe" Width="120" Height="35" Foreground="White" Background="#222120" Style="{StaticResource ActionButtonStyle}" Command="{Binding NewRecipeCommand}"/>
+                    <Button Content="Rename" Width="120" Height="35" Foreground="White" Background="#222120" Style="{StaticResource ActionButtonStyle}" Command="{Binding RenameRecipeCommand}"/>
+                    <Button Content="Delete" Width="120" Height="35" Foreground="White" Background="#222120" Style="{StaticResource ActionButtonStyle}" Command="{Binding DeleteRecipeCommand}"/>
+                    <Button Content="Apply" Width="120" Height="35" Foreground="White" Background="#222120" Style="{StaticResource ActionButtonStyle}" Command="{Binding ApplySelectedRecipeCommand}"/>
+                    <Button Content="Save" Width="120" Height="35" Foreground="White" Background="#007ACC" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveRecipeCommand}"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -101,82 +60,64 @@
 
             <local:RecipeFileManager Grid.Column="0"/>
 
-            <Border Grid.Column="1" 
-                    Background="#1f1f1f">
+            <Grid Grid.Column="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*" MinWidth="400"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*" MinWidth="400"/>
+                </Grid.ColumnDefinitions>
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Border Grid.Column="0" Background="#1a1a1a">
+                    <local:RecipeConstructor DataContext="{Binding ConstructorContext}"/>
+                </Border>
 
-                    <ScrollViewer.Resources>
-                        <Style TargetType="ScrollBar" BasedOn="{StaticResource ModernScrollBarStyle}"/>
-                    </ScrollViewer.Resources>
+                <GridSplitter Grid.Column="1" 
+                              Width="4" 
+                              HorizontalAlignment="Center" 
+                              VerticalAlignment="Stretch" 
+                              Background="#2d2d2d"
+                              ShowsPreview="True"/>
 
-                    <Grid Margin="10">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
+                <Border Grid.Column="2" Background="#1f1f1f" BorderBrush="#2d2d2d" BorderThickness="0,0,1,0">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer.Resources>
+                            <Style TargetType="ScrollBar" BasedOn="{StaticResource ModernScrollBarStyle}"/>
+                        </ScrollViewer.Resources>
 
-                        <local:NameControl Grid.Row="0"/>
+                        <Grid Margin="15">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-                        <local:SetupControl Grid.Row="1"/>
-
-                        <local:WavelengthControl Grid.Row="2"/>
-                        
-                        <local:ProcessingModeControl Grid.Row="3"/>
-
-                        <local:TimingParametersControl Grid.Row="4"/>
-
-                        <local:PreprocessingParametersControl Grid.Row="5"/>
-
-                        <local:DetectionParametersControl Grid.Row="6"/>
-
-                        <local:OveretchingParametersControl Grid.Row="7"/>
-
-                        <local:AnalysisParametersControl Grid.Row="8"/>
-                        
-                    </Grid>
-                </ScrollViewer>
-            </Border>
+                            <local:NameControl Grid.Row="0" Margin="0,0,0,10"/>
+                            <local:SetupControl Grid.Row="1" Margin="0,0,0,10"/>
+                            <local:WavelengthControl Grid.Row="2" Margin="0,0,0,10"/>
+                            <local:TimingParametersControl Grid.Row="3" Margin="0,0,0,10"/>
+                            <local:DetectionParametersControl Grid.Row="4" Margin="0,0,0,10"/>
+                            <local:OveretchingParametersControl Grid.Row="5" Margin="0,0,0,10"/>
+                            <local:AnalysisParametersControl Grid.Row="6" Margin="0,0,0,10"/>
+                        </Grid>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
         </Grid>
 
         <Border Grid.Row="2" 
                 Background="#1f1f1f"
                 Padding="5">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" 
-                            Orientation="Horizontal">
-
-                    <Ellipse Width="10" 
-                             Height="10" 
-                             Fill="Green" 
-                             Margin="0,0,8,0"/>
-
-                    <TextBlock Text="System is ready"
-                               Foreground="#999999"/>
-
-                </StackPanel>
-
-                <TextBlock Grid.Column="2" 
-                           Foreground="#999999"> 
-                    
+                <TextBlock Foreground="#999999" 
+                           HorizontalAlignment="Right"> 
                     <Run Text="Last modified: "/> 
                     <Run Text="{Binding SelectedRecipe.LastModifiedAt}"/>
-
                 </TextBlock>
-
             </Grid>
         </Border>
     </Grid>

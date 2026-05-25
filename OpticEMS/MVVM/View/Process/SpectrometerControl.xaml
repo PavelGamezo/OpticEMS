@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:OpticEMS.MVVM.View.Process"
              mc:Ignorable="d" 
              d:DesignWidth="800">
-    
+
     <Grid Margin="12">
 
         <Grid.RowDefinitions>
@@ -181,14 +181,14 @@
                            FontSize="10" 
                            Foreground="#999999"
                            Margin="0,2,0,0"/>
-                
+
             </StackPanel>
-            
+
         </Grid>
-        
+
         <StackPanel Grid.Row="1"
                     Margin="0,5,0,0">
-            
+
             <Button Content="Apply" 
                     Width="320"
                     Height="35"
@@ -196,7 +196,7 @@
                     Background="#222120"
                     Style="{StaticResource ActionButtonStyle}"
                     Command="{Binding ApplySpecParamsCommand}"/>
-            
+
         </StackPanel>
     </Grid>
 </UserControl>

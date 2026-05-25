@@ -18,20 +18,10 @@ namespace OpticEMS.Data.Database.Configurations
 
             builder.HasIndex(r => r.RecipeId);
 
-            builder.Property(r => r.ProcessingMode)
-                   .HasConversion<int>();
-
-            builder.Property(r => r.DualSubMode)
-                   .HasConversion<int>();
-
-            builder.Property(r => r.MultiSubMode)
-                   .HasConversion<int>();
-
             builder.Property(r => r.Wavelengths)
                    .HasConversion(
                        value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
                        value => JsonSerializer.Deserialize<List<double>>(value) ?? new());
-
 
             builder.Property(r => r.WavelengthNames)
                    .HasConversion(
@@ -47,16 +37,6 @@ namespace OpticEMS.Data.Database.Configurations
                    .HasConversion(
                        value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
                        value => JsonSerializer.Deserialize<List<double>>(value) ?? new());
-
-            builder.Property(r => r.CombinedNumeratorIndices)
-                   .HasConversion(
-                       v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                       v => JsonSerializer.Deserialize<List<int>>(v) ?? new());
-
-            builder.Property(r => r.CombinedDenominatorIndices)
-                   .HasConversion(
-                       v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                       v => JsonSerializer.Deserialize<List<int>>(v) ?? new());
         }
     }
 }

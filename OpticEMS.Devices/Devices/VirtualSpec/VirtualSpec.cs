@@ -35,7 +35,7 @@ namespace OpticEMS.Devices.Devices.VirtualSpec
             {
                 DeviceInfo = new DeviceInfo(
                     "VIRTUAL-SPEC-001",
-                    PIXELS, 
+                    PIXELS,
                     id,
                     -1,
                     DeviceType.VirtualSpec,

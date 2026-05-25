@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using OpticEMS.Communication.Modules;
+using OpticEMS.Contracts.Preprocessing;
 using OpticEMS.Contracts.Services.Calibration;
 using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Etching;
@@ -9,8 +10,7 @@ using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
 using OpticEMS.Notifications.Messages;
-using OpticEMS.Preprocessing;
-using OpticEMS.Preprocessing.Modes;
+using OpticEMS.Preprocessing.Operations.Averaging;
 using OpticEMS.Processing;
 using OpticEMS.Processing.PCA;
 using Serilog;
@@ -23,6 +23,7 @@ namespace OpticEMS.Orchestrator
     {
         private const double CALIBRATION_INTERVAL_MS = 5000;
 
+        private Task _scanningTask = Task.CompletedTask;
         private readonly List<TimePoint> _exportData = new();
         private CancellationTokenSource _cancellationToken = new();
         private CancellationTokenSource _cancellationTokenStart = new();
@@ -34,11 +35,13 @@ namespace OpticEMS.Orchestrator
         private DateTime _endTime;
         private long _lastUiUpdateMs = 0;
         private int[] _wavelengthsIndices = Array.Empty<int>();
-        public double[] _currentIntensities = Array.Empty<double>(); 
+        public double[] _currentIntensities = Array.Empty<double>();
         private readonly List<double[]> _fullSpectrumHistory = new();
         private bool _isPcaBusy = false;
         private DateTime _lastPcaAnalysisTime = DateTime.MinValue;
         private DateTime _lastAutocalibrationTime = DateTime.MinValue;
+        private List<ExecutionStep> _executionPipeline = new();
+        private readonly Dictionary<string, double> _frameMemory = new();
 
         private readonly IEtchingProcessService _endpointService;
         private readonly IRecipeRepository _recipeRepository;
@@ -50,8 +53,8 @@ namespace OpticEMS.Orchestrator
         private readonly DeviceProcessing _deviceProcessing;
         private PcaAnalysisHandler? _pcaHandler;
         private ModuleHandler _connectionHandler;
-        private ModePreprocessorHandler _modeHandler;
-        private TrendEquationsHandler _trendHandler;
+        private FrameAverager _frameAverager;
+        private readonly IGraphCompiler _graphCompiler;
 
         public EtchingOrchestrator(
             int channelId,
@@ -60,7 +63,8 @@ namespace OpticEMS.Orchestrator
             ICalibrationService calibrationService,
             IWavelengthMapper wavelengthMapper,
             ISettingsProvider configureProvider,
-            IExportManager exportManager)
+            IExportManager exportManager,
+            IGraphCompiler graphCompiler)
         {
             ChannelId = channelId;
 
@@ -79,10 +83,11 @@ namespace OpticEMS.Orchestrator
             _wavelengthMapper = wavelengthMapper;
             _configureProvider = configureProvider;
             _exportManager = exportManager;
+            _graphCompiler = graphCompiler;
 
             RegisterMessages();
 
-            Task.Run(() =>
+            _scanningTask = Task.Run(() =>
             {
                 _deviceProcessing.StartContinueScan(1, 1, _cancellationToken.Token);
             });
@@ -108,13 +113,12 @@ namespace OpticEMS.Orchestrator
             }
 
             Recipe = recipe;
-            _modeHandler = new ModePreprocessorHandler(Recipe);
-            _trendHandler = new TrendEquationsHandler(Recipe.DerivativeEnabled);
-            _trendHandler.Set(Recipe.MagneticFieldPeriodMs, Recipe.FieldPeriodsToAverage, Recipe.DerivativePoints);
+            _frameAverager = new FrameAverager();
 
-            WeakReferenceMessenger.Default.Send(new RecipeAppliedMessage(
-                ChannelId, Recipe.Wavelengths,
-                Recipe.WavelengthColors));
+            _executionPipeline = _graphCompiler.Compile(recipe.GraphJson);
+
+            WeakReferenceMessenger.Default.Send(
+                new RecipeAppliedMessage(ChannelId, Recipe.Wavelengths, Recipe.WavelengthColors));
 
             UpdateInternalIndexes();
             _currentIntensities = new double[Recipe.Wavelengths.Count];
@@ -127,15 +131,32 @@ namespace OpticEMS.Orchestrator
                 Recipe.PcaComponents);
         }
 
-        public void ApplySpecParams(float exposureMs, int scansNum)
+        public async Task ApplySpecParams(float exposureMs, int scansNum)
         {
-            _cancellationToken.Cancel();
-            _cancellationToken = new CancellationTokenSource();
-
-            _ = Task.Run(() =>
+            try
             {
-                _deviceProcessing.StartContinueScan(exposureMs, scansNum, _cancellationToken.Token);
-            });
+                _cancellationToken.Cancel();
+
+                try
+                {
+                    await _scanningTask;
+                }
+                catch (Exception exception)
+                {
+                    Log.Warning("[ORCHESTRATOR]: Scanning request awaiting cancelled.");
+                }
+
+                _cancellationToken = new CancellationTokenSource();
+                _scanningTask = Task.Run(() =>
+                {
+                    _deviceProcessing.StartContinueScan(exposureMs, scansNum, _cancellationToken.Token);
+                }, _cancellationToken.Token);
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception, "[ORCHESTRATOR]: Error changing spectrometer parameters.");
+                _deviceProcessing.StopScanning();
+            }
         }
 
         public async Task ApplyRecipe(int recipeId)
@@ -146,13 +167,10 @@ namespace OpticEMS.Orchestrator
             }
 
             Recipe = await _recipeRepository.GetRecipeByRecipeIdAsync(recipeId);
-            _modeHandler = new ModePreprocessorHandler(Recipe);
-            _trendHandler = new TrendEquationsHandler(Recipe.DerivativeEnabled);
 
-            WeakReferenceMessenger.Default.Send(new RecipeAppliedMessage(
-                ChannelId, Recipe.Wavelengths,
-                Recipe.WavelengthColors));
-            
+            WeakReferenceMessenger.Default.Send(
+                new RecipeAppliedMessage(ChannelId, Recipe.Wavelengths, Recipe.WavelengthColors));
+
             UpdateInternalIndexes();
             _currentIntensities = new double[Recipe.Wavelengths.Count];
             _wavelengthChanged = false;
@@ -183,6 +201,13 @@ namespace OpticEMS.Orchestrator
 
             _cancellationTokenStart.Cancel();
             _cancellationTokenStart = new CancellationTokenSource();
+            _frameMemory.Clear();
+            _frameAverager.Reset();
+
+            foreach (var step in _executionPipeline)
+            {
+                step.Processor.Reset();
+            }
 
             _endpointService.ClearConfirmedWindowsIn();
             _endpointService.ClearConfirmedWindowsOut();
@@ -203,36 +228,37 @@ namespace OpticEMS.Orchestrator
 
             _ = Task.Run(() => RunProcessLoopAsync(_cancellationTokenStart.Token));
 
-            _endpointService.Start(Recipe, _currentIntensities);
+            double[] fullyProcessedSignal = PrepareFirstSignal(_stopwatch.Elapsed.TotalMilliseconds);
+            _endpointService.Start(Recipe, fullyProcessedSignal);
 
             Log.Information("Process START requested. Recipe: {RecipeName}, Device: {DeviceType}",
                 Recipe?.Name, _configureProvider.GetByChannelId(ChannelId)?.DeviceType);
         }
 
-        public void PauseProcess()
-        {
-            if (!_isRunning)
-            {
-                throw new Exception("Process is not running.");
-            }
+        //public void PauseProcess()
+        //{
+        //    if (!_isRunning)
+        //    {
+        //        throw new Exception("Process is not running.");
+        //    }
 
-            _isPaused = !_isPaused;
+        //    _isPaused = !_isPaused;
 
-            if (_isPaused)
-            {
-                _stopwatch.Stop();
-                ProcessStatus = "Paused";
-            }
-            else
-            {
-                _stopwatch.Start();
-            }
+        //    if (_isPaused)
+        //    {
+        //        _stopwatch.Stop();
+        //        ProcessStatus = "Paused";
+        //    }
+        //    else
+        //    {
+        //        _stopwatch.Start();
+        //    }
 
-            if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec) 
-            {
-                _deviceProcessing?.NotifyVirtualProcessPaused();
-            }
-        }
+        //    if (_configureProvider.GetByChannelId(ChannelId)?.DeviceType == DeviceType.VirtualSpec) 
+        //    {
+        //        _deviceProcessing?.NotifyVirtualProcessPaused();
+        //    }
+        //}
 
         public async Task StopProcessAsync()
         {
@@ -250,7 +276,6 @@ namespace OpticEMS.Orchestrator
             _endpointService.ClearConfirmedWindowsIn();
             _endpointService.ClearConfirmedWindowsOut();
             _cancellationTokenStart.Cancel();
-            _trendHandler.Reset();
 
             WeakReferenceMessenger.Default.Send(new ExportAvailabilityChangedMessage(ChannelId, true));
 
@@ -272,7 +297,7 @@ namespace OpticEMS.Orchestrator
                 await ExecuteAnalyzingTrainingAsync();
             }
 
-            Log.Information("Process STOPPED. Duration: {Duration}s", 
+            Log.Information("Process STOPPED. Duration: {Duration}s",
                 _stopwatch.Elapsed.TotalSeconds);
         }
 
@@ -320,7 +345,7 @@ namespace OpticEMS.Orchestrator
 
                 Log.Information("[ORCHESTRATOR]: PCA Training completed");
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 Log.Error(exception, "[ORCHESTRATOR]: Critical error during PCA training");
                 throw;
@@ -414,7 +439,7 @@ namespace OpticEMS.Orchestrator
             var confirmedWindowsOut = _endpointService.GetConfirmedWindowsOut();
 
             WeakReferenceMessenger.Default.Send(new DrawWindowBoundsMessage(
-                ChannelId, 
+                ChannelId,
                 windowBounds,
                 confirmedWindowsIn,
                 confirmedWindowsOut));
@@ -427,7 +452,7 @@ namespace OpticEMS.Orchestrator
 
             BroadcastWindowBounds();
 
-            double[] signal = PrepareSignal(currentTimeMs, currentTimeSec);
+            double[] signal = PrepareSignal(currentTimeMs);
 
             var endpointResult = _endpointService.Update(signal, currentTimeMs);
             UpdateStatusAndNotify(endpointResult, signal, currentTimeSec);
@@ -443,22 +468,99 @@ namespace OpticEMS.Orchestrator
             }
         }
 
-
-        private double[] PrepareSignal(double currentTimeMs, double currentTimeSec)
+        private double[] PrepareFirstSignal(double currentTimeMs)
         {
-            var trendResult = _trendHandler.Process(currentTimeMs);
+            var signal = _currentIntensities;
 
-            double[] averagedSignal = trendResult.FrameAveraged;
+            List<double> endpointSignal = new();
 
-            double[] preprocessedSignal = Recipe.DerivativeEnabled
-                ? trendResult.Derivatives
-                : trendResult.Smoothed;
+            foreach (var step in _executionPipeline)
+            {
+                double[] inputData;
 
-            var processedSignal = _modeHandler.Process(preprocessedSignal);
+                if (step.InputNodeIds.Count == 0)
+                {
+                    int chIdx = step.ChannelId;
 
-            RecordDataForExport(averagedSignal, preprocessedSignal, processedSignal, currentTimeSec);
+                    if (chIdx >= 0 && chIdx < signal.Length)
+                    {
+                        inputData = new double[] { signal[chIdx] };
+                    }
+                    else
+                    {
+                        inputData = new double[] { 0.0 };
+                        Log.Warning("[ORCHESTRATOR]: step.ChannelIndex {chIdx} out of bounds for signal length {Length}", chIdx, signal.Length);
+                    }
+                }
+                else
+                {
+                    inputData = step.InputNodeIds
+                        .Select(id => _frameMemory[id])
+                        .ToArray();
+                }
 
-            return processedSignal;
+                double outputData = step.Processor.Process(inputData, currentTimeMs);
+
+                _frameMemory[step.NodeId] = outputData;
+
+                if (step.IsSink)
+                {
+                    endpointSignal.Add(outputData);
+                }
+            }
+
+            return endpointSignal.ToArray();
+        }
+
+        private double[] PrepareSignal(double currentTimeMs)
+        {
+            var signal = _frameAverager.ComputeAveraged();
+
+            if (signal == Array.Empty<double>())
+            {
+                signal = _currentIntensities;
+            }
+
+            List<double> endpointSignal = new();
+
+            foreach (var step in _executionPipeline)
+            {
+                double[] inputData;
+
+                if (step.InputNodeIds.Count == 0)
+                {
+                    int chIdx = step.ChannelId;
+
+                    if (chIdx >= 0 && chIdx < signal.Length)
+                    {
+                        inputData = new double[] { signal[chIdx] };
+                    }
+                    else
+                    {
+                        inputData = new double[] { 0.0 };
+                        Log.Warning("[ORCHESTRATOR]: step.ChannelIndex {chIdx} out of bounds for signal length {Length}", chIdx, signal.Length);
+                    }
+                }
+                else
+                {
+                    inputData = step.InputNodeIds
+                        .Select(id => _frameMemory[id])
+                        .ToArray();
+                }
+
+                double outputData = step.Processor.Process(inputData, currentTimeMs);
+
+                _frameMemory[step.NodeId] = outputData;
+
+                if (step.IsSink)
+                {
+                    endpointSignal.Add(outputData);
+                }
+            }
+
+            //RecordDataForExport(averagedSignal, preprocessedSignal, processedSignal, currentTimeSec);
+
+            return endpointSignal.ToArray();
         }
 
         private async Task ProcessPcaAnalyticsAsync()
@@ -687,7 +789,7 @@ namespace OpticEMS.Orchestrator
 
             if (_isRunning && !_isPaused)
             {
-                _trendHandler.PushIntensities(_currentIntensities);
+                _frameAverager.PushIntensities(_currentIntensities);
             }
         }
 
@@ -719,6 +821,10 @@ namespace OpticEMS.Orchestrator
 
         public async Task UpdateWavelengthManually()
         {
+            if (Recipe is null)
+            {
+                return;
+            }
             Log.Information("[ORCHESTRATOR]: Wavelength update requested");
 
             UpdateInternalIndexes();
@@ -780,16 +886,13 @@ namespace OpticEMS.Orchestrator
 
         private void RecordProcessedDataForExport(double[] trend, double currentTime)
         {
-            if (Recipe.CanUseCombinedMode || Recipe.CanUseRatioMode)
+            var processedTimePoint = new TimePoint
             {
-                var processedTimePoint = new TimePoint
-                {
-                    TimeSeconds = currentTime,
-                    Trend = trend
-                };
+                TimeSeconds = currentTime,
+                Trend = trend
+            };
 
-                _exportData.Add(processedTimePoint);
-            }
+            _exportData.Add(processedTimePoint);
         }
 
         private void RecordDataForExport(
@@ -805,7 +908,7 @@ namespace OpticEMS.Orchestrator
                 Preprocessed = preprocessed,
                 Processed = processed
             };
-            
+
             _exportData.Add(timePoint);
         }
 
@@ -851,7 +954,7 @@ namespace OpticEMS.Orchestrator
 
                     _deviceProcessing?.Dispose();
 
-                    _trendHandler?.Reset();
+                    _frameAverager?.Reset();
                     _pcaHandler = null;
 
                     WeakReferenceMessenger.Default.UnregisterAll(this);

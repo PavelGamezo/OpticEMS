@@ -1,5 +1,8 @@
 ﻿using OpticEMS.Contracts.Services.Settings;
+using Serilog;
+using Serilog.Core;
 using System.Runtime.InteropServices;
+using System.Windows.Media.Media3D;
 
 namespace OpticEMS.Devices.Devices.Solar
 {
@@ -9,6 +12,7 @@ namespace OpticEMS.Devices.Devices.Solar
 
         private bool _isInitialized;
         private IntPtr _ahAppWnd;
+        private IntPtr _pData;
         private int _totalDevices;
         private int _deviceId;
 
@@ -98,7 +102,7 @@ namespace OpticEMS.Devices.Devices.Solar
 
                 lock (@lock)
                 {
-                    Devices = new DeviceInfo(n1, p, _deviceId, channelId, DeviceType.Solar ,10, 0, 0, 0, 0, 0, 0);
+                    Devices = new DeviceInfo(n1, p, _deviceId, channelId, DeviceType.Solar, 10, 0, 0, 0, 0, 0, 0);
                 }
             }
         }
@@ -112,36 +116,93 @@ namespace OpticEMS.Devices.Devices.Solar
 
             lock (@lock)
             {
-                int pixels = collection.Length; 
-                IntPtr buffer = Marshal.AllocHGlobal(pixels * sizeof(uint));
+                if (_pData == IntPtr.Zero)
+                {
+                    Log.Error($"[MD:Solar]: Scan failed because of zero memory buffer.");
+                    return false;
+                }
+
+                int pixelCount = DeviceInfo.PixelNum;
+                var ps = new SolarCCD.TCCDUSBExtendParams();
+
+                if (!SolarCCD.CCD_GetExtendParameters(cameraId, ref ps))
+                {
+                    Log.Error($"[MD:Solar]: Failed to get parameters for Device {cameraId}");
+                    return false;
+                }
+
+                int scansNum = ps.nNumReadOuts <= 0 ? 1 : ps.nNumReadOuts;
+                int totalElements = pixelCount * scansNum;
 
                 try
                 {
-                    if (!SolarCCD.CCD_InitMeasuring(cameraId)) return false;
-
-                    if (SolarCCD.CCD_StartWaitMeasuring(cameraId))
+                    if (!SolarCCD.CCD_StartMeasuring(cameraId))
                     {
-                        if (cancellationToken.IsCancellationRequested) return false;
+                        Log.Error($"[MD:Solar]: Start measuring error");
+                        return false;
+                    }
 
-                        if (SolarCCD.CCD_GetData(cameraId, buffer))
+                    var startTime = DateTime.Now;
+                    uint status = 0;
+
+                    do
+                    {
+                        if (cancellationToken.IsCancellationRequested)
                         {
-                            int[] temp = new int[pixels];
-                            Marshal.Copy(buffer, temp, 0, pixels);
+                            return false;
+                        }
 
-                            for (int i = 0; i < pixels; i++)
-                            {
-                                collection[i] = temp[i];
-                            }
+                        if ((DateTime.Now - startTime).TotalSeconds > 20.0)
+                        {
+                            Log.Error($"[MD:Solar]: Spectrometer {cameraId} is not responding (Timed out waiting for data)");
+                            SolarCCD.CCD_CameraReset(cameraId);
+                            return false;
+                        }
 
-                            return true;
+                        if (!SolarCCD.CCD_GetMeasureStatus(cameraId, ref status))
+                        {
+                            Log.Error($"[MD:Solar] Error calling status for Device {DeviceInfo.Name}");
+                            return false;
+                        }
+                    } while (status != SolarCCD.STATUS_DATA_READY);
+
+                    int[] tmpInt = new int[totalElements];
+
+                    Marshal.Copy(_pData, tmpInt, 0, tmpInt.Length);
+
+                    int elementsToCopy = Math.Min(collection.Length, pixelCount);
+                    for (int i = 0; i < elementsToCopy; i++)
+                    {
+                        collection[i] = 0d;
+                    }
+
+                    for (int ii = 0; ii < elementsToCopy; ii++)
+                    {
+                        for (int kk = 0; kk < scansNum; kk++)
+                        {
+                            collection[ii] += tmpInt[ii + kk * pixelCount];
                         }
                     }
 
-                    return false;
+
+                    int adcRes = (int)ps.dwDigitCapacity;
+                    if (adcRes <= 0) adcRes = 16;
+
+                    int di = scansNum * (int)Math.Pow(2, adcRes - 14);
+                    if (di > 1)
+                    {
+                        for (int i = 0; i < elementsToCopy; i++)
+                        {
+                            collection[i] /= di;
+                        }
+                    }
+
+                    return true;
                 }
-                finally
+                catch (Exception exception)
                 {
-                    Marshal.FreeHGlobal(buffer);
+                    Log.Error(exception, "[MD:Solar] Error marshaling or calculating spectrum data.");
+                    return false;
                 }
             }
         }
@@ -149,6 +210,55 @@ namespace OpticEMS.Devices.Devices.Solar
         public override void SetParameters(int id, float exposureMs, int scansNum)
         {
             SolarCCD.CCD_SetParameter(id, SolarCCD.PRM_EXPTIME, exposureMs);
+            var prms = new SolarCCD.TCCDUSBExtendParams();
+
+            if (!SolarCCD.CCD_GetExtendParameters(id, ref prms))
+            {
+                Log.Error($"[MD:Solar]: Failed to get parameters for Device {DeviceInfo.Name}");
+            }
+            prms.sExposureTime = exposureMs;
+            prms.nNumReadOuts = scansNum;
+            prms.dwSynchr = SolarCCD.SYNCHR_NONE;
+            prms.dwDeviceMode = 1;
+
+            if (!SolarCCD.CCD_SetExtendParameters(id, ref prms))
+            {
+                throw new Exception($"Driver rejected parameters for Device {DeviceInfo.Name}.");
+            }
+            int pixelCount = DeviceInfo.PixelNum;
+            int bufferSizeInBytes = sizeof(uint) * pixelCount * scansNum;
+
+            lock (@lock)
+            {
+                if (_pData != IntPtr.Zero)
+                {
+                    SolarCCD.CCD_DoneMeasuring(id);
+                    Marshal.FreeHGlobal(_pData);
+                    _pData = IntPtr.Zero;
+                }
+
+                _pData = Marshal.AllocHGlobal(bufferSizeInBytes);
+            }
+
+            if (!SolarCCD.CCD_HitTest(id))
+            {
+                Log.Error($"[MD:Solar] HitTest failure");
+                throw new Exception($"Spectrometer {DeviceInfo.Name} is not ready.");
+            }
+
+            if (!SolarCCD.CCD_InitMeasuring(id))
+            {
+                Log.Error($"[MD:Solar] Init measuring data failure");
+                throw new Exception($"Spectrometer {id} is not ready.");
+            }
+
+            if (!SolarCCD.CCD_InitMeasuringData(id, _pData))
+            {
+                Log.Error($"[MD:Solar] Init measuring data failure");
+                throw new Exception($"Spectrometer {id} is not ready.");
+            }
+
+            Log.Information($"[MD:Solar] Spectrometer is ready for measuring.");
         }
 
         public override void StopMeasurement()

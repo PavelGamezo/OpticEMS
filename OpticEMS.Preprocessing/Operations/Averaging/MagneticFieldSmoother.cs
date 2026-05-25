@@ -1,49 +1,54 @@
-﻿using Serilog;
+﻿using OpticEMS.Contracts.Preprocessing;
+using Serilog;
 
 namespace OpticEMS.Preprocessing.Operations.Averaging
 {
-    public class MagneticFieldSmoother
+    public class MagneticFieldSmoother : INodeProcessor
     {
         private readonly double _targetIntervalMs;
-        private readonly Queue<(double[] Signal, double Timestamp)> _buffer = new();
+        private readonly Queue<(double Signal, double Timestamp)> _buffer = new();
 
-        public MagneticFieldSmoother(double magneticFieldPeriodMs, int periodsToAverage = 1)
+        public MagneticFieldSmoother(double magneticFieldPeriodMs, int periodsToAverage = 5)
         {
             _targetIntervalMs = magneticFieldPeriodMs * periodsToAverage;
         }
 
-        public double[] ComputeAvg(double[] inputSignal, double elapsedMs)
+        public double ComputeAvg(double inputSignal, double elapsedMs)
         {
-            _buffer.Enqueue(((double[])inputSignal.Clone(), elapsedMs));
+            _buffer.Enqueue((inputSignal, elapsedMs));
 
             while (_buffer.Count > 0 && (elapsedMs - _buffer.Peek().Timestamp > _targetIntervalMs))
             {
                 _buffer.Dequeue();
             }
 
-            int len = inputSignal.Length;
-            var result = new double[len];
+            double accumulatedValue = 0;
             double totalWeight = 0;
-
             int i = 0;
+
             foreach (var frame in _buffer)
             {
                 i++;
                 double weight = i;
                 totalWeight += weight;
-
-                for (int j = 0; j < len; j++)
-                {
-                    result[j] += frame.Signal[j] * weight;
-                }
+                accumulatedValue += frame.Signal * weight;
             }
 
-            for (int j = 0; j < len; j++)
+            return totalWeight > 0 ? (accumulatedValue / totalWeight) : inputSignal;
+        }
+
+        public double Process(double[] inputs, double currentTimeMs)
+        {
+            if (inputs == null || inputs.Length == 0 || inputs[0] == null)
             {
-                result[j] /= totalWeight;
+                return 0;
             }
 
-            return result;
+            double currentSingleValue = inputs[0];
+
+            double smoothedValue = ComputeAvg(currentSingleValue, currentTimeMs);
+
+            return smoothedValue;
         }
 
         public void Reset() => _buffer.Clear();

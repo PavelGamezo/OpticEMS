@@ -6,13 +6,13 @@
              xmlns:local="clr-namespace:OpticEMS.MVVM.View.Recipe"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    
+
     <Border Grid.Column="0" 
             Background="#252526"
             Margin="5,0,5,0">
 
         <Grid>
-            
+
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -23,14 +23,8 @@
             <Border Grid.Row="0" 
                     Background="#1f1f1f"
                     Padding="10">
-                
+
                 <StackPanel>
-                    
-                    <TextBlock Text="Recipe database"
-                               FontWeight="Bold"
-                               FontSize="12" 
-                               Foreground="White"
-                               Margin="0,0,0,10"/>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -65,11 +59,11 @@
                             </Grid>
 
                         </Border>
-                        
+
                     </Grid>
-                    
+
                 </StackPanel>
-                
+
             </Border>
 
             <ListView Grid.Row="2" 
@@ -81,7 +75,7 @@
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
 
                 <ListView.ItemContainerStyle>
-                    
+
                     <Style TargetType="ListViewItem">
                         <Setter Property="Background" Value="Transparent"/>
                         <Setter Property="Template">
@@ -113,15 +107,15 @@
                             </Setter.Value>
                         </Setter>
                     </Style>
-                    
+
                 </ListView.ItemContainerStyle>
 
                 <ListView.ItemTemplate>
-                    
+
                     <DataTemplate>
-                        
+
                         <Grid Margin="10,10,10,10">
-                            
+
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
@@ -153,13 +147,13 @@
                                        FontSize="11"
                                        VerticalAlignment="Center"
                                        Foreground="#999999"/>
-                            
+
                         </Grid>
-                        
+
                     </DataTemplate>
-                    
+
                 </ListView.ItemTemplate>
-                
+
             </ListView>
 
             <Border Grid.Row="3" 
@@ -180,7 +174,7 @@
                                    Foreground="#999999"/>
 
                     </StackPanel>
-                    
+
                 </Grid>
             </Border>
         </Grid>

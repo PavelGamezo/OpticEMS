@@ -21,6 +21,7 @@ namespace OpticEMS.Common.Helpers
                 return (Brush)Application.Current.Resources[color]
                        ?? new SolidColorBrush(isValid ? Colors.LimeGreen : Colors.Red);
             }
+
             return Brushes.Red;
         }
 

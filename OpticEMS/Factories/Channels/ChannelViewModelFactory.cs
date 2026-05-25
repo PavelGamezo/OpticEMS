@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using OpticEMS.Contracts.Preprocessing;
 using OpticEMS.Contracts.Services.Calibration;
 using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Dialog;
@@ -29,6 +30,7 @@ namespace OpticEMS.Factories.Channels
             IExportManager exportManager = _serviceProvider.GetRequiredService<IExportManager>();
             ICalibrationService calibrationService = _serviceProvider.GetRequiredService<ICalibrationService>();
             ISpectralLineRepository spectralLineRepository = _serviceProvider.GetRequiredService<ISpectralLineRepository>();
+            IGraphCompiler graphCompiler = _serviceProvider.GetRequiredService<IGraphCompiler>();
 
             var id = configuration.ChannelId;
 
@@ -40,7 +42,8 @@ namespace OpticEMS.Factories.Channels
                 configProvider,
                 exportManager,
                 calibrationService,
-                spectralLineRepository);
+                spectralLineRepository,
+                graphCompiler);
         }
 
         public ChannelViewModel CreateDefault() => new ChannelViewModel();

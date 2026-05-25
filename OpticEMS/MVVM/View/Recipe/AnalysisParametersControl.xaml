@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:OpticEMS.MVVM.View.Recipe"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    
+
     <Border CornerRadius="5"
             Padding="15,15,15,0">
 
@@ -25,7 +25,7 @@
                        Margin="0,0,0,5"/>
 
             <Grid Grid.Row="1">
-                
+
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
@@ -157,9 +157,9 @@
                         </Border>
 
                     </StackPanel>
-                    
+
                     <Grid Margin="0,5,0,0">
-                        
+
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
@@ -180,5 +180,5 @@
         </Grid>
 
     </Border>
-    
+
 </UserControl>

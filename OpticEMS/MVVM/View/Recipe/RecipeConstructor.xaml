@@ -1,0 +1,155 @@
+﻿<UserControl x:Class="OpticEMS.MVVM.View.Recipe.RecipeConstructor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.expression/blend/2008" 
+             xmlns:local="clr-namespace:OpticEMS.MVVM.View.Recipe"
+             xmlns:vm="clr-namespace:OpticEMS.MVVM.ViewModels.RecipeViewModels"
+             xmlns:nodify="https://miroiu.github.io/nodify"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="1000">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#252526" Padding="10,6" BorderBrush="#3f3f3f" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Processing:" Foreground="White" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="11"/>
+                <Button Content="Filter" Width="65" Height="24" Margin="0,0,5,0" Background="#222120" Foreground="White"
+                        Command="{Binding AddNodeCommand}" CommandParameter="{x:Static vm:NodeType.Filter}"
+                        Style="{StaticResource ActionButtonStyle}"/>
+                <Button Content="Derivative" Width="75" Height="24" Margin="0,0,15,0" Background="#222120" Foreground="White"
+                        Command="{Binding AddNodeCommand}" CommandParameter="{x:Static vm:NodeType.Derivative}"
+                        Style="{StaticResource ActionButtonStyle}"/>
+
+                <Separator Width="1" Background="#3f3f3f" Margin="5,2,15,2"/>
+
+                <TextBlock Text="Math:" Foreground="White" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="11"/>
+                <Button Content="+" Width="32" Height="24" Margin="0,0,4,0" Background="#222120" Foreground="White" FontWeight="Bold"
+                        Command="{Binding AddNodeCommand}" CommandParameter="{x:Static vm:NodeType.Addition}"
+                        Style="{StaticResource ActionButtonStyle}"/>
+                <Button Content="-" Width="32" Height="24" Margin="0,0,4,0" Background="#222120" Foreground="White" FontWeight="Bold"
+                        Command="{Binding AddNodeCommand}" CommandParameter="{x:Static vm:NodeType.Subtraction}"
+                        Style="{StaticResource ActionButtonStyle}"/>
+                <Button Content="×" Width="32" Height="24" Margin="0,0,4,0" Background="#222120" Foreground="White" FontWeight="Bold"
+                        Command="{Binding AddNodeCommand}" CommandParameter="{x:Static vm:NodeType.Multiplication}"
+                        Style="{StaticResource ActionButtonStyle}"/>
+                <Button Content="÷" Width="32" Height="24" Background="#222120" Foreground="White" FontWeight="Bold"
+                        Command="{Binding AddNodeCommand}" CommandParameter="{x:Static vm:NodeType.Division}"
+                        Style="{StaticResource ActionButtonStyle}"/>
+
+                <Separator Width="1" Background="#3f3f3f" Margin="5,2,15,2"/>
+                <TextBlock Text="Trend:" Foreground="White" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="11"/>
+                <Button Content="Sink" Width="75" Height="24" Margin="0,0,15,0" Background="#222120" Foreground="White"
+                        Command="{Binding AddNodeCommand}" CommandParameter="{x:Static vm:NodeType.Sink}"
+                        Style="{StaticResource ActionButtonStyle}"/>
+                <Separator Width="1" Background="#3f3f3f" Margin="5,2,15,2"/>
+
+                <Button Content="Delete" Width="65" Height="24" Background="#3a1e1e" Foreground="#ff8888" FontWeight="SemiBold"
+                        Command="{Binding DeleteSelectedNodesCommand}"
+                        Style="{StaticResource ActionButtonStyle}"
+                        ToolTip="Delete selected nodes (or press Delete key)"/>
+            </StackPanel>
+        </Border>
+
+        <nodify:NodifyEditor Grid.Row="1"
+                             ItemsSource="{Binding Nodes}"
+                             Connections="{Binding Connections}"
+                             Background="#1a1a1a"
+                             PendingConnection="{Binding PendingConnectionSource, Mode=TwoWay}"
+                             ConnectionCompletedCommand="{Binding ConnectCommand}">
+
+            <nodify:NodifyEditor.InputBindings>
+                <KeyBinding Key="Delete" Command="{Binding DeleteSelectedNodesCommand}" />
+            </nodify:NodifyEditor.InputBindings>
+
+            <nodify:NodifyEditor.ItemContainerStyle>
+                <Style TargetType="{x:Type nodify:ItemContainer}">
+                    <Setter Property="Location" Value="{Binding Location, Mode=TwoWay}" />
+                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                </Style>
+            </nodify:NodifyEditor.ItemContainerStyle>
+
+            <nodify:NodifyEditor.PendingConnectionTemplate>
+                <DataTemplate>
+                    <nodify:PendingConnection Source="{Binding}" />
+                </DataTemplate>
+            </nodify:NodifyEditor.PendingConnectionTemplate>
+
+            <nodify:NodifyEditor.ConnectionTemplate>
+                <DataTemplate DataType="{x:Type vm:ConnectionViewModel}">
+                    <nodify:Connection Source="{Binding SourcePoint}" 
+                                       Target="{Binding TargetPoint}"
+                                       Cursor="Hand"
+                                       ToolTip="Left click to delete">
+                        <nodify:Connection.InputBindings>
+                            <MouseBinding MouseAction="LeftClick"
+                                          Command="{Binding DataContext.DisconnectCommand, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}"
+                                          CommandParameter="{Binding}" />
+                        </nodify:Connection.InputBindings>
+                    </nodify:Connection>
+                </DataTemplate>
+            </nodify:NodifyEditor.ConnectionTemplate>
+
+            <nodify:NodifyEditor.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:NodeViewModel}">
+                    <nodify:Node Header="{Binding Title}" Background="#2d2d2d" BorderBrush="#3f3f3f" Foreground="White">
+                        <StackPanel Margin="0,10,0,10" MinWidth="180">
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <ItemsControl ItemsSource="{Binding InputPins}" Grid.Column="0" HorizontalAlignment="Left">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:PinViewModel}">
+                                            <nodify:NodeInput Header="{Binding Name}" Foreground="#aeaeae" Anchor="{Binding}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <ItemsControl ItemsSource="{Binding OutputPins}" Grid.Column="1" HorizontalAlignment="Right">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:PinViewModel}">
+                                            <nodify:NodeOutput Header="{Binding Name}" Foreground="#aeaeae" Anchor="{Binding}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+
+                            <StackPanel Margin="10,10,10,0" x:Name="FilterSettingsPanel" Visibility="Collapsed">
+                                <TextBlock Text="Field Period (s):" Foreground="#888888" FontSize="11" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding FilterPeriod, UpdateSourceTrigger=PropertyChanged}" 
+                                         Background="#1e1e1e" Foreground="White" BorderBrush="#3f3f3f" Padding="2"/>
+                                <TextBlock Text="Period to Average:" Foreground="#888888" FontSize="11" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding PeriodToAverage, UpdateSourceTrigger=PropertyChanged}" 
+                                         Background="#1e1e1e" Foreground="White" BorderBrush="#3f3f3f" Padding="2"/>
+                            </StackPanel>
+
+                            <StackPanel Margin="10,10,10,0" x:Name="DerivativeSettingsPanel" Visibility="Collapsed">
+                                <TextBlock Text="Derivative Points" Foreground="#888888" FontSize="11" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding DerivativeTime, UpdateSourceTrigger=PropertyChanged}" 
+                                         Background="#1e1e1e" Foreground="White" BorderBrush="#3f3f3f" Padding="2"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </nodify:Node>
+
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding Type}" Value="{x:Static vm:NodeType.Filter}">
+                            <Setter TargetName="FilterSettingsPanel" Property="UIElement.Visibility" Value="Visible"/>
+                        </DataTrigger>
+
+                        <DataTrigger Binding="{Binding Type}" Value="{x:Static vm:NodeType.Derivative}">
+                            <Setter TargetName="DerivativeSettingsPanel" Property="UIElement.Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </nodify:NodifyEditor.ItemTemplate>
+        </nodify:NodifyEditor>
+    </Grid>
+</UserControl>

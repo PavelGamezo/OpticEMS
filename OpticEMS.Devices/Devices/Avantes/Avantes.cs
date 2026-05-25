@@ -1,4 +1,5 @@
 ﻿using OpticEMS.Contracts.Services.Settings;
+using Serilog;
 using System.Runtime.InteropServices;
 
 namespace OpticEMS.Devices.Devices.Avantes
@@ -41,6 +42,7 @@ namespace OpticEMS.Devices.Devices.Avantes
             _devHandle = AvantesCCD.AVS_Activate(ref list[0]);
             if (_devHandle == 1000)
             {
+                Log.Error("[MD:Avantes]: Failed to activate Device");
                 throw new Exception("Failed to activate Avantes device");
             }
 
@@ -57,7 +59,7 @@ namespace OpticEMS.Devices.Devices.Avantes
                     list[0].m_SerialNumber,
                     _numPixels,
                     _devHandle,
-                    channelId, 
+                    channelId,
                     DeviceType.Avantes,
                     0,
                     0,
