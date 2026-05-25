@@ -122,12 +122,12 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Grid.Column="0" 
-                                       Text="📄" 
-                                       Foreground="White"
-                                       FontSize="16"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,12,0"/>
+                            <Image Grid.Column="0" 
+                                   Source="/Common/Images/folder_icon.png" 
+                                   Width="18" 
+                                   Height="22"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,12,0"/>
 
                             <StackPanel Grid.Column="1" 
                                         VerticalAlignment="Center">
