@@ -342,7 +342,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     Stroke = color,
                     StrokeThickness = 1.5,
                     Layer = AnnotationLayer.AboveSeries,
-                    Text = $"{tagPrefix} {b.WavelengthIndex + 1}",
                     TextColor = color,
                     FontSize = 9
                 };

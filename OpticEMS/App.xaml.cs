@@ -178,6 +178,7 @@ namespace OpticEMS
             var assembly = Assembly.GetExecutingAssembly();
             using (var mem = new MemoryStream())
             {
+                var name = assembly.GetName().Name;
                 assembly.GetManifestResourceStream(assembly.GetName().Name + ".LicenseVerify.cer")?.CopyTo(mem);
 
                 certPubicKeyData = mem.ToArray();
