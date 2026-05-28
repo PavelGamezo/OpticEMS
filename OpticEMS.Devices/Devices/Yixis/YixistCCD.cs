@@ -1,119 +1,178 @@
 ﻿using System.IO.Ports;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace OpticEMS.Devices.Devices.Yixis
 {
     public static class YixistCCD
     {
-        public const byte CMD_READ_SP_INFO = 0x01;
-        public const byte CMD_SET_SPECTRUM_PARAS = 0x03;
-        public const byte CMD_READ_SPECTRUM_DATA = 0x04;
-        public const byte CMD_CAL_DATA = 0x07;
-        public const byte CMD_SET_SYN_PULSE_OUTPUT = 0x0A;
-        public const byte CMD_READ_NL_DATA = 0x0B;
-
-        public const byte HEADER = 0xAA;
-        public const byte ORIGIN_PC = 0x00;
-        public const byte ORIGIN_DEVICE = 0x01;
-        public const byte END = 0x7E;
-
-        /// <summary>
-        /// Creates packet request for spectrometer 
-        /// </summary>
-        /// <param name="command"></param>
-        /// <param name="buffer"></param>
-        /// <returns></returns>
-        public static byte[] BuildRequest(byte command, byte[]? buffer = null)
+        public enum TriggerMode
         {
-            buffer ??= Array.Empty<byte>();
-
-            int length = 1 + 1 + 2 + 1 + buffer.Length + 2 + 1;
-
-            byte[] packet = new byte[length + 5];
-            var idx = 0;
-
-            packet[idx++] = HEADER;
-            packet[idx++] = ORIGIN_PC;
-            packet[idx++] = (byte)(length >> 8);
-            packet[idx++] = (byte)length;
-            packet[idx++] = command;
-
-            if (buffer.Length > 0)
-            {
-                Array.Copy(buffer, 0, packet, idx, buffer.Length);
-                idx += buffer.Length;
-            }
-
-            packet[idx++] = 0x00;
-            packet[idx++] = 0x00;
-
-            packet[idx++] = END;
-
-            for (int i = 0; i < 5; i++)
-            {
-                packet[idx++] = 0x55;
-            }
-
-            return packet;
+            /// <summary>
+            /// Normal mode
+            /// </summary>
+            NormalMode = 0x11,
+            /// <summary>
+            /// Software trigger
+            /// </summary>
+            SoftwareTriggerMode = 0x12,
+            /// <summary>
+            /// Hardware trigger
+            /// </summary>
+            HardwareTriggerMode = 0x13,
+            /// <summary>
+            /// Synchronous trigger
+            /// </summary>
+            SyncTriggerMode = 0x14,
+            /// <summary>
+            /// Passing in 0 will not change the original trigger mask parameter.
+            /// </summary>
+            Default = 0
         }
 
-
-        public static byte[] SendCommand(SerialPort port, byte command, byte[]? data = null)
+        public struct Color_Result
         {
-            byte[] request = BuildRequest(command, data);
-            port.Write(request, 0, request.Length);
+            public double m_dx;
+            public double m_dy;
+            public double m_dz;
+            public double m_dBigX;
+            public double m_dBigY;
+            public double m_dBigZ;
+            public double m_du;
+            public double m_dv;
+            public double m_duPrime; //           CIE1976UV - u
+            public double m_dvprime; //        -   CIE1976UV - v
+            public double m_dwprime; //        -   CIE1976UV
 
-            int bytesToRead = port.BytesToRead;
-            byte[] response = new byte[bytesToRead];
-            port.Read(response, 0, bytesToRead);
+            public double m_dPeakWavelength;
+            public double m_dPeakIntensity;
+            public double m_dDominantWavelength;
+            public double m_Pe;
+            public double m_dColorTemperature;
 
-            return response;
-        }
+            public double m_dRa;
+            public double m_dR1;
+            public double m_dR2;
+            public double m_dR3;
+            public double m_dR4;
+            public double m_dR5;
+            public double m_dR6;
+            public double m_dR7;
+            public double m_dR8;
+            public double m_dR9;
+            public double m_dR10;
+            public double m_dR11;
+            public double m_dR12;
+            public double m_dR13;
+            public double m_dR14;
 
-        /// <summary>
-        /// Set the exposure time, scans numbers to averages, and the working mode
-        /// </summary>
-        /// <param name="port"></param>
-        /// <param name="exposureMs"></param>
-        /// <param name="averages"></param>
-        /// <param name="mode"></param>
-        public static void SetSpectrumParams(SerialPort port, float exposureMs, int averages = 1, byte mode = 0x11)
-        {
-            int exposureUs = (int)(exposureMs * 1000);
+            public double Hunter_L;
+            public double Hunter_a;
+            public double Hunter_b;
+            public double CIE_L;
+            public double CIE_a;
+            public double CIE_b;
+            public double Cab; //Chroma
+            public double Hab; //Hue angle
+            public double YI;
+            public double Rratio; //Red ratio
+            public double fCTA; //Color tolerance
+        };
 
-            byte[] data = new byte[5];
-            data[0] = (byte)((exposureUs >> 16) & 0xFF);
-            data[1] = (byte)((exposureUs >> 8) & 0xFF);
-            data[2] = (byte)(exposureUs & 0xFF);
-            data[3] = (byte)averages;
-            data[4] = mode;
+        private const string CCD_DLL = "Libraries\\SpectroMeter.dll";
 
-            SendCommand(port, CMD_SET_SPECTRUM_PARAS, data);
-        }
+        #region importDll
 
-        /// <summary>
-        /// Read the spectral data
-        /// </summary>
-        /// <param name="port"></param>
-        /// <returns></returns>
-        public static byte[] ReadSpectrumData(SerialPort port)
-        {
-            var packet = SendCommand(port, CMD_READ_SPECTRUM_DATA);
+        [DllImport(CCD_DLL, EntryPoint = "SPGetAllDevices", CharSet = CharSet.Auto)]
+        public static extern UInt32 SPGetAllDevices([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] UInt32[] port, out UInt32 num);
 
-            return packet;
-        }
+        [DllImport(CCD_DLL, EntryPoint = "SPConnect", CharSet = CharSet.Auto)]
+        public static extern UInt32 SPConnect(UInt32 port);
 
-        /// <summary>
-        /// Read the basic information of the spectrometer, including Model, SN, Detector,
-        /// Resolution, Wavelength range, Slit, and Firmware Version. Each message is separated 
-        /// by a newline character
-        /// </summary>
-        /// <param name="port"></param>
-        /// <returns></returns>
-        public static string ReadDeviceInfo(SerialPort port)
-        {
-            byte[] response = SendCommand(port, CMD_READ_SP_INFO);
-            return Encoding.ASCII.GetString(response).Trim('\0', '\r', '\n');
-        }
+        [DllImport(CCD_DLL, EntryPoint = "SPConfig", CharSet = CharSet.Auto)]
+        public static extern bool SPConfig(UInt32 DevID, UInt64 dwIntegrateTime, int BoxCar, int TriggerMode);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPReadDoubleCCD", CharSet = CharSet.Auto)]
+        public static extern int SPReadDoubleCCD(UInt32 DevID, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] double[] data);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPReadDoubleCCDAvg", CharSet = CharSet.Auto)]
+        public static extern int SPReadDoubleCCDAvg(UInt32 DevID, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] double[] data, int avgTimes);
+
+
+        [DllImport(CCD_DLL, EntryPoint = "SPWaveLengthToPixel", CharSet = CharSet.Auto)]
+        public static extern int SPWaveLengthToPixel(UInt32 DevID, double fWaveLen);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPPixelToWaveLength", CharSet = CharSet.Auto)]
+        public static extern double SPPixelToWaveLength(UInt32 DevID, UInt32 pixelIndex);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPClose", CharSet = CharSet.Auto)]
+        public static extern bool SPClose(UInt32 DevID);
+
+        [DllImport(CCD_DLL, EntryPoint = "GetDllVer", CharSet = CharSet.Auto)]
+        public static extern bool GetDllVer(UInt32 DevID, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] data);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPGetDeviceModelName", CharSet = CharSet.Auto)]
+        public static extern bool SPGetDeviceModelName(UInt32 DevID, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] modelName);
+
+
+        [DllImport(CCD_DLL, EntryPoint = "SPGetSN", CharSet = CharSet.Auto)]
+        public static extern bool SPGetSN(UInt32 DevID, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] SN);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPGetFirmWareVer", CharSet = CharSet.Auto)]
+        public static extern bool SPGetFirmWareVer(UInt32 DevID, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] firmwareVer);
+
+
+        [DllImport(CCD_DLL, EntryPoint = "SPGetWaveLengthRange", CharSet = CharSet.Auto)]
+        public static extern bool SPGetWaveLengthRange(UInt32 DevID, ref double min, ref double max);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPGetResolution", CharSet = CharSet.Auto)]
+        public static extern bool SPGetResolution(UInt32 DevID, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] resolution);
+
+
+        [DllImport(CCD_DLL, EntryPoint = "SPGetSlit", CharSet = CharSet.Auto)]
+        public static extern bool SPGetSlit(UInt32 DevID, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] slit);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPGetIntegrateTimeRange", CharSet = CharSet.Auto)]
+        public static extern bool SPGetIntegrateTimeRange(UInt32 DevID, ref UInt64 min, ref UInt64 max);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPGetCCDInfo", CharSet = CharSet.Auto)]
+        public static extern bool SPGetCCDInfo(UInt32 DevID, ref uint nTotalPixel, ref uint nStartPixel, ref uint BackLightIntensity);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPGetADDigits", CharSet = CharSet.Auto)]
+        public static extern int SPGetADDigits(UInt32 DevID);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPGetDetectorId", CharSet = CharSet.Auto)]
+        public static extern int SPGetDetectorId(UInt32 DevID);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPReset", CharSet = CharSet.Auto)]
+        public static extern bool SPReset(UInt32 DevID);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPSetStandardLampSpectrum", CharSet = CharSet.Auto)]
+        public static extern bool SPSetStandardLampSpectrum(UInt32 DevID, double[] wave, double[] pow, int cnt, double T);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPProcessSpectrum", CharSet = CharSet.Auto)]
+        public static extern Color_Result SPProcessSpectrum(UInt32 DevID, double[] wave, double[] pow, int cnt);
+
+
+        [DllImport(CCD_DLL, EntryPoint = "SPSetTecEnable", CharSet = CharSet.Auto)]
+        public static extern bool SPSetTecEnable(UInt32 DevID, bool enable);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPGetTecEnableState", CharSet = CharSet.Auto)]
+        public static extern bool SPGetTecEnableState(UInt32 DevID, ref bool enable);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPSetDetectorTemperature", CharSet = CharSet.Auto)]
+        public static extern bool SPSetDetectorTemperature(UInt32 DevID, float temperature);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPReadSetDetectorTemperature", CharSet = CharSet.Auto)]
+        public static extern bool SPReadSetDetectorTemperature(UInt32 DevID, ref float temperature);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPReadDetectorTemperature", CharSet = CharSet.Auto)]
+        public static extern bool SPReadDetectorTemperature(UInt32 DevID, ref float temperature);
+
+
+        [DllImport(CCD_DLL, EntryPoint = "SPGetDeviceType", CharSet = CharSet.Auto)]
+        public static extern bool SPGetDeviceType(UInt32 DevID, ref UInt16 deviceType);
+
+        #endregion
     }
 }
