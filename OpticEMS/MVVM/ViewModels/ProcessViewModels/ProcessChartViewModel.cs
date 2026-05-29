@@ -1,10 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using OpticEMS.Common.Helpers;
+using OpticEMS.Common.Helpers.OxyPlot;
 using OpticEMS.Services.Etching;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
+using OxyPlot.Wpf;
+using System.IO;
 using System.Windows.Media;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
@@ -428,6 +431,23 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             };
 
             AddAnnotationSafe(line);
+        }
+
+        public void Export(
+            OxyExportType type, DateTime startTime, DateTime endTime,
+            DateTime overEtchStartTime, DateTime overEtchEndTime,
+            string recipeName, string channelName, string path)
+        {
+            var exportInfo = OxyPlotHelper.GetExportInfo(
+                type, startTime, endTime, overEtchStartTime,
+                overEtchEndTime, recipeName, channelName, path);
+
+            IExporter exporter = exportInfo.Item1;
+
+            using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read))
+            {
+                exporter.Export(PlotModel, fileStream);
+            }
         }
 
         #endregion

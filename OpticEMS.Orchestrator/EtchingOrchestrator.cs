@@ -634,6 +634,19 @@ namespace OpticEMS.Orchestrator
             }
         }
 
+        public ExportData GetExportData()
+        {
+            double endpointTime = _endpointService.DetectedAtSeconds;
+            double overEtchDurationSeconds = _endpointService.OverEtchDurationSeconds;
+
+            var overEtchStartTime = _startTime.AddSeconds(endpointTime);
+            var overEtchEndTime = overEtchStartTime.AddSeconds(overEtchDurationSeconds);
+
+            var result = new ExportData(_startTime, _endTime, overEtchStartTime, overEtchEndTime);
+
+            return result;
+        }
+
         public void ExportToCsv(string path, string channelName)
         {
             if (_exportData.Count == 0)

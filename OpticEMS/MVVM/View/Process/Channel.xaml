@@ -88,13 +88,13 @@
                         <ContextMenu Style="{StaticResource ModernContextMenu}">
 
                             <MenuItem Header="CSV (.csv)" 
-                                      Command="{Binding ExportToCsvCommand}"/>
+                                      Command="{Binding ExportDataCommand}"/>
 
                             <MenuItem Header="Excel (.xlsx)" 
-                                      Command="{Binding ExportToExcelCommand}"/>
+                                      Command="{Binding ExportDataCommand}"/>
 
                             <MenuItem Header="Text (.txt)" 
-                                      Command="{Binding ExportToTxtCommand}"/>
+                                      Command="{Binding ExportDataCommand}"/>
 
                         </ContextMenu>
                     </Button.ContextMenu>

@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using OpticEMS.Common.Helpers.OxyPlot;
 using OpticEMS.Contracts.Preprocessing;
 using OpticEMS.Contracts.Services.Calibration;
 using OpticEMS.Contracts.Services.Database;
@@ -12,6 +13,7 @@ using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Orchestrator;
+using Serilog;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -281,25 +283,50 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         }
 
         [RelayCommand(CanExecute = nameof(CanExport))]
-        public void ExportToExcel()
+        public void ExportData()
         {
             var dialog = new Microsoft.Win32.SaveFileDialog
             {
-                Filter = "Excel files (*.xlsx)|*.xlsx",
-                FileName = $"Channel_{ChannelId + 1}_Data_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
+                Filter = "Excel files (*.xlsx)|*.xlsx|CSV files (*.csv)|*.csv|Text files (*.txt)|*.txt",
+                DefaultExt = ".xlsx",
+                FileName = $"Channel_{ChannelId + 1}_Data_{DateTime.Now:yyyyMMdd_HHmmss}"
             };
 
-            if (dialog.ShowDialog() == true)
+            if (dialog.ShowDialog() != true)
             {
-                try
+                return;
+            }
+
+            try
+            {
+                string extension = System.IO.Path.GetExtension(dialog.FileName).ToLower();
+                OxyExportType exportType = extension switch
                 {
-                    _orchestrator.ExportToExcel(dialog.FileName, ChannelName);
-                    _dialogService.ShowInformation("Data exported successfully.");
-                }
-                catch (Exception exception)
-                {
-                    _dialogService.ShowError(exception.Message);
-                }
+                    ".xlsx" => OxyExportType.Excel,
+                    ".csv" => OxyExportType.CommaSeparatedValues,
+                    ".txt" => OxyExportType.Text,
+                    _ => OxyExportType.Text
+                };
+
+                var exportData = _orchestrator.GetExportData();
+
+                ProcessChartViewModel.Export(
+                    type: exportType,
+                    startTime: exportData.StartTime,
+                    endTime: exportData.EndTime,
+                    overEtchStartTime: exportData.OverEtchStartTime,
+                    overEtchEndTime: exportData.OverEtchEndTime,
+                    recipeName: Recipe.Name,
+                    channelName: ChannelName,
+                    path: dialog.FileName
+                );
+
+                _dialogService.ShowInformation("Data exported successfully.");
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception, "[VM_EXPORT]: Failed to export OES data");
+                _dialogService.ShowError($"Export failed: {exception.Message}");
             }
         }
 
