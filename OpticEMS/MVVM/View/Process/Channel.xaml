@@ -146,7 +146,7 @@
                 Margin="0,0,0,0">
 
             <ContentControl Grid.Row="2" 
-                Content="{Binding SpectrumChartViewModel}" />
+                            Content="{Binding SpectrumChartViewModel}" />
 
         </Border>
     </Grid>

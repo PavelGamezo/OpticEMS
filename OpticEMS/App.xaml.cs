@@ -115,6 +115,9 @@ namespace OpticEMS
         {
             ConnectLogger();
 
+            var splash = new SplashScreen("Common/Images/splash.png");
+            splash.Show(true);
+
             CheckLicense(e);
         }
 

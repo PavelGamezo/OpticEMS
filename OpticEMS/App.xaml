@@ -245,7 +245,7 @@
 
             <Style x:Key="ActionButtonStyle" TargetType="Button">
                 <Setter Property="Background" Value="Black"/>
-                <Setter Property="Foreground" Value="Black"/>
+                <Setter Property="Foreground" Value="White"/>
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="Height" Value="25"/>
                 <Setter Property="Width" Value="80"/>
@@ -256,10 +256,19 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="2"
-                                SnapsToDevicePixels="True">
+                                    Background="{TemplateBinding Background}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="2"
+                                    SnapsToDevicePixels="True">
+
+                                <Border.Effect>
+                                    <DropShadowEffect x:Name="shadow" 
+                                          BlurRadius="6" 
+                                          ShadowDepth="2" 
+                                          Direction="270" 
+                                          Opacity="0.25" 
+                                          Color="Black"/>
+                                </Border.Effect>
 
                                 <ContentPresenter x:Name="contentPresenter"
                                               HorizontalAlignment="Center"

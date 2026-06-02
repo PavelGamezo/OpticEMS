@@ -558,8 +558,6 @@ namespace OpticEMS.Orchestrator
                 }
             }
 
-            //RecordDataForExport(averagedSignal, preprocessedSignal, processedSignal, currentTimeSec);
-
             return endpointSignal.ToArray();
         }
 
@@ -645,87 +643,6 @@ namespace OpticEMS.Orchestrator
             var result = new ExportData(_startTime, _endTime, overEtchStartTime, overEtchEndTime);
 
             return result;
-        }
-
-        public void ExportToCsv(string path, string channelName)
-        {
-            if (_exportData.Count == 0)
-            {
-                throw new Exception("No data to export.");
-            }
-
-            double endpointTime = _endpointService.DetectedAtSeconds;
-            double overEtchDurationSeconds = _endpointService.OverEtchDurationSeconds;
-
-            var overEtchStartTime = _startTime.AddSeconds(endpointTime);
-            var overEtchEndTime = overEtchStartTime.AddSeconds(overEtchDurationSeconds);
-
-            _exportManager.ExportAsTextFormat(
-                path: path,
-                startTime: _startTime,
-                endTime: _endTime,
-                overEtchStartTime: overEtchStartTime,
-                overEtchEndTime: overEtchEndTime,
-                recipeName: Recipe.Name,
-                channelName: channelName,
-                wavelengths: Recipe.Wavelengths,
-                points: _exportData);
-
-            //ReleaseExportBuffers();
-        }
-
-        public void ExportToExcel(string path, string channelName)
-        {
-            if (_exportData.Count == 0)
-            {
-                throw new Exception("No data to export.");
-            }
-
-            double endpointTime = _endpointService.DetectedAtSeconds;
-            double overEtchDurationSeconds = _endpointService.OverEtchDurationSeconds;
-
-            var overEtchStartTime = _startTime.AddSeconds(endpointTime);
-            var overEtchEndTime = overEtchStartTime.AddSeconds(overEtchDurationSeconds);
-
-            _exportManager.ExportAsXLS(
-                path: path,
-                startTime: _startTime,
-                endTime: _endTime,
-                overEtchStartTime: overEtchStartTime,
-                overEtchEndTime: overEtchEndTime,
-                recipeName: Recipe.Name,
-                channelName: channelName,
-                wavelengths: Recipe.Wavelengths,
-                points: _exportData);
-
-            //ReleaseExportBuffers();
-        }
-
-        public void ExportToTxt(string path, string channelName)
-        {
-            if (_exportData.Count == 0)
-            {
-                throw new Exception("No data to export.");
-            }
-
-            double endpointTime = _endpointService.DetectedAtSeconds;
-            double overEtchDurationSeconds = _endpointService.OverEtchDurationSeconds;
-
-            var overEtchStartTime = _startTime.AddSeconds(endpointTime);
-            var overEtchEndTime = overEtchStartTime.AddSeconds(overEtchDurationSeconds);
-
-            _exportManager.ExportAsTextFormat(
-                path: path,
-                startTime: _startTime,
-                endTime: _endTime,
-                overEtchStartTime: overEtchStartTime,
-                overEtchEndTime: overEtchEndTime,
-                recipeName: Recipe.Name,
-                channelName: channelName,
-                wavelengths: Recipe.Wavelengths,
-                points: _exportData);
-
-            //ReleaseExportBuffers();
         }
 
         private void RegisterMessages()
@@ -894,49 +811,6 @@ namespace OpticEMS.Orchestrator
             WeakReferenceMessenger.Default.Send(
                 new RecipeAppliedMessage(ChannelId, Recipe.Wavelengths, Recipe.WavelengthColors));
         }
-
-        #region export
-
-        private void RecordProcessedDataForExport(double[] trend, double currentTime)
-        {
-            var processedTimePoint = new TimePoint
-            {
-                TimeSeconds = currentTime,
-                Trend = trend
-            };
-
-            _exportData.Add(processedTimePoint);
-        }
-
-        private void RecordDataForExport(
-            double[] averaged,
-            double[] preprocessed,
-            double[] processed,
-            double currentTime)
-        {
-            var timePoint = new TimePoint
-            {
-                TimeSeconds = currentTime,
-                Trend = averaged,
-                Preprocessed = preprocessed,
-                Processed = processed
-            };
-
-            _exportData.Add(timePoint);
-        }
-
-        /*
-        private void ReleaseExportBuffers()
-        {
-            foreach (var tp in _exportData)
-            {
-                ArrayPool<double>.Shared.Return(tp.Intensities);
-            }
-
-            _exportData.Clear();
-        }*/
-
-        #endregion
 
         #region disposing
 

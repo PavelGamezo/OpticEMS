@@ -125,7 +125,10 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 if (message.ChannelId == ChannelId)
                 {
-                    SpectrumChartViewModel.UpdateChart(message.Wavelengths, message.Intensities);
+                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        SpectrumChartViewModel.UpdateChart(message.Wavelengths, message.Intensities);
+                    }, DispatcherPriority.Render);
                 }
             });
 
@@ -134,10 +137,13 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 if (message.ChannelId == ChannelId)
                 {
-                    ProcessChartViewModel.DrawWindowBounds(
-                        message.WindowBounds,
-                        message.ConfirmedWindowsIn,
-                        message.ConfirmedWindowsOut);
+                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        ProcessChartViewModel.DrawWindowBounds(
+                            message.WindowBounds,
+                            message.ConfirmedWindowsIn,
+                            message.ConfirmedWindowsOut);
+                    }, DispatcherPriority.Render);
                 }
             });
 
@@ -145,7 +151,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 if (message.ChannelId == ChannelId)
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
+                    Application.Current.Dispatcher.InvokeAsync(() =>
                     {
                         if (message.IsForsed)
                         {
@@ -165,7 +171,10 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 {
                     Recipe = _orchestrator.Recipe;
 
-                    UpdateSpectrumAnnotations();
+                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        UpdateSpectrumAnnotations();
+                    }, DispatcherPriority.Render);
                 }
             });
 
@@ -176,7 +185,10 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     return;
                 }
 
-                ProcessChartViewModel.SetUpModel(message.Wavelengths, message.WavelengthColors);
+                Application.Current.Dispatcher.InvokeAsync(() => 
+                {
+                    ProcessChartViewModel.SetUpModel(message.Wavelengths, message.WavelengthColors); 
+                }, DispatcherPriority.Render);
             });
 
             WeakReferenceMessenger.Default.Register<ProcessStepUpdateMessage>(this, (recipient, message) =>
@@ -187,15 +199,22 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 }
 
                 ProcessStatus = message.Status;
-                ProcessChartViewModel.UpdateTopPlot(TimeSpan.FromSeconds(message.CurrentTime), message.IntensitiesSnapshot);
-                ProcessChartViewModel.StartAnnotationArea(message.Status, TimeSpan.FromSeconds(message.CurrentTime));
+
+                Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    ProcessChartViewModel.UpdateTopPlot(TimeSpan.FromSeconds(message.CurrentTime), message.IntensitiesSnapshot);
+                    ProcessChartViewModel.StartAnnotationArea(message.Status, TimeSpan.FromSeconds(message.CurrentTime));
+                });
             });
 
             WeakReferenceMessenger.Default.Register<SpectralLineSelectionMessage>(this, (recipient, message) =>
             {
                 if (message.ChannelId == this.ChannelId)
                 {
-                    UpdateSpectrumAnnotations();
+                    Application.Current.Dispatcher.InvokeAsync(() => 
+                    {
+                        UpdateSpectrumAnnotations(); 
+                    }, DispatcherPriority.Render);
                 }
             });
 
@@ -211,7 +230,10 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 if (message.ChannelId == ChannelId)
                 {
-                    SpectrumChartViewModel.UpdateAnomaly(message.Ranges);
+                    Application.Current.Dispatcher.InvokeAsync(() => 
+                    {
+                        SpectrumChartViewModel.UpdateAnomaly(message.Ranges); 
+                    }, DispatcherPriority.Render);
                 }
             });
         }
@@ -259,30 +281,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
-        [RelayCommand(CanExecute = nameof(CanExport))]
-        public void ExportToCsv()
-        {
-            var dialog = new Microsoft.Win32.SaveFileDialog
-            {
-                Filter = "CSV files (*.csv)|*.csv",
-                FileName = $"Channel_{ChannelId + 1}_Data_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                try
-                {
-                    _orchestrator.ExportToTxt(dialog.FileName, ChannelName);
-                    _dialogService.ShowInformation("Data exported successfully.");
-                }
-                catch (Exception exception)
-                {
-                    _dialogService.ShowError(exception.Message);
-                }
-            }
-        }
-
-        [RelayCommand(CanExecute = nameof(CanExport))]
+        [RelayCommand]
         public void ExportData()
         {
             var dialog = new Microsoft.Win32.SaveFileDialog
@@ -327,30 +326,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 Log.Error(exception, "[VM_EXPORT]: Failed to export OES data");
                 _dialogService.ShowError($"Export failed: {exception.Message}");
-            }
-        }
-
-
-        [RelayCommand(CanExecute = nameof(CanExport))]
-        public void ExportToTxt()
-        {
-            var dialog = new Microsoft.Win32.SaveFileDialog
-            {
-                Filter = "Text files (*.txt)|*.txt",
-                FileName = $"Channel_{ChannelId + 1}_Data_{DateTime.Now:yyyyMMdd_HHmmss}.txt"
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                try
-                {
-                    _orchestrator.ExportToTxt(dialog.FileName, ChannelName);
-                    _dialogService.ShowInformation("Data exported successfully.");
-                }
-                catch (Exception exception)
-                {
-                    _dialogService.ShowError(exception.Message);
-                }
             }
         }
 

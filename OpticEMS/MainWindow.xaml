@@ -326,6 +326,15 @@
                         Margin="2,0,2,1"
                         CornerRadius="0">
 
+                    <Border.Effect>
+                        <DropShadowEffect x:Name="shadow" 
+                                          BlurRadius="1" 
+                                          ShadowDepth="2" 
+                                          Direction="270" 
+                                          Opacity="0.25" 
+                                          Color="Black"/>
+                    </Border.Effect>
+
                     <StackPanel Orientation="Horizontal" 
                                 VerticalAlignment="Center"
                                 Height="45">

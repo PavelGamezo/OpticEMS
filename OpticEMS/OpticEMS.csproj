@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <SplashScreen Include="Common\Images\splash.png" />
+    <Resource Include="Common\Images\splash.png" />
   </ItemGroup>
 
   <ItemGroup>
