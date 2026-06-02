@@ -17,6 +17,7 @@ using Serilog;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
+using XAct;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {
@@ -102,11 +103,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
             RegisterMessages();
 
-            SpectrumChartViewModel.OnWavelengthMoved += () =>
+            SpectrumChartViewModel.OnWavelengthMoved += (index, wavelength) =>
             {
-                _orchestrator.UpdateWavelengthManually();
-
-                UpdateSpectrumAnnotations();
+                _orchestrator.UpdateWavelengthManually(index, wavelength);
             };
         }
 
@@ -362,31 +361,38 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         private void UpdateSpectrumAnnotations()
         {
-            Application.Current?.Dispatcher?.Invoke(() =>
+            var wavelengths = new List<double>();
+            var colors = new List<Color>();
+            var isRecipeFlags = new List<bool>();
+
+            var selectedCatalogLines = SpectralLinesCatalogViewModel
+                .SelectedSpectralLines
+                .ToList();
+
+            foreach (var line in selectedCatalogLines)
             {
-                var selectedCatalogLines = SpectralLinesCatalogViewModel
-                    .SelectedSpectralLines
-                    .ToList();
+                wavelengths.Add(line.Wavelength);
+                colors.Add(line.LineColor);
+                isRecipeFlags.Add(false);
+            }
 
-                foreach (var line in selectedCatalogLines)
+            if (Recipe != null)
+            {
+                foreach (var wavelength in Recipe.Wavelengths)
                 {
-                    var originalValue = SpectralLinesCatalogViewModel.GetOriginalWavelength(line.Id);
-                    if (originalValue > 0)
-                    {
-                        line.Wavelength = originalValue;
-                    }
+                    wavelengths.Add(wavelength);
+                    isRecipeFlags.Add(true);
                 }
 
-                var wavelengths = selectedCatalogLines.Select(l => l.Wavelength).ToList();
-                var colors = selectedCatalogLines.Select(l => l.LineColor).ToList();
-
-                if (Recipe != null)
+                foreach (var color in Recipe.WavelengthColors)
                 {
-                    wavelengths.AddRange((IEnumerable<double>)Recipe.Wavelengths);
-                    colors.AddRange((IEnumerable<Color>)Recipe.WavelengthColors);
+                    colors.Add(color);
                 }
+            }
 
-                SpectrumChartViewModel.UpdateAnnotations(wavelengths, colors);
+            Application.Current?.Dispatcher?.InvokeAsync(() =>
+            {
+                SpectrumChartViewModel.UpdateAnnotations(wavelengths, colors, isRecipeFlags);
             }, DispatcherPriority.Render);
         }
 
@@ -404,9 +410,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 SpectrumChartViewModel.Dispose();
                 ProcessChartViewModel.Dispose();
-                SpectrumChartViewModel.OnWavelengthMoved -= () =>
+                SpectrumChartViewModel.OnWavelengthMoved -= (index, newWavelength) =>
                 {
-                    _orchestrator?.UpdateWavelengthManually();
+                    _orchestrator?.UpdateWavelengthManually(index, newWavelength);
                 };
 
                 _orchestrator?.Dispose();

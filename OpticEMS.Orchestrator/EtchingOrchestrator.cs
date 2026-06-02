@@ -749,15 +749,26 @@ namespace OpticEMS.Orchestrator
             }
         }
 
-        public async Task UpdateWavelengthManually()
+        public async Task UpdateWavelengthManually(int wavelengthIndex, double newWavelength)
         {
             if (Recipe is null)
             {
                 return;
             }
-            Log.Information("[ORCHESTRATOR]: Wavelength update requested");
 
-            UpdateInternalIndexes();
+            if (_isRunning)
+            {
+                UpdateInternalIndexes();
+            }
+            else
+            {
+                Log.Information("[ORCHESTRATOR]: Wavelength update requested");
+                Recipe.Wavelengths[wavelengthIndex] = Math.Round(newWavelength, 2);
+
+                var currentWavelengths = _deviceProcessing?.Wavelengths ?? Array.Empty<double>();
+                _wavelengthsIndices[wavelengthIndex] = _wavelengthMapper.FindNearestIndex(currentWavelengths, newWavelength);
+            }
+
             await SaveUpdatedWavelengthsAsync();
         }
 
