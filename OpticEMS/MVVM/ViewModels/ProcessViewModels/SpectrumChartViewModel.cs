@@ -101,10 +101,17 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         public void UpdateChart(IReadOnlyList<double> x, IReadOnlyList<double> y)
         {
+            if (PlotModel is null)
+            {
+                return;
+            }
+
             _lastX = x;
 
             if (PlotModel.Series[0] is not LineSeries line)
+            {
                 return;
+            }
 
             line.Points.Clear();
 

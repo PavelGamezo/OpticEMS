@@ -81,7 +81,7 @@ namespace OpticEMS.Devices.Devices.Yixis
             }
         }
 
-        public override void SetParameters(int id, float exposureMs, int scansNum)
+        public override void SetParameters(int id, float exposureMs, int scansNum, int mode)
         {
             if (_deviceHandle == 0)
             {

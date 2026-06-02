@@ -51,7 +51,7 @@ namespace OpticEMS.Devices.Devices.VirtualSpec
             }
         }
 
-        public override void SetParameters(int id, float exposureMs, int scansNum)
+        public override void SetParameters(int id, float exposureMs, int scansNum, int mode)
         {
             _exposureMs = exposureMs;
         }

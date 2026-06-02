@@ -17,12 +17,13 @@ using Serilog;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
-using XAct;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {
     public partial class ChannelViewModel : ObservableObject, IDisposable
     {
+        private bool _isDisposed;
+
         #region services
 
         private readonly IDialogService _dialogService;
@@ -124,7 +125,12 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 if (message.ChannelId == ChannelId)
                 {
-                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    if (Application.Current?.Dispatcher.HasShutdownStarted == true || _isDisposed)
+                    {
+                        return;
+                    }
+
+                    Application.Current?.Dispatcher.InvokeAsync(() =>
                     {
                         SpectrumChartViewModel.UpdateChart(message.Wavelengths, message.Intensities);
                     }, DispatcherPriority.Render);
@@ -136,7 +142,12 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 if (message.ChannelId == ChannelId)
                 {
-                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    if (Application.Current?.Dispatcher.HasShutdownStarted == true || _isDisposed)
+                    {
+                        return;
+                    }
+
+                    Application.Current?.Dispatcher.InvokeAsync(() =>
                     {
                         ProcessChartViewModel.DrawWindowBounds(
                             message.WindowBounds,
@@ -150,6 +161,11 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 if (message.ChannelId == ChannelId)
                 {
+                    if (Application.Current?.Dispatcher.HasShutdownStarted == true || _isDisposed)
+                    {
+                        return;
+                    }
+
                     Application.Current.Dispatcher.InvokeAsync(() =>
                     {
                         if (message.IsForsed)
@@ -170,9 +186,21 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 {
                     Recipe = _orchestrator.Recipe;
 
-                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    if (Application.Current?.Dispatcher.HasShutdownStarted == true || _isDisposed)
                     {
-                        UpdateSpectrumAnnotations();
+                        return;
+                    }
+
+                    Application.Current?.Dispatcher.InvokeAsync(() =>
+                    {
+                        try
+                        {
+                            UpdateSpectrumAnnotations();
+                        }
+                        catch (Exception exception)
+                        {
+                            Log.Error(exception, "[ORCHESTRATOR]: Error during async annotations update after recipe applying");
+                        }
                     }, DispatcherPriority.Render);
                 }
             });
@@ -184,7 +212,12 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     return;
                 }
 
-                Application.Current.Dispatcher.InvokeAsync(() => 
+                if (Application.Current?.Dispatcher.HasShutdownStarted == true || _isDisposed)
+                {
+                    return;
+                }
+
+                Application.Current?.Dispatcher.InvokeAsync(() => 
                 {
                     ProcessChartViewModel.SetUpModel(message.Wavelengths, message.WavelengthColors); 
                 }, DispatcherPriority.Render);
@@ -197,12 +230,24 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     return;
                 }
 
+                if (Application.Current?.Dispatcher.HasShutdownStarted == true || _isDisposed)
+                {
+                    return;
+                }
+
                 ProcessStatus = message.Status;
 
-                Application.Current.Dispatcher.InvokeAsync(() =>
+                Application.Current?.Dispatcher.InvokeAsync(() =>
                 {
-                    ProcessChartViewModel.UpdateTopPlot(TimeSpan.FromSeconds(message.CurrentTime), message.IntensitiesSnapshot);
-                    ProcessChartViewModel.StartAnnotationArea(message.Status, TimeSpan.FromSeconds(message.CurrentTime));
+                    try
+                    {
+                        ProcessChartViewModel.UpdateTopPlot(TimeSpan.FromSeconds(message.CurrentTime), message.IntensitiesSnapshot);
+                        ProcessChartViewModel.StartAnnotationArea(message.Status, TimeSpan.FromSeconds(message.CurrentTime));
+                    }
+                    catch (Exception exception)
+                    {
+                        Log.Error(exception, "[ORCHESTRATOR]: Error during async process step update");
+                    }
                 });
             });
 
@@ -210,9 +255,21 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 if (message.ChannelId == this.ChannelId)
                 {
-                    Application.Current.Dispatcher.InvokeAsync(() => 
+                    if (Application.Current?.Dispatcher.HasShutdownStarted == true || _isDisposed)
                     {
-                        UpdateSpectrumAnnotations(); 
+                        return;
+                    }
+
+                    Application.Current?.Dispatcher.InvokeAsync(() => 
+                    {
+                        try
+                        {
+                            UpdateSpectrumAnnotations();
+                        }
+                        catch (Exception exception)
+                        {
+                            Log.Error(exception, "[ORCHESTRATOR]: Error during async annotations update");
+                        }
                     }, DispatcherPriority.Render);
                 }
             });
@@ -229,6 +286,11 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 if (message.ChannelId == ChannelId)
                 {
+                    if (Application.Current?.Dispatcher.HasShutdownStarted == true)
+                    {
+                        return;
+                    }
+
                     Application.Current.Dispatcher.InvokeAsync(() => 
                     {
                         SpectrumChartViewModel.UpdateAnomaly(message.Ranges); 
@@ -400,8 +462,17 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         #region disposing
 
+
+
         public void Dispose()
         {
+            if (_isDisposed)
+            {
+                return;
+            }
+            
+            _isDisposed = true;
+
             WeakReferenceMessenger.Default.UnregisterAll(this);
 
             if (_orchestrator is not null &&

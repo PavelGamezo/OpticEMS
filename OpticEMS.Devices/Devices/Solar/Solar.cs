@@ -207,7 +207,7 @@ namespace OpticEMS.Devices.Devices.Solar
             }
         }
 
-        public override void SetParameters(int id, float exposureMs, int scansNum)
+        public override void SetParameters(int id, float exposureMs, int scansNum, int mode)
         {
             SolarCCD.CCD_SetParameter(id, SolarCCD.PRM_EXPTIME, exposureMs);
             var prms = new SolarCCD.TCCDUSBExtendParams();
@@ -263,6 +263,7 @@ namespace OpticEMS.Devices.Devices.Solar
 
         public override void StopMeasurement()
         {
+            Thread.Sleep(1);
             var result = SolarCCD.CCD_CameraReset(_deviceId);
         }
     }

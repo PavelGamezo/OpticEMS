@@ -7,6 +7,7 @@ namespace OpticEMS.Devices.Devices.Avantes
     public class Avantes : Device
     {
         private int _devHandle = -1;
+        private short _measuring = 1;
         private ushort _numPixels = 0;
         private double[] _wavelengths = Array.Empty<double>();
 
@@ -80,8 +81,6 @@ namespace OpticEMS.Devices.Devices.Avantes
                 return false;
             }
 
-            AvantesCCD.AVS_Measure(_devHandle, IntPtr.Zero, 1);
-
             while (!cancellationToken.IsCancellationRequested)
             {
                 int status = AvantesCCD.AVS_PollScan(_devHandle);
@@ -104,16 +103,21 @@ namespace OpticEMS.Devices.Devices.Avantes
                 {
                     return false;
                 }
-
-                Thread.Sleep(1);
             }
 
             return false;
         }
 
-        public override void SetParameters(int id, float exposureMs, int scansNum)
+        public override void SetParameters(int id, float exposureMs, int scansNum, int mode)
         {
-            if (_devHandle == -1) return;
+            Log.Information($"[MD:Avantes]: Setting parameters for {id}: ExposureTime = {exposureMs}, ScansNum = {scansNum}, Mode = {mode}");
+            var trigger = Convert.ToBoolean(mode);
+
+            if (_devHandle == -1)
+            {
+                Log.Error($"[MD:Avantes]: Device is not initialized");
+                return;
+            }
 
             AvantesCCD.MeasConfigType config = new AvantesCCD.MeasConfigType
             {
@@ -128,8 +132,19 @@ namespace OpticEMS.Devices.Devices.Avantes
                 }
             };
 
+            if (trigger) // Continuous
+            {
+                _measuring = -1; 
+                config.m_Trigger.m_Mode = AvantesCCD.SW_TRIGGER_MODE;
+                config.m_Trigger.m_Source = AvantesCCD.SYNCH_TRIGGER_SOURCE;
+            }
+
+            Log.Information($"[MD:Avantes]: Applying new parameters for device {DeviceInfo.Name}");
+
             int result = AvantesCCD.AVS_PrepareMeasure(_devHandle, ref config);
             if (result != AvantesCCD.ERR_SUCCESS) throw new Exception($"PrepareMeasure failed: {result}");
+            
+            AvantesCCD.AVS_Measure(_devHandle, IntPtr.Zero, _measuring);
         }
 
         public override void StopMeasurement()

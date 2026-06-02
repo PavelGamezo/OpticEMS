@@ -101,7 +101,7 @@ namespace OpticEMS.Devices
             ScanNum = scanNum;
             var deviceId = _device.DeviceInfo.DeviceId;
 
-            SetParameters(deviceId, ExposureTime, ScanNum);
+            SetParameters(deviceId, ExposureTime, ScanNum, 1);
             InitWavelengths();
 
             _scanning = true;
@@ -142,7 +142,7 @@ namespace OpticEMS.Devices
             ExposureTime = exposureMs;
             ScanNum = scanNum;
 
-            SetParameters(id, ExposureTime, ScanNum);
+            SetParameters(id, ExposureTime, ScanNum, 0);
             InitWavelengths();
 
             try
@@ -171,8 +171,9 @@ namespace OpticEMS.Devices
             WeakReferenceMessenger.Default.Send(new CalibrationChartUpdatedMessage(id, Intensities));
         }
 
-        private void SetParameters(int id, float exposureMs, int scansNum)
+        private void SetParameters(int id, float exposureMs, int scansNum, int mode)
         {
+            Log.Information($"[MEASURING]: Setting device parameters with ID {id}: ExposureTime = {exposureMs}, ScansNum = {scansNum}, Mode = {mode}");
             try
             {
                 if (_device is null)
@@ -180,7 +181,7 @@ namespace OpticEMS.Devices
                     throw new Exception("Can't set device parameters because of device init error.");
                 }
 
-                _device?.SetParameters(id, exposureMs, scansNum);
+                _device?.SetParameters(id, exposureMs, scansNum, mode);
             }
             catch (Exception exception)
             {

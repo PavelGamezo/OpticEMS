@@ -63,11 +63,11 @@ namespace OpticEMS.Services.Spectrometers
                     }
                 }
 
-                int avantesCount = AvantesCCD.AVS_Init(0);
-                if (avantesCount > 0)
-                {
-                    total += avantesCount;
-                }
+                //int avantesCount = AvantesCCD.AVS_Init(0);
+                //if (avantesCount > 0)
+                //{
+                //    total += avantesCount;
+                //}
 
                 return total;
             }
