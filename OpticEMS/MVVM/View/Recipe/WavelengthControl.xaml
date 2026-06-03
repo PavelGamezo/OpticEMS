@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:OpticEMS.MVVM.View.Recipe"
              xmlns:converters="clr-namespace:OpticEMS.Common.Helpers"
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              mc:Ignorable="d" 
              d:DesignWidth="800">
 
@@ -204,8 +205,7 @@
 
                                 <xctk:ColorPicker SelectedColor="{Binding Color, UpdateSourceTrigger=PropertyChanged}" 
                                                   Height="30" Margin="0,5,0,0"
-                                                  Style="{StaticResource DarkColorPicker}" 
-                                                  UsingAlphaChannel="False"/>
+                                                  Style="{StaticResource DarkColorPicker}"/>
 
                                 <StackPanel Visibility="{Binding DataContext.IsSingleWindowMode, 
                                                         RelativeSource={RelativeSource AncestorType=ItemsControl}, 

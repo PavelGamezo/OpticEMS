@@ -10,7 +10,7 @@ using System.Collections.ObjectModel;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {
-    public partial class ProcessViewModel : ObservableObject
+    public partial class ProcessViewModel : ObservableObject, IDisposable
     {
         private readonly IChannelViewModelFactory _channelViewModelFactory;
         private readonly ISettingsProvider _settingsProvider;
@@ -101,6 +101,14 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
 
             SelectedChannel = Channels.FirstOrDefault();
+        }
+
+        public void Dispose()
+        {
+            foreach (var channel in Channels)
+            {
+                channel.Dispose();
+            }
         }
     }
 }

@@ -6,11 +6,13 @@ using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices.Devices.Avantes;
 using OpticEMS.Devices.Devices.Solar;
+using OpticEMS.Devices.Devices.Yixis;
 using OpticEMS.MVVM.Models;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Services.Settings;
 using OpticEMS.Services.Spectrometers;
 using Serilog;
+using System.Collections;
 using System.Collections.ObjectModel;
 
 namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
@@ -96,6 +98,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                         {
                             DeviceType.Solar => SpectrometerType.Solar,
                             DeviceType.Avantes => SpectrometerType.Avantes,
+                            DeviceType.Yixist => SpectrometerType.Yixist,
                             DeviceType.VirtualSpec => SpectrometerType.VirtualSpec,
                             _ => SpectrometerType.VirtualSpec
                         },
@@ -136,6 +139,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                     {
                         SpectrometerType.Solar => DeviceType.Solar,
                         SpectrometerType.Avantes => DeviceType.Avantes,
+                        SpectrometerType.Yixist => DeviceType.Yixist,
                         SpectrometerType.VirtualSpec => DeviceType.VirtualSpec,
                         _ => DeviceType.VirtualSpec
                     };
@@ -166,6 +170,18 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                         device.TrimLeft = (int)item.TrimLeft;
                         device.TrimRight = (int)item.TrimRight;
                         device.DeviceType = DeviceType.Avantes;
+                        device.ChannelId = channelId;
+
+                        devices.Add(device);
+                    }
+                    else if (item.DeviceType == DeviceType.Yixist)
+                    {
+                        // Make it fking work!
+                        var yixist = new Yixist(0);
+                        device = yixist.DeviceInfo;
+                        device.TrimLeft = (int)item.TrimLeft;
+                        device.TrimRight = (int)item.TrimRight;
+                        device.DeviceType = DeviceType.Yixist;
                         device.ChannelId = channelId;
 
                         devices.Add(device);

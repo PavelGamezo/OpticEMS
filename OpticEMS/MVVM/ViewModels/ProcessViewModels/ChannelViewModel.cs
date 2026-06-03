@@ -297,6 +297,11 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     }, DispatcherPriority.Render);
                 }
             });
+
+            WeakReferenceMessenger.Default.Register<ApplicationShutdownMessage>(this, (recipient, message) =>
+            {
+                _orchestrator.Dispose();
+            });
         }
 
         #endregion

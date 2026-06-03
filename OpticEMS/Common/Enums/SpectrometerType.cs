@@ -4,6 +4,7 @@
     {
         VirtualSpec,
         Solar,
-        Avantes
+        Avantes,
+        Yixist
     }
 }

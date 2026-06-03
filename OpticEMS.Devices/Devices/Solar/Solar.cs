@@ -1,8 +1,6 @@
 ﻿using OpticEMS.Contracts.Services.Settings;
 using Serilog;
-using Serilog.Core;
 using System.Runtime.InteropServices;
-using System.Windows.Media.Media3D;
 
 namespace OpticEMS.Devices.Devices.Solar
 {
@@ -39,19 +37,6 @@ namespace OpticEMS.Devices.Devices.Solar
         public Solar(string serialNumber)
         {
             InitializeBySerialNumber(serialNumber);
-        }
-
-        public static bool IsPresent(int id)
-        {
-            try
-            {
-                int tempId = id;
-
-                var result = SolarCCD.CCD_Init(IntPtr.Zero, "", ref tempId);
-
-                return result;
-            }
-            catch { return false; }
         }
 
         private void InitializeBySerialNumber(string serialNumber)
@@ -118,7 +103,7 @@ namespace OpticEMS.Devices.Devices.Solar
             {
                 if (_pData == IntPtr.Zero)
                 {
-                    Log.Error($"[MD:Solar]: Scan failed because of zero memory buffer.");
+                    Log.Error($"[D:Solar]: Scan failed because of zero memory buffer.");
                     return false;
                 }
 
@@ -127,7 +112,7 @@ namespace OpticEMS.Devices.Devices.Solar
 
                 if (!SolarCCD.CCD_GetExtendParameters(cameraId, ref ps))
                 {
-                    Log.Error($"[MD:Solar]: Failed to get parameters for Device {cameraId}");
+                    Log.Error($"[D:Solar]: Failed to get parameters for Device {cameraId}");
                     return false;
                 }
 
@@ -138,7 +123,7 @@ namespace OpticEMS.Devices.Devices.Solar
                 {
                     if (!SolarCCD.CCD_StartMeasuring(cameraId))
                     {
-                        Log.Error($"[MD:Solar]: Start measuring error");
+                        Log.Error($"[D:Solar]: Start measuring error");
                         return false;
                     }
 
@@ -154,14 +139,14 @@ namespace OpticEMS.Devices.Devices.Solar
 
                         if ((DateTime.Now - startTime).TotalSeconds > 20.0)
                         {
-                            Log.Error($"[MD:Solar]: Spectrometer {cameraId} is not responding (Timed out waiting for data)");
+                            Log.Error($"[D:Solar]: Spectrometer {cameraId} is not responding (Timed out waiting for data)");
                             SolarCCD.CCD_CameraReset(cameraId);
                             return false;
                         }
 
                         if (!SolarCCD.CCD_GetMeasureStatus(cameraId, ref status))
                         {
-                            Log.Error($"[MD:Solar] Error calling status for Device {DeviceInfo.Name}");
+                            Log.Error($"[D:Solar] Error calling status for Device {DeviceInfo.Name}");
                             return false;
                         }
                     } while (status != SolarCCD.STATUS_DATA_READY);
@@ -201,7 +186,7 @@ namespace OpticEMS.Devices.Devices.Solar
                 }
                 catch (Exception exception)
                 {
-                    Log.Error(exception, "[MD:Solar] Error marshaling or calculating spectrum data.");
+                    Log.Error(exception, "[D:Solar] Error marshaling or calculating spectrum data.");
                     return false;
                 }
             }
@@ -214,7 +199,7 @@ namespace OpticEMS.Devices.Devices.Solar
 
             if (!SolarCCD.CCD_GetExtendParameters(id, ref prms))
             {
-                Log.Error($"[MD:Solar]: Failed to get parameters for Device {DeviceInfo.Name}");
+                Log.Error($"[D:Solar]: Failed to get parameters for Device {DeviceInfo.Name}");
             }
             prms.sExposureTime = exposureMs;
             prms.nNumReadOuts = scansNum;
@@ -242,29 +227,33 @@ namespace OpticEMS.Devices.Devices.Solar
 
             if (!SolarCCD.CCD_HitTest(id))
             {
-                Log.Error($"[MD:Solar] HitTest failure");
+                Log.Error($"[D:Solar] HitTest failure");
                 throw new Exception($"Spectrometer {DeviceInfo.Name} is not ready.");
             }
 
             if (!SolarCCD.CCD_InitMeasuring(id))
             {
-                Log.Error($"[MD:Solar] Init measuring data failure");
+                Log.Error($"[D:Solar] Init measuring data failure");
                 throw new Exception($"Spectrometer {id} is not ready.");
             }
 
             if (!SolarCCD.CCD_InitMeasuringData(id, _pData))
             {
-                Log.Error($"[MD:Solar] Init measuring data failure");
+                Log.Error($"[D:Solar] Init measuring data failure");
                 throw new Exception($"Spectrometer {id} is not ready.");
             }
 
-            Log.Information($"[MD:Solar] Spectrometer is ready for measuring.");
+            Log.Information($"[D:Solar] Spectrometer is ready for measuring.");
         }
 
         public override void StopMeasurement()
         {
+            Log.Information($"[D:Solar]: Stopping measuring request for {DeviceInfo.Name}");
+            
             Thread.Sleep(1);
             var result = SolarCCD.CCD_CameraReset(_deviceId);
+
+            Log.Information($"[D:Solar]: Stopping measuring response with code {result}");
         }
     }
 }

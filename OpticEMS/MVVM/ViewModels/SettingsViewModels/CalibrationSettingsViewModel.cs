@@ -9,6 +9,7 @@ using OpticEMS.Services.Settings;
 using OpticEMS.Services.Spectrometers;
 using Serilog;
 using System.Collections.ObjectModel;
+using System.Windows.Threading;
 
 namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 {
@@ -220,6 +221,11 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                 }
 
                 HandleIncomingSpectrum(message.Intensities);
+            });
+
+            WeakReferenceMessenger.Default.Register<LiveSpectrumDataMessage>(this, (recipient, message) =>
+            {
+                RefreshChannels();
             });
         }
 

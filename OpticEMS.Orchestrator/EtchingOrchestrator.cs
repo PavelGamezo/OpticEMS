@@ -877,7 +877,7 @@ namespace OpticEMS.Orchestrator
 
         ~EtchingOrchestrator()
         {
-            Dispose(false);
+            Dispose(true);
         }
 
         #endregion

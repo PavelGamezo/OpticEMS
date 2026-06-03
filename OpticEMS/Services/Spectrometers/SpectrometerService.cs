@@ -1,10 +1,9 @@
-﻿using OfficeOpenXml.FormulaParsing.Excel.Functions.Math;
-using OpticEMS.Contracts.Services.Settings;
+﻿using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
 using OpticEMS.Devices.Devices.Avantes;
 using OpticEMS.Devices.Devices.Solar;
+using OpticEMS.Devices.Devices.Yixis;
 using System.Runtime.InteropServices;
-using Serilog;
 
 namespace OpticEMS.Services.Spectrometers
 {
@@ -63,11 +62,16 @@ namespace OpticEMS.Services.Spectrometers
                     }
                 }
 
-                //int avantesCount = AvantesCCD.AVS_Init(0);
-                //if (avantesCount > 0)
-                //{
-                //    total += avantesCount;
-                //}
+                int avantesCount = AvantesCCD.AVS_Init(0);
+                if (avantesCount > 0)
+                {
+                    total += avantesCount;
+                }
+
+                UInt32[] port = new UInt32[36];
+                YixistCCD.SPGetAllDevices(port, out UInt32 yixistCount);
+
+                total += (int)yixistCount;
 
                 return total;
             }

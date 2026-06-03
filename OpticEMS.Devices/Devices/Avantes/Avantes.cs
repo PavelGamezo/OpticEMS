@@ -43,8 +43,8 @@ namespace OpticEMS.Devices.Devices.Avantes
             _devHandle = AvantesCCD.AVS_Activate(ref list[0]);
             if (_devHandle == 1000)
             {
-                Log.Error("[MD:Avantes]: Failed to activate Device");
-                throw new Exception("Failed to activate Avantes device");
+                Log.Error("[D:Avantes]: Failed to activate Device");
+                throw new Exception("Failed to activate device");
             }
 
             AvantesCCD.AVS_GetNumPixels(_devHandle, ref _numPixels);
@@ -110,12 +110,12 @@ namespace OpticEMS.Devices.Devices.Avantes
 
         public override void SetParameters(int id, float exposureMs, int scansNum, int mode)
         {
-            Log.Information($"[MD:Avantes]: Setting parameters for {id}: ExposureTime = {exposureMs}, ScansNum = {scansNum}, Mode = {mode}");
+            Log.Information($"[D:Avantes]: Setting parameters for {DeviceInfo.Name}: ExposureTime = {exposureMs}, ScansNum = {scansNum}, Mode = {mode}");
             var trigger = Convert.ToBoolean(mode);
 
             if (_devHandle == -1)
             {
-                Log.Error($"[MD:Avantes]: Device is not initialized");
+                Log.Error($"[D:Avantes]: Device is not initialized");
                 return;
             }
 
@@ -139,7 +139,7 @@ namespace OpticEMS.Devices.Devices.Avantes
                 config.m_Trigger.m_Source = AvantesCCD.SYNCH_TRIGGER_SOURCE;
             }
 
-            Log.Information($"[MD:Avantes]: Applying new parameters for device {DeviceInfo.Name}");
+            Log.Information($"[D:Avantes]: Applying new parameters for device {DeviceInfo.Name}");
 
             int result = AvantesCCD.AVS_PrepareMeasure(_devHandle, ref config);
             if (result != AvantesCCD.ERR_SUCCESS) throw new Exception($"PrepareMeasure failed: {result}");
@@ -149,9 +149,16 @@ namespace OpticEMS.Devices.Devices.Avantes
 
         public override void StopMeasurement()
         {
+            Log.Information($"[D:Avantes]: Stopping measuring request for {DeviceInfo.Name}");
             if (_devHandle != -1)
             {
-                AvantesCCD.AVS_StopMeasure(_devHandle);
+                var response = AvantesCCD.AVS_StopMeasure(_devHandle);
+                Log.Information($"[D:Avantes]: Stopping measuring response with code {response}");
+
+                if (AvantesCCD.ERR_SUCCESS != response)
+                {
+                    throw new Exception("Stopping measuring error");
+                }
             }
         }
     }

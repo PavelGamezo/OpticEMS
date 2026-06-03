@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpticEMS.Contracts.Factories;
 using OpticEMS.Contracts.Preprocessing;
@@ -23,6 +24,7 @@ using OpticEMS.MVVM.ViewModels.Activation;
 using OpticEMS.MVVM.ViewModels.ProcessViewModels;
 using OpticEMS.MVVM.ViewModels.RecipeViewModels;
 using OpticEMS.MVVM.ViewModels.SettingsViewModels;
+using OpticEMS.Notifications.Messages;
 using OpticEMS.Preprocessing.Factories;
 using OpticEMS.Preprocessing.Graph;
 using OpticEMS.Services.Calibration;
@@ -123,11 +125,12 @@ namespace OpticEMS
 
         protected override async void OnExit(ExitEventArgs e)
         {
-            Log.Information("Closing current application");
+            Log.Information("[APPLICATION]: Closing current application");
 
+            WeakReferenceMessenger.Default.Send(new ApplicationShutdownMessage());
             await Host.StopAsync();
 
-            Log.Information("=== OpticEMS completion ===");
+            Log.Information("[APPLICATION]: OpticEMS completion.");
 
             base.OnExit(e);
         }
@@ -143,7 +146,7 @@ namespace OpticEMS
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
 
-            Log.Information("=== OpticEMS started ===");
+            Log.Information("[APPLICATION]: OpticEMS started.");
 
             SetupExceptionHandling();
         }
@@ -152,7 +155,7 @@ namespace OpticEMS
         {
             this.DispatcherUnhandledException += (s, e) =>
             {
-                Log.Fatal(e.Exception, "Unhandled UI dispatcher exception: {Message}", e.Exception.Message);
+                Log.Fatal(e.Exception, "[APPLICATION]: Unhandled UI dispatcher exception: {Message}", e.Exception.Message);
 
                 e.Handled = false;
             };
@@ -160,7 +163,7 @@ namespace OpticEMS
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
             {
                 var exception = e.ExceptionObject as Exception;
-                Log.Fatal(exception, "Unhandled AppDomain exception. Terminating: {IsTerminating}", e.IsTerminating);
+                Log.Fatal(exception, "[APPLICATION]: Unhandled AppDomain exception. Terminating: {IsTerminating}", e.IsTerminating);
             };
 
             System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (s, e) =>
@@ -176,7 +179,7 @@ namespace OpticEMS
             LicenseStatus status;
             byte[] certPubicKeyData;
             string message;
-            Log.Information("Started license checking...");
+            Log.Information("[APPLICATION]: Started license checking...");
 
             var assembly = Assembly.GetExecutingAssembly();
             using (var mem = new MemoryStream())
@@ -195,14 +198,14 @@ namespace OpticEMS
                     out status,
                     out message);
 
-                Log.Information("File license exists, checking license status...");
+                Log.Information("[APPLICATION]: File license exists, checking license status...");
             }
             else
             {
                 status = LicenseStatus.Invalid;
                 message = "Your copy of this application is not activated";
 
-                Log.Information("File license.lic not exists");
+                Log.Information("[APPLICATION]: File license.lic not exists");
             }
 
             switch (status)
@@ -220,15 +223,15 @@ namespace OpticEMS
 
                     using (var db = new AppDbContext())
                     {
-                        Log.Information("SQLite creating...");
+                        Log.Information("[APPLICATION]: SQLite creating...");
 
                         await db.Database.EnsureCreatedAsync();
                         await SpectralLinesSeeder.SeedFromCsvAsync(db);
 
-                        Log.Information("SQLite created...");
+                        Log.Information("[APPLICATION]: SQLite created...");
                     }
 
-                    Log.Information("Creating MainWindow view...");
+                    Log.Information("[APPLICATION]: Creating MainWindow view...");
                     var mainWindow = Host.Services.GetRequiredService<MainWindow>();
                     mainWindow.Show();
 
@@ -237,16 +240,16 @@ namespace OpticEMS
 
                 case LicenseStatus.Expired:
 
-                    Log.Information("License status is \"Expired\". Starting application activation.");
+                    Log.Information("[APPLICATION]: License status is \"Expired\". Starting application activation.");
                     File.Delete("license.lic");
-                    Log.Information("File \"license.lic\" was deleted from current directory.");
+                    Log.Information("[APPLICATION]: File \"license.lic\" was deleted from current directory.");
                     MessageBox.Show(message, string.Empty, MessageBoxButton.OK, MessageBoxImage.Warning);
                     ShowActivationWindow(certPubicKeyData);
                     break;
 
                 default:
 
-                    Log.Information("Unhandled license status. Starting application activation.");
+                    Log.Information("[APPLICATION]: Unhandled license status. Starting application activation.");
                     MessageBox.Show(message, string.Empty, MessageBoxButton.OK, MessageBoxImage.Warning);
                     ShowActivationWindow(certPubicKeyData);
 
@@ -257,7 +260,7 @@ namespace OpticEMS
 
         private void ShowActivationWindow(byte[] certPubicKeyData)
         {
-            Log.Information("Started ActivationWindow creation...");
+            Log.Information("[APPLICATION]: Started ActivationWindow creation...");
 
             var window = new ActivationWindow(null);
 
@@ -268,7 +271,7 @@ namespace OpticEMS
 
             window.DataContext = viewModel;
 
-            Log.Information("Ended ActivationWindow creation. Showing ActivationWindow view");
+            Log.Information("[APPLICATION]: Ended ActivationWindow creation. Showing ActivationWindow view");
             window.ShowDialog();
         }
     }

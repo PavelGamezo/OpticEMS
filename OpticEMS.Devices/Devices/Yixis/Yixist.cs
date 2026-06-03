@@ -6,7 +6,7 @@ using static OpticEMS.Devices.Devices.Yixis.YixistCCD;
 
 namespace OpticEMS.Devices.Devices.Yixis
 {
-    internal class Yixist : Device
+    public class Yixist : Device
     {
         private UInt32 _port = 0;
         private UInt32 _deviceHandle;
@@ -22,7 +22,8 @@ namespace OpticEMS.Devices.Devices.Yixis
         private int _avgTimes;
         private double integrationTimeMin;
         private double integrationTimeMax;
-        private TriggerMode _triggerMode = TriggerMode.Default;
+
+        private TriggerMode _triggerMode = TriggerMode.NormalMode;
 
         public UInt32 Port => _port;
         public UInt32 DeviceHandle => _deviceHandle;
@@ -67,34 +68,57 @@ namespace OpticEMS.Devices.Devices.Yixis
                 return false;
             }
 
-            lock (@lock)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                try
+                if (!_isInitialized || _deviceHandle == 0)
                 {
-                    return ReadData(collection, 1);
-                }
-                catch (Exception exception)
-                {
-                    Log.Error(exception, "[MD:Yixist] Error marshaling or calculating spectrum data.");
                     return false;
                 }
+
+                lock (@lock)
+                {
+                    try
+                    {
+                        return ReadData(collection, 1);
+                    }
+                    catch (Exception exception)
+                    {
+                        Log.Error(exception, "[D:Yixist] Error marshaling or calculating spectrum data.");
+                        return false;
+                    }
+                }
             }
+
+            return false;
         }
 
         public override void SetParameters(int id, float exposureMs, int scansNum, int mode)
         {
+            Log.Information($"[D:Yixist]: Setting parameters for {DeviceInfo.Name}: ExposureTime = {exposureMs}, ScansNum = {scansNum}, Mode = {mode}");
             if (_deviceHandle == 0)
             {
-                Log.Error($"[MD:Yixist]: Spectrometer {id} is not responding.");
+                Log.Error($"[D:Yixist]: Spectrometer {DeviceInfo.Name} is not responding.");
                 return;
             }
-
-            Config((ulong)exposureMs, 1, scansNum, _triggerMode);
+            _triggerMode = mode == 1 ? TriggerMode.NormalMode : TriggerMode.SoftwareTriggerMode;
+            Log.Information($"[D:Avantes]: Applying new parameters for device {DeviceInfo.Name}");
+            Config((ulong)exposureMs, scansNum, scansNum, _triggerMode);
         }
 
         public override void StopMeasurement()
         {
-            Reset();
+            Log.Information($"[D:Yixist]: Stopping measuring request for {DeviceInfo.Name}");
+            lock (@lock)
+            {
+                if (_deviceHandle != 0)
+                {
+                    Reset();
+                }
+                else
+                {
+                    Log.Error("[D:Yixist]: Device is not initialized");
+                }
+            }
         }
 
         private bool ReadData(double[] data, int avgTimes)
@@ -103,7 +127,7 @@ namespace OpticEMS.Devices.Devices.Yixis
             {
                 if (_deviceHandle == 0)
                 {
-                    Log.Error($"[MD:Yixist]: Device is not connected to  start reading data");
+                    Log.Error($"[D:Yixist]: Device is not connected to  start reading data");
                     return false;
                 }
 
@@ -130,7 +154,7 @@ namespace OpticEMS.Devices.Devices.Yixis
             }
             else
             {
-                Log.Error($"[MD:Yixist]: Device is not responding for get serial number request");
+                Log.Error($"[D:Yixist]: Device is not responding for get serial number request");
                 throw new Exception("Device is not responding for get serial number request");
             }
 
@@ -150,7 +174,7 @@ namespace OpticEMS.Devices.Devices.Yixis
             }
             else
             {
-                Log.Error($"[MD:Yixist]: Failed to activate Device");
+                Log.Error($"[D:Yixist]: Failed to activate Device");
                 throw new Exception("Failder to activate Yixist device");
             }
 
@@ -192,12 +216,6 @@ namespace OpticEMS.Devices.Devices.Yixis
 
         private bool Config(UInt64 integrateTime, int box = 0, int avg = 0, TriggerMode triggerMode = TriggerMode.NormalMode)
         {
-            if (_deviceHandle == 0)
-            {
-                Log.Error($"[MD:Yixist]: Device is failed or disconnected");
-                return false;
-            }
-
             if (integrationTimeMin == 0)
             {
                 ulong min = 0, max = 0;
@@ -257,7 +275,7 @@ namespace OpticEMS.Devices.Devices.Yixis
             var requestResult = YixistCCD.SPGetWaveLengthRange(_deviceHandle, ref min, ref max);
             if (!requestResult)
             {
-                Log.Error($"[MD:Yixist]: Failed to activate Device");
+                Log.Error($"[D:Yixist]: Failed to activate Device");
                 throw new Exception("Failder to activate Yixist device");
             }
 
@@ -280,7 +298,7 @@ namespace OpticEMS.Devices.Devices.Yixis
             }
             else
             {
-                Log.Error($"[MD:Yixist]: Failed to get device info request");
+                Log.Error($"[D:Yixist]: Failed to get device info request");
                 throw new Exception("Failder to activate Yixist device");
             }
 
