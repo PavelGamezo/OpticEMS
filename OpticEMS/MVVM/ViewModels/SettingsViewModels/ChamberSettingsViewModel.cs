@@ -12,7 +12,6 @@ using OpticEMS.Notifications.Messages;
 using OpticEMS.Services.Settings;
 using OpticEMS.Services.Spectrometers;
 using Serilog;
-using System.Collections;
 using System.Collections.ObjectModel;
 
 namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
@@ -188,7 +187,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                     }
                     else
                     {
-                        var solar = new Solar(serial);
+                        var solar = new Solar(channelId, serial);
                         device = solar.DeviceInfo;
                         device.TrimLeft = (int)item.TrimLeft;
                         device.TrimRight = (int)item.TrimRight;

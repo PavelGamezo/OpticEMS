@@ -34,12 +34,12 @@ namespace OpticEMS.Devices.Devices.Solar
             Initialize(channelId);
         }
 
-        public Solar(string serialNumber)
+        public Solar(int channelId, string serialNumber)
         {
-            InitializeBySerialNumber(serialNumber);
+            InitializeBySerialNumber(channelId, serialNumber);
         }
 
-        private void InitializeBySerialNumber(string serialNumber)
+        private void InitializeBySerialNumber(int channelId, string serialNumber)
         {
             if (_isInitialized)
             {
@@ -59,7 +59,7 @@ namespace OpticEMS.Devices.Devices.Solar
                         var p1 = new SolarCCD.TCCDUSBExtendParams();
                         SolarCCD.CCD_GetExtendParameters(_deviceId, ref p1);
                         var p = p1.nNumPixelsH * p1.nNumPixelsV;
-                        Devices = new DeviceInfo(n1, p, _deviceId, 0, DeviceType.Solar, 0, 0, 0, 0, 0, 0, 0);
+                        Devices = new DeviceInfo(n1, p, _deviceId, channelId, DeviceType.Solar, 0, 0, 0, 0, 0, 0, 0);
                         break;
                     }
                 }
@@ -250,7 +250,6 @@ namespace OpticEMS.Devices.Devices.Solar
         {
             Log.Information($"[D:Solar]: Stopping measuring request for {DeviceInfo.Name}");
             
-            Thread.Sleep(1);
             var result = SolarCCD.CCD_CameraReset(_deviceId);
 
             Log.Information($"[D:Solar]: Stopping measuring response with code {result}");

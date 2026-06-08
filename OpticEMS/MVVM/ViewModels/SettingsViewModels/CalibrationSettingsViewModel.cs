@@ -9,7 +9,6 @@ using OpticEMS.Services.Settings;
 using OpticEMS.Services.Spectrometers;
 using Serilog;
 using System.Collections.ObjectModel;
-using System.Windows.Threading;
 
 namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 {
@@ -50,13 +49,16 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
             ? "#E74C3C"
             : "#27AE60";
 
-        public CalibrationSettingsViewModel(ICalibrationService calibrationService,
+        public CalibrationSettingsViewModel(
+            ICalibrationService calibrationService,
             IWavelengthMapper wavelengthMapper,
             IDialogService dialogService,
             ISpectrometerService spectrometerService)
         {
             try
             {
+                RegisterMessages();
+
                 _calibrationService = calibrationService;
                 _wavelengthMapper = wavelengthMapper;
                 _dialogService = dialogService;
@@ -64,7 +66,6 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 
                 CalibrationSettingsChartViewModel = new CalibrationSettingsChartViewModel();
                 GetSetupSettings();
-                RegisterMessages();
 
                 CalibrationPoints.CollectionChanged += (s, e) => CalculateCalibrationCommand.NotifyCanExecuteChanged();
 
@@ -174,7 +175,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
         {
             if (CalibrationWavelength > 0 && CalibrationPixel >= 0)
             {
-                var point = new Contracts.Services.Calibration.CalibrationPoint(CalibrationPixel, CalibrationWavelength);
+                var point = new CalibrationPoint(CalibrationPixel, CalibrationWavelength);
                 CalibrationPoints.Add(point);
 
                 CalibrationPixel = 0;
@@ -223,10 +224,10 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                 HandleIncomingSpectrum(message.Intensities);
             });
 
-            WeakReferenceMessenger.Default.Register<LiveSpectrumDataMessage>(this, (recipient, message) =>
-            {
-                RefreshChannels();
-            });
+            //WeakReferenceMessenger.Default.Register<LiveSpectrumDataMessage>(this, (recipient, message) =>
+            //{
+            //    RefreshChannels();
+            //});
         }
 
         private void HandleIncomingSpectrum(double[] intensities)

@@ -45,7 +45,7 @@ namespace OpticEMS.Devices
             switch (_deviceType)
             {
                 case DeviceType.Solar:
-                    _device = new Solar(saved.Name);
+                    _device = new Solar(channelId, saved.Name);
                     break;
                 case DeviceType.Avantes:
                     _device = new Avantes();

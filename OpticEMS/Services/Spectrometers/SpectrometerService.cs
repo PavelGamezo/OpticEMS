@@ -20,7 +20,7 @@ namespace OpticEMS.Services.Spectrometers
         {
             _configProvider = configProvider;
 
-            InitializeLibrary();
+            //InitializeLibrary();
         }
 
         public void RequestSingleScan(int cameraId)
@@ -187,6 +187,6 @@ namespace OpticEMS.Services.Spectrometers
             }
         }*/
 
-        public bool IsSpectrometerInitialized() => _isInitialized;
+        //public bool IsSpectrometerInitialized() => _isInitialized;
     }
 }

@@ -8,7 +8,7 @@
 
         int GetConnectedSpectrometersCount();
 
-        bool IsSpectrometerInitialized();
+        //bool IsSpectrometerInitialized();
 
         //uint[]? GetSpectrometerData(int cameraId, float exposureMs = 5f);
     }

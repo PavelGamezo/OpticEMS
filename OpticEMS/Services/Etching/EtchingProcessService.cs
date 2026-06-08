@@ -1,6 +1,7 @@
 ﻿using OpticEMS.Contracts.Services.Etching;
 using OpticEMS.Contracts.Services.Recipe;
 using Serilog;
+using System.Diagnostics;
 
 namespace OpticEMS.Services.Etching
 {
@@ -143,8 +144,8 @@ namespace OpticEMS.Services.Etching
 
             if (hasJustViolated)
             {
-                state.ConsecutiveOut++;
                 RecordConfirmedWindowOut(state, elapsedMs);
+                state.ConsecutiveOut++;
 
                 if (state.ConsecutiveOut >= _recipe.WindowOutCount)
                 {
@@ -153,6 +154,9 @@ namespace OpticEMS.Services.Etching
                     state.ConsecutiveIn = 0;
                     state.ConsecutiveOut = 0;
                 }
+
+                state.WindowStartTime = elapsedMs;
+                state.Reference = signal;
             }
             else
             {
@@ -300,9 +304,6 @@ namespace OpticEMS.Services.Etching
             if (violated)
             {
                 anyLineViolatedThisCycle = true;
-
-                state.WindowStartTime = elapsedMs;
-                state.Reference = currentSignal;
             }
             else if (elapsedMs - state.WindowStartTime >= _recipe.DetectionWindowTime)
             {
