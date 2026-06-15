@@ -83,7 +83,6 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             
                             <local:NameControl Grid.Row="0" Margin="0,0,0,10"/>
@@ -91,10 +90,9 @@
                             <local:WavelengthControl Grid.Row="2" Margin="0,0,0,10"/>
                             <local:ProcessingModeControl Grid.Row="3" Margin="0,0,0,10"/>
                             <local:TimingParametersControl Grid.Row="4" Margin="0,0,0,10"/>
-                            <local:DetectionParametersControl Grid.Row="5" Margin="0,0,0,10"/>
-                            <local:PreprocessingParametersControl Grid.Row="6" Margin="0,0,0,10"/>
-                            <local:OveretchingParametersControl Grid.Row="7" Margin="0,0,0,10"/>
-                            <local:AnalysisParametersControl Grid.Row="8" Margin="0,0,0,10"/>
+                            <local:PreprocessingParametersControl Grid.Row="5" Margin="0,0,0,10"/>
+                            <local:OveretchingParametersControl Grid.Row="6" Margin="0,0,0,10"/>
+                            <local:AnalysisParametersControl Grid.Row="7" Margin="0,0,0,10"/>
                         </Grid>
                     </ScrollViewer>
                 </Border>

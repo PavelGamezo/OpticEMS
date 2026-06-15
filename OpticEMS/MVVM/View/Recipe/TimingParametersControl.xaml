@@ -28,7 +28,6 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <Grid.RowDefinitions>
@@ -185,84 +184,6 @@
                                FontSize="10" 
                                Foreground="#999999"
                                Margin="0,2,0,0"/>
-                </StackPanel>
-
-                <StackPanel Grid.Row="0" 
-                            Grid.Column="2" 
-                            Margin="5,0,0,0">
-
-                    <StackPanel Orientation="Horizontal">
-
-
-                        <TextBlock Text="Detection Window Time" 
-                                   FontSize="11" 
-                                   Foreground="#999999"/>
-
-                        <Border Margin="6,0,0,0" 
-                                Width="14" 
-                                Height="14" 
-                                CornerRadius="7" 
-                                Background="#444444" 
-                                Cursor="Help"
-                                VerticalAlignment="Center"
-                                ToolTipService.InitialShowDelay="100">
-
-                            <TextBlock Text="?" 
-                                       FontSize="10" 
-                                       FontWeight="Bold"
-                                       Foreground="#AAAAAA" 
-                                       HorizontalAlignment="Center" 
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,0,1"/>
-
-                            <Border.ToolTip>
-
-                                <ToolTip Background="#252526" 
-                                         Foreground="White" 
-                                         BorderBrush="#454545"
-                                         Padding="10"
-                                         HasDropShadow="True">
-
-                                    <StackPanel Width="200">
-
-                                        <TextBlock Text="Detection Window Time / Cycle Time" 
-                                                   FontWeight="Bold" 
-                                                   Foreground="White" 
-                                                   Margin="0,0,0,5"/>
-
-                                        <Image Source="pack://application:,,,/Common/Images/splash.png"
-                                               Height="108"
-                                               Width="192"
-                                               Stretch="Uniform" 
-                                               Margin="0,5"
-                                               RenderOptions.BitmapScalingMode="HighQuality"/>
-
-                                        <TextBlock Text="This parameter sets the heartbeat of the detection algorithm. Minimum time (in milliseconds) during which the signal must remain within the detection window to be considered stable. The result must remain stable for {WindowOutCount} consecutive cycles to trigger the process is in stable or to stop it." 
-                                                   Foreground="#CCCCCC" 
-                                                   FontSize="11" 
-                                                   TextWrapping="Wrap"/>
-                                    </StackPanel>
-
-                                </ToolTip>
-
-                            </Border.ToolTip>
-
-                        </Border>
-
-                    </StackPanel>
-
-                    <TextBox Text="{Binding SelectedRecipe.DetectionWindowTime}" 
-                             Background="#3E3E40"
-                             BorderThickness="0"
-                             Foreground="White"
-                             Padding="8"
-                             Margin="0,5,0,0"/>
-
-                    <TextBlock Text="ms" 
-                               FontSize="10" 
-                               Foreground="#999999"
-                               Margin="0,2,0,0"/>
-
                 </StackPanel>
 
             </Grid>

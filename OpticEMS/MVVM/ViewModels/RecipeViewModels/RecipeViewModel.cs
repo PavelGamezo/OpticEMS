@@ -107,6 +107,48 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             }
         }
 
+        public int CommonWindowIn
+        {
+            get => WavelengthItems.FirstOrDefault()?.WindowInCount ?? 0;
+            set
+            {
+                foreach (var item in WavelengthItems)
+                {
+                    item.WindowInCount = value;
+                }
+
+                OnPropertyChanged(nameof(CommonWindowIn));
+            }
+        }
+
+        public int CommonWindowOut
+        {
+            get => WavelengthItems.FirstOrDefault()?.WindowOutCount ?? 0;
+            set
+            {
+                foreach (var item in WavelengthItems)
+                {
+                    item.WindowOutCount = value;
+                }
+
+                OnPropertyChanged(nameof(CommonWindowOut));
+            }
+        }
+
+        public int CommonWindowTime
+        {
+            get => WavelengthItems.FirstOrDefault()?.DetectionWindowTime ?? 0;
+            set
+            {
+                foreach (var item in WavelengthItems)
+                {
+                    item.DetectionWindowTime = value;
+                }
+
+                OnPropertyChanged(nameof(CommonWindowTime));
+            }
+        }
+
         public RecipeViewModel(
             IRecipeRepository recipeRepository,
             IDialogService dialogService,
@@ -301,7 +343,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         [RelayCommand(CanExecute = nameof(HasSelectedRecipe))]
         private void AddWavelength()
         {
-            var newItem = new WavelengthMonitorItem($"CH{WavelengthItems.Count}", 500.0, Colors.Cyan, 0);
+            var newItem = new WavelengthMonitorItem(500.0, Colors.Cyan, 0, 1000, 1, 1);
             newItem.PropertyChanged += OnItemPropertyChanged;
 
             WavelengthItems.Add(newItem);
@@ -347,7 +389,9 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
             SelectedRecipe.Wavelengths = WavelengthItems.Select(x => x.Wavelength).ToList();
             SelectedRecipe.WavelengthColors = WavelengthItems.Select(x => x.Color).ToList();
-            SelectedRecipe.WavelengthNames = WavelengthItems.Select(x => x.Name).ToList();
+            SelectedRecipe.DetectionWindowTimes = WavelengthItems.Select(x => x.DetectionWindowTime).ToList();
+            SelectedRecipe.WindowInCounts = WavelengthItems.Select(x => x.WindowInCount).ToList();
+            SelectedRecipe.WindowOutCounts = WavelengthItems.Select(x => x.WindowOutCount).ToList();
             SelectedRecipe.DetectionWindowHighs = WavelengthItems.Select(x => x.SignalHigh).ToList();
         }
 
@@ -375,13 +419,23 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                                 ? SelectedRecipe.WavelengthColors[i]
                                 : Colors.White;
 
-                    var high = SelectedRecipe.DetectionWindowHighs.Count > i ? SelectedRecipe.DetectionWindowHighs[i] : 0;
+                    var high = SelectedRecipe.DetectionWindowHighs.Count > i 
+                        ? SelectedRecipe.DetectionWindowHighs[i] 
+                        : 0;
 
-                    var name = SelectedRecipe.WavelengthNames.Count > i
-                               ? SelectedRecipe.WavelengthNames[i]
-                               : $"CH{i}";
+                    var windowIn = SelectedRecipe.WindowInCounts.Count > i 
+                        ? SelectedRecipe.WindowInCounts[i] 
+                        : 0;
 
-                    var newItem = new WavelengthMonitorItem(name, SelectedRecipe.Wavelengths[i], color, high);
+                    var windowOut = SelectedRecipe.WindowOutCounts.Count > i 
+                        ? SelectedRecipe.WindowOutCounts[i] 
+                        : 0;
+
+                    var windowTime = SelectedRecipe.DetectionWindowTimes.Count > i 
+                        ? SelectedRecipe.DetectionWindowTimes[i] 
+                        : 0;
+
+                    var newItem = new WavelengthMonitorItem(SelectedRecipe.Wavelengths[i], color, high, windowTime, windowIn, windowOut);
 
                     newItem.PropertyChanged += OnItemPropertyChanged;
                     WavelengthItems.Add(newItem);
