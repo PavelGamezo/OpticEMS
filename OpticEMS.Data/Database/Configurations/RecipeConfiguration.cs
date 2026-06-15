@@ -43,6 +43,21 @@ namespace OpticEMS.Data.Database.Configurations
                    .HasConversion(
                        value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
                        value => JsonSerializer.Deserialize<List<double>>(value) ?? new());
+
+            builder.Property(r => r.WindowInCounts)
+                   .HasConversion(
+                       value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
+                       value => JsonSerializer.Deserialize<List<int>>(value) ?? new());
+
+            builder.Property(r => r.WindowOutCounts)
+                   .HasConversion(
+                       value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
+                       value => JsonSerializer.Deserialize<List<int>>(value) ?? new());
+
+            builder.Property(r => r.DetectionWindowTimes)
+                   .HasConversion(
+                       value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
+                       value => JsonSerializer.Deserialize<List<int>>(value) ?? new());
         }
     }
 }

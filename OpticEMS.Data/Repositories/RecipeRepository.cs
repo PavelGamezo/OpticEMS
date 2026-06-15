@@ -7,9 +7,9 @@ namespace OpticEMS.Data.Repositories
 {
     public class RecipeRepository : IRecipeRepository
     {
-        private readonly AppDbContext _context;
+        private readonly RecipeDbContext _context;
 
-        public RecipeRepository(AppDbContext context)
+        public RecipeRepository(RecipeDbContext context)
         {
             _context = context;
         }

@@ -1,25 +1,25 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OpticEMS.Contracts.Services.Database;
+using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Data.Database.Configurations;
 
 namespace OpticEMS.Data.Database.Context
 {
-    public class AppDbContext : DbContext
+    public class RecipeDbContext : DbContext
     {
-        public DbSet<SpectralLine> SpectralLines { get; set; }
+        public DbSet<Recipe> Recipes { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "optic_ems_lines.db");
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "optic_ems_recipes.db");
 
             optionsBuilder.UseSqlite($"Data Source={path}");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            var spectralLineConfiguration = new SpectralLineConfiguration();
+            var recipeConfiguration = new RecipeConfiguration();
 
-            modelBuilder.ApplyConfiguration(spectralLineConfiguration);
+            modelBuilder.ApplyConfiguration(recipeConfiguration);
 
             base.OnModelCreating(modelBuilder);
         }

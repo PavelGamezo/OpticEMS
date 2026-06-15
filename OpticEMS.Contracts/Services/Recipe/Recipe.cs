@@ -20,8 +20,11 @@ namespace OpticEMS.Contracts.Services.Recipe
         public List<double> Wavelengths { get; set; } = new();
         public List<Color> WavelengthColors { get; set; } = new();
 
+        public List<int> DetectionWindowTimes { get; set; } = new();
+        public List<int> WindowInCounts { get; set; } = new();
+        public List<int> WindowOutCounts { get; set; } = new();
         public List<double> DetectionWindowHighs { get; set; } = new();
-        public int DetectionWindowTime { get; set; }
+        //public int DetectionWindowTime { get; set; }
 
         public float MagneticFieldPeriodMs { get; set; }
         public int FieldPeriodsToAverage { get; set; }
@@ -29,8 +32,8 @@ namespace OpticEMS.Contracts.Services.Recipe
         public bool DerivativeEnabled { get; set; }
         public int DerivativePoints { get; set; } = 1;
 
-        public int WindowInCount { get; set; } = 1;
-        public int WindowOutCount { get; set; } = 1;
+        //public int WindowInCount { get; set; } = 1;
+        //public int WindowOutCount { get; set; } = 1;
 
         public int InitialDelay { get; set; }
         public int MaxEndpointTime { get; set; }

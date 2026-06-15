@@ -1,7 +1,6 @@
 ﻿using OpticEMS.Contracts.Services.Etching;
 using OpticEMS.Contracts.Services.Recipe;
 using Serilog;
-using System.Diagnostics;
 
 namespace OpticEMS.Services.Etching
 {
@@ -147,7 +146,7 @@ namespace OpticEMS.Services.Etching
                 RecordConfirmedWindowOut(state, elapsedMs);
                 state.ConsecutiveOut++;
 
-                if (state.ConsecutiveOut >= _recipe.WindowOutCount)
+                if (state.ConsecutiveOut >= state.WindowOutCount)
                 {
                     Log.Information("[PROCESS]: \"WindowOut\" -> \"WindowIn\" at {ElapsedMs}", elapsedMs);
                     state.ProcessState = ProcessState.WindowIn;
@@ -160,7 +159,7 @@ namespace OpticEMS.Services.Etching
             }
             else
             {
-                if (elapsedMs - state.WindowStartTime >= _recipe.DetectionWindowTime)
+                if (elapsedMs - state.WindowStartTime >= state.DetectionWindowTime)
                 {
                     if (state.ConsecutiveOut > 0)
                     {
@@ -188,7 +187,7 @@ namespace OpticEMS.Services.Etching
                     state.ConsecutiveIn++;
                 }
 
-                if (state.ConsecutiveIn >= _recipe.WindowInCount)
+                if (state.ConsecutiveIn >= state.WindowInCount)
                 {
                     state.HasReachedWindowIn = true;
                     state.ProcessState = ProcessState.Overetch;
@@ -250,7 +249,7 @@ namespace OpticEMS.Services.Etching
                 return true;
             }
 
-            if (elapsedMs - state.WindowStartTime >= _recipe.DetectionWindowTime)
+            if (elapsedMs - state.WindowStartTime >= state.DetectionWindowTime)
             {
                 return true;
             }
@@ -270,7 +269,7 @@ namespace OpticEMS.Services.Etching
                 return;
             }
 
-            if (elapsedMs - state.WindowStartTime >= _recipe.DetectionWindowTime)
+            if (elapsedMs - state.WindowStartTime >= state.DetectionWindowTime)
             {
                 state.WindowStartTime = elapsedMs;
                 state.Reference = signal;
@@ -305,7 +304,7 @@ namespace OpticEMS.Services.Etching
             {
                 anyLineViolatedThisCycle = true;
             }
-            else if (elapsedMs - state.WindowStartTime >= _recipe.DetectionWindowTime)
+            else if (elapsedMs - state.WindowStartTime >= state.DetectionWindowTime)
             {
                 state.WindowStartTime = elapsedMs;
                 state.Reference = currentSignal;
@@ -343,7 +342,12 @@ namespace OpticEMS.Services.Etching
                 {
                     Index = i,
                     ProcessState = isMonitoringDisabled ? ProcessState.Overetch : ProcessState.WindowOut,
+                    Reference = startIntensities[i],
                     HasReachedWindowIn = isMonitoringDisabled,
+
+                    DetectionWindowTime = _recipe.DetectionWindowTimes[i],
+                    WindowInCount = _recipe.WindowInCounts[i],
+                    WindowOutCount = _recipe.WindowOutCounts[i]
                 };
 
                 WavelengthStates.Add(state);
@@ -375,7 +379,7 @@ namespace OpticEMS.Services.Etching
             {
                 WavelengthIndex = state.Index,
                 StartTime = state.WindowStartTime / 1000.0,
-                EndTime = (state.WindowStartTime + _recipe.DetectionWindowTime) / 1000.0,
+                EndTime = (state.WindowStartTime + state.DetectionWindowTime) / 1000.0,
                 Top = state.Reference + half,
                 Bottom = state.Reference - half,
                 Reference = state.Reference
@@ -392,7 +396,7 @@ namespace OpticEMS.Services.Etching
             {
                 WavelengthIndex = state.Index,
                 StartTime = state.WindowStartTime / 1000.0,
-                EndTime = (state.WindowStartTime + _recipe.DetectionWindowTime) / 1000.0,
+                EndTime = (state.WindowStartTime + state.DetectionWindowTime) / 1000.0,
                 Top = state.Reference + half,
                 Bottom = state.Reference - half,
                 Reference = state.Reference
@@ -416,7 +420,7 @@ namespace OpticEMS.Services.Etching
                 {
                     WavelengthIndex = state.Index,
                     StartTime = state.WindowStartTime / 1000.0,
-                    EndTime = (state.WindowStartTime + _recipe.DetectionWindowTime) / 1000.0,
+                    EndTime = (state.WindowStartTime + state.DetectionWindowTime) / 1000.0,
                     Top = state.Reference + half,
                     Bottom = state.Reference - half,
                     Reference = state.Reference

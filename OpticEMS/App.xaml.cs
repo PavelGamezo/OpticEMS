@@ -1,8 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using OpticEMS.Contracts.Factories;
-using OpticEMS.Contracts.Preprocessing;
 using OpticEMS.Contracts.Services.Calibration;
 using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Dialog;
@@ -78,6 +76,7 @@ namespace OpticEMS
 
             // Databases
             services.AddScoped<AppDbContext>();
+            services.AddScoped<RecipeDbContext>();
 
             // Factories
             services.AddScoped<IChannelViewModelFactory, ChannelViewModelFactory>();
@@ -219,12 +218,21 @@ namespace OpticEMS
 
                     using (var db = new AppDbContext())
                     {
-                        Log.Information("[APPLICATION]: SQLite creating...");
+                        Log.Information("[APPLICATION]: SQLite Spectral lines DB creating...");
 
                         await db.Database.EnsureCreatedAsync();
                         await SpectralLinesSeeder.SeedFromCsvAsync(db);
 
-                        Log.Information("[APPLICATION]: SQLite created...");
+                        Log.Information("[APPLICATION]: SQLite Spectral lines DB created...");
+                    }
+
+                    using (var db = new RecipeDbContext())
+                    {
+                        Log.Information("[APPLICATION]: SQLite Recipe DB creating...");
+
+                        await db.Database.EnsureCreatedAsync();
+
+                        Log.Information("[APPLICATION]: SQLite Recipe DB created...");
                     }
 
                     Log.Information("[APPLICATION]: Creating MainWindow view...");
