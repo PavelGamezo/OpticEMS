@@ -29,6 +29,7 @@
 
                 <Button Content="+ Add"
                         Style="{StaticResource ActionButtonStyle}"
+                        Width="80"
                         Foreground="White"
                         Background="#272727"
                         Command="{Binding AddWavelengthCommand}" 

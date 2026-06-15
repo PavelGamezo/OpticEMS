@@ -92,7 +92,7 @@ namespace OpticEMS.Devices.Devices.Yixis
             return false;
         }
 
-        public override void SetParameters(int id, float exposureMs, int scansNum, int mode)
+        public override void SetParameters(int id, float exposureMs, int scansNum, float equalizer, int mode)
         {
             Log.Information($"[D:Yixist]: Setting parameters for {DeviceInfo.Name}: ExposureTime = {exposureMs}, ScansNum = {scansNum}, Mode = {mode}");
             if (_deviceHandle == 0)

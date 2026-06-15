@@ -1,9 +1,6 @@
-﻿using OpticEMS.Contracts.Preprocessing;
-using Serilog;
-
-namespace OpticEMS.Preprocessing.Operations.Averaging
+﻿namespace OpticEMS.Preprocessing.Operations.Averaging
 {
-    public class MagneticFieldSmoother : INodeProcessor
+    public class MagneticFieldSmoother
     {
         private readonly double _targetIntervalMs;
         private readonly Queue<(double Signal, double Timestamp)> _buffer = new();
@@ -37,18 +34,28 @@ namespace OpticEMS.Preprocessing.Operations.Averaging
             return totalWeight > 0 ? (accumulatedValue / totalWeight) : inputSignal;
         }
 
-        public double Process(double[] inputs, double currentTimeMs)
+        public double[] ComputeAvg(double[] inputSignals, double elapsedMs)
         {
-            if (inputs == null || inputs.Length == 0 || inputs[0] == null)
+            if (inputSignals == null || inputSignals.Length == 0)
             {
-                return 0;
+                return Array.Empty<double>();
             }
 
-            double currentSingleValue = inputs[0];
+            var smoothed = new double[inputSignals.Length];
 
-            double smoothedValue = ComputeAvg(currentSingleValue, currentTimeMs);
+            for (int i = 0; i < inputSignals.Length; i++)
+            {
+                smoothed[i] = ComputeAvg(inputSignals[i], elapsedMs);
+            }
 
-            return smoothedValue;
+            return smoothed;
+        }
+
+        public double[] Process(double[] inputs, double currentTimeMs)
+        {
+            var smoothedValues = ComputeAvg(inputs, currentTimeMs);
+
+            return smoothedValues;
         }
 
         public void Reset() => _buffer.Clear();

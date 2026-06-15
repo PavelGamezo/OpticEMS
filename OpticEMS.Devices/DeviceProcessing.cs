@@ -11,23 +11,16 @@ namespace OpticEMS.Devices
     public class DeviceProcessing : IDisposable
     {
         private ISettingsProvider _configProvider;
-
         private Device? _device;
-
         private DeviceType _deviceType;
-
         private bool _scanning;
-
         private bool _disposed = false;
 
         public int ChannelId { get; private set; }
-
         public float ExposureTime { get; private set; }
-
-        public int ScanNum { get; private set; }
-
+        public int ScansNum { get; private set; }
+        public float Equalizer { get; private set; }
         public double[] Wavelengths { get; set; }
-
         public double[] Intensities { get; set; }
 
         public Device Device => _device;
@@ -95,13 +88,14 @@ namespace OpticEMS.Devices
             return true;
         }
 
-        public void StartContinueScan(float exposureMs, int scanNum, CancellationToken cancellationToken)
+        public void StartContinueScan(float exposureMs, int scanNum, float equalizer, CancellationToken cancellationToken)
         {
             ExposureTime = exposureMs;
-            ScanNum = scanNum;
+            ScansNum = scanNum;
+            Equalizer = equalizer;
             var deviceId = _device.DeviceInfo.DeviceId;
 
-            SetParameters(deviceId, ExposureTime, ScanNum, 1);
+            SetParameters(deviceId, ExposureTime, ScansNum, Equalizer, 1);
             InitWavelengths();
 
             _scanning = true;
@@ -136,13 +130,14 @@ namespace OpticEMS.Devices
             }
         }
 
-        public void StartSingleScan(int id, float exposureMs, int scanNum, CancellationToken cancellationToken)
+        public void StartSingleScan(int id, float exposureMs, int scanNum, float equalizer, CancellationToken cancellationToken)
         {
             _scanning = true;
             ExposureTime = exposureMs;
-            ScanNum = scanNum;
+            ScansNum = scanNum;
+            Equalizer = Equalizer;
 
-            SetParameters(id, ExposureTime, ScanNum, 0);
+            SetParameters(id, ExposureTime, ScansNum, Equalizer, 0);
             InitWavelengths();
 
             try
@@ -171,7 +166,7 @@ namespace OpticEMS.Devices
             WeakReferenceMessenger.Default.Send(new CalibrationChartUpdatedMessage(id, Intensities));
         }
 
-        private void SetParameters(int id, float exposureMs, int scansNum, int mode)
+        private void SetParameters(int id, float exposureMs, int scansNum, float equalizer, int mode)
         {
             Log.Information($"[MEASURING]: Setting device parameters with ID {id}: ExposureTime = {exposureMs}, ScansNum = {scansNum}, Mode = {mode}");
             try
@@ -181,7 +176,7 @@ namespace OpticEMS.Devices
                     throw new Exception("Can't set device parameters because of device init error.");
                 }
 
-                _device?.SetParameters(id, exposureMs, scansNum, mode);
+                _device?.SetParameters(id, exposureMs, scansNum, equalizer, mode);
             }
             catch (Exception exception)
             {

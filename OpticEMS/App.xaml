@@ -248,7 +248,6 @@
                 <Setter Property="Foreground" Value="White"/>
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="Height" Value="25"/>
-                <Setter Property="Width" Value="80"/>
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Margin" Value="5"/>
@@ -263,65 +262,33 @@
 
                                 <Border.Effect>
                                     <DropShadowEffect x:Name="shadow" 
-                                          BlurRadius="6" 
-                                          ShadowDepth="2" 
-                                          Direction="270" 
-                                          Opacity="0.25" 
-                                          Color="Black"/>
+                                                      BlurRadius="6" 
+                                                      ShadowDepth="2" 
+                                                      Direction="270" 
+                                                      Opacity="0.25" 
+                                                      Color="Black"/>
                                 </Border.Effect>
 
                                 <ContentPresenter x:Name="contentPresenter"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              RecognizesAccessKey="True"
-                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True"
+                                                  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
                             </Border>
 
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Trigger.EnterActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Duration="0:0:0.2"
-                                                             Storyboard.TargetName="border"
-                                                             Storyboard.TargetProperty="Opacity"
-                                                             To="0.8"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.EnterActions>
-                                    <Trigger.ExitActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Duration="0:0:0.3"
-                                                             Storyboard.TargetName="border"
-                                                             Storyboard.TargetProperty="Opacity"
-                                                             To="1"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.ExitActions>
+                                    <Setter TargetName="border" Property="Opacity" Value="0.8"/>
                                 </Trigger>
+
                                 <Trigger Property="IsPressed" Value="True">
-                                    <Trigger.EnterActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Duration="0:0:0.1"
-                                                             Storyboard.TargetName="border"
-                                                             Storyboard.TargetProperty="Opacity"
-                                                             To="0.5"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.EnterActions>
-                                    <Trigger.ExitActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Duration="0:0:0.2"
-                                                             Storyboard.TargetName="border"
-                                                             Storyboard.TargetProperty="Opacity"
-                                                             To="0.8"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.ExitActions>
+                                    <Setter TargetName="border" Property="Opacity" Value="0.5"/>
+                                </Trigger>
+
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.35"/>
+                                    <Setter Property="Foreground" Value="#666666"/>
+                                    <Setter Property="Cursor" Value="Arrow"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>

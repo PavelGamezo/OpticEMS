@@ -2,12 +2,10 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using OpticEMS.Common.Helpers.OxyPlot;
-using OpticEMS.Contracts.Preprocessing;
 using OpticEMS.Contracts.Services.Calibration;
 using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.Contracts.Services.Etching;
-using OpticEMS.Contracts.Services.Export;
 using OpticEMS.Contracts.Services.Mapper;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
@@ -74,10 +72,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             IDialogService dialogService,
             IEtchingProcessService endpointService,
             ISettingsProvider configureProvider,
-            IExportManager exportManager,
             ICalibrationService calibrationService,
-            ISpectralLineRepository spectralLineRepository,
-            IGraphCompiler graphCompiler)
+            ISpectralLineRepository spectralLineRepository)
         {
             _dialogService = dialogService;
             _orchestrator = new EtchingOrchestrator(
@@ -86,9 +82,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 recipeRepository,
                 calibrationService,
                 wavelengthMapper,
-                configureProvider,
-                exportManager,
-                graphCompiler);
+                configureProvider);
 
             ChannelId = id;
             ChannelName = $"Chamber {id + 1}";
@@ -100,7 +94,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             SpectralLinesCatalogViewModel = new SpectralLinesCatalogViewModel(
                 ChannelId, spectralLineRepository, dialogService);
             ChannelDetailsViewModel = new ChannelDetailsViewModel(this);
-            SpectrometerControlViewModel = new SpectrometerControlViewModel(_orchestrator, 1, 1);
+            SpectrometerControlViewModel = new SpectrometerControlViewModel(
+                ChannelId, _orchestrator, configureProvider);
 
             RegisterMessages();
 
@@ -300,7 +295,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
             WeakReferenceMessenger.Default.Register<ApplicationShutdownMessage>(this, (recipient, message) =>
             {
-                _orchestrator.Dispose();
+                Dispose();
             });
         }
 
@@ -467,8 +462,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         #region disposing
 
-
-
         public void Dispose()
         {
             if (_isDisposed)
@@ -482,7 +475,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
             if (_orchestrator is not null &&
                 ProcessChartViewModel is not null &&
-                SpectrumChartViewModel is not null)
+                SpectrumChartViewModel is not null &&
+                SpectrometerControlViewModel is not null)
             {
                 SpectrumChartViewModel.Dispose();
                 ProcessChartViewModel.Dispose();

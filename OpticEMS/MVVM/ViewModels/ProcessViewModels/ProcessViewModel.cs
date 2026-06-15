@@ -58,9 +58,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 targetChannel.ApplyRecipe(recipe);
             }
-            else
-            {
-            }
         }
 
         private void RegistedMessages()

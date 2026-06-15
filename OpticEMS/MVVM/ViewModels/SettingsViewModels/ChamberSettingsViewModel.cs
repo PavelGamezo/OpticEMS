@@ -160,6 +160,10 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                             344.5635979788548,
                             0);
 
+                        device.ExposureTime = 1;
+                        device.ScansNum = 1;
+                        device.Equalizer = 1;
+
                         devices.Add(device);
                     }
                     else if (item.DeviceType == DeviceType.Avantes)
@@ -170,6 +174,9 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                         device.TrimRight = (int)item.TrimRight;
                         device.DeviceType = DeviceType.Avantes;
                         device.ChannelId = channelId;
+                        device.ExposureTime = 1;
+                        device.ScansNum = 1;
+                        device.Equalizer = 1;
 
                         devices.Add(device);
                     }
@@ -182,6 +189,9 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                         device.TrimRight = (int)item.TrimRight;
                         device.DeviceType = DeviceType.Yixist;
                         device.ChannelId = channelId;
+                        device.ExposureTime = 1;
+                        device.ScansNum = 1;
+                        device.Equalizer = 1;
 
                         devices.Add(device);
                     }
@@ -193,6 +203,9 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                         device.TrimRight = (int)item.TrimRight;
                         device.DeviceType = DeviceType.Solar;
                         device.ChannelId = channelId;
+                        device.ExposureTime = 1;
+                        device.ScansNum = 1;
+                        device.Equalizer = 1;
 
                         devices.Add(device);
                     }

@@ -192,7 +192,7 @@ namespace OpticEMS.Devices.Devices.Solar
             }
         }
 
-        public override void SetParameters(int id, float exposureMs, int scansNum, int mode)
+        public override void SetParameters(int id, float exposureMs, int scansNum, float equalizer, int mode)
         {
             SolarCCD.CCD_SetParameter(id, SolarCCD.PRM_EXPTIME, exposureMs);
             var prms = new SolarCCD.TCCDUSBExtendParams();

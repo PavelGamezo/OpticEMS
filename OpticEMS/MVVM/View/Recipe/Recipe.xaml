@@ -26,7 +26,9 @@
         <Border Grid.Row="0" 
                 Background="#1a1a1a"
                 Padding="25,5,5,5">
+            
             <Grid>
+                
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -43,12 +45,15 @@
                 <StackPanel Grid.Column="2" 
                             Orientation="Horizontal" 
                             HorizontalAlignment="Right">
+
                     <Button Content="New recipe" Width="120" Height="35" Foreground="White" Background="#222120" Style="{StaticResource ActionButtonStyle}" Command="{Binding NewRecipeCommand}"/>
                     <Button Content="Rename" Width="120" Height="35" Foreground="White" Background="#222120" Style="{StaticResource ActionButtonStyle}" Command="{Binding RenameRecipeCommand}"/>
                     <Button Content="Delete" Width="120" Height="35" Foreground="White" Background="#222120" Style="{StaticResource ActionButtonStyle}" Command="{Binding DeleteRecipeCommand}"/>
                     <Button Content="Apply" Width="120" Height="35" Foreground="White" Background="#222120" Style="{StaticResource ActionButtonStyle}" Command="{Binding ApplySelectedRecipeCommand}"/>
                     <Button Content="Save" Width="120" Height="35" Foreground="White" Background="#007ACC" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveRecipeCommand}"/>
+
                 </StackPanel>
+                
             </Grid>
         </Border>
 
@@ -61,22 +66,6 @@
             <local:RecipeFileManager Grid.Column="0"/>
 
             <Grid Grid.Column="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="3*" MinWidth="400"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*" MinWidth="400"/>
-                </Grid.ColumnDefinitions>
-
-                <Border Grid.Column="0" Background="#1a1a1a">
-                    <local:RecipeConstructor DataContext="{Binding ConstructorContext}"/>
-                </Border>
-
-                <GridSplitter Grid.Column="1" 
-                              Width="4" 
-                              HorizontalAlignment="Center" 
-                              VerticalAlignment="Stretch" 
-                              Background="#2d2d2d"
-                              ShowsPreview="True"/>
 
                 <Border Grid.Column="2" Background="#1f1f1f" BorderBrush="#2d2d2d" BorderThickness="0,0,1,0">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -93,15 +82,19 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-
+                            
                             <local:NameControl Grid.Row="0" Margin="0,0,0,10"/>
                             <local:SetupControl Grid.Row="1" Margin="0,0,0,10"/>
                             <local:WavelengthControl Grid.Row="2" Margin="0,0,0,10"/>
-                            <local:TimingParametersControl Grid.Row="3" Margin="0,0,0,10"/>
-                            <local:DetectionParametersControl Grid.Row="4" Margin="0,0,0,10"/>
-                            <local:OveretchingParametersControl Grid.Row="5" Margin="0,0,0,10"/>
-                            <local:AnalysisParametersControl Grid.Row="6" Margin="0,0,0,10"/>
+                            <local:ProcessingModeControl Grid.Row="3" Margin="0,0,0,10"/>
+                            <local:TimingParametersControl Grid.Row="4" Margin="0,0,0,10"/>
+                            <local:DetectionParametersControl Grid.Row="5" Margin="0,0,0,10"/>
+                            <local:PreprocessingParametersControl Grid.Row="6" Margin="0,0,0,10"/>
+                            <local:OveretchingParametersControl Grid.Row="7" Margin="0,0,0,10"/>
+                            <local:AnalysisParametersControl Grid.Row="8" Margin="0,0,0,10"/>
                         </Grid>
                     </ScrollViewer>
                 </Border>

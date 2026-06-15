@@ -3,20 +3,13 @@
     public enum ProcessingMode
     {
         SingleChannel = 0,
-        DualChannel = 1,
-        MultiChannel = 2
+        DualChannel = 1
     }
 
     public enum DualChannelSubMode
     {
         Simultaneous = 0,
         Ratio = 1
-    }
-
-    public enum MultiChannelSubMode
-    {
-        Simultaneous = 0,
-        Combined = 1
     }
 }
 

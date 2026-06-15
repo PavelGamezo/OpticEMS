@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Dialog;
+using OpticEMS.Contracts.Services.ProcessingModes;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.MVVM.Models;
 using OpticEMS.Services.Validators;
@@ -17,7 +18,6 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
     {
         private readonly IRecipeRepository _recipeRepository;
         private readonly IDialogService _dialogService;
-        private readonly IExpressionValidator _validator;
 
         [ObservableProperty]
         private Color _currentWavelengthColor;
@@ -31,9 +31,6 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
         [ObservableProperty]
         private ObservableCollection<Recipe> _recipeFiles = new();
-
-        [ObservableProperty]
-        private RecipeConstructorViewModel _constructorContext = new();
 
         [ObservableProperty]
         private int _recipeCount;
@@ -57,13 +54,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         private string _combinedExpression = string.Empty;
 
         [ObservableProperty]
-        private bool _isCombinedMode;
-
-        [ObservableProperty]
         private bool _isSingleWindowMode;
-
-        [ObservableProperty]
-        private bool _isCombinedExpressionValid;
 
         [ObservableProperty]
         private string _combinedExpressionValidationMessage;
@@ -72,14 +63,22 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         private ObservableCollection<WavelengthMonitorItem> _wavelengthItems = new();
 
         [ObservableProperty]
-        private bool _isDualChannelMode;
+        private ProcessingMode _processingMode;
 
         [ObservableProperty]
-        private bool _isMultiChannelMode;
+        private DualChannelSubMode _dualSubMode;
+
+        [ObservableProperty]
+        private bool _isDualChannelMode;
 
         private bool _isSuppressingSync = false;
 
+        public List<ProcessingMode> AvailableProcessingModes { get; private set; } = new();
+
         public ObservableCollection<string> AvailableChannelNames { get; } = new();
+
+        public List<DualChannelSubMode> DualSubModes { get; } =
+            Enum.GetValues(typeof(DualChannelSubMode)).Cast<DualChannelSubMode>().ToList();
 
         public ICollectionView RecipesView { get; private set; }
         public int SelectedWavelengthIndex { get; set; }
@@ -117,11 +116,10 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             {
                 _recipeRepository = recipeRepository;
                 _dialogService = dialogService;
-                _validator = validator;
+
+                SetupWavelengthItemsListener();
 
                 _ = LoadFilesAsync();
-                WavelengthItems.CollectionChanged += SynchronizeNodesWithWavelengths;
-                SetupWavelengthItemsListener();
             }
             catch (Exception exception)
             {
@@ -129,38 +127,6 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             }
         }
 
-
-        private void SynchronizeNodesWithWavelengths(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            if (_isSuppressingSync) return;
-
-            ConstructorContext.Nodes.Clear();
-
-            ConstructorContext.Connections.Clear();
-
-            double startX = 100;
-            double startY = 100;
-
-            foreach (var item in WavelengthItems)
-            {
-                var spectralNode = new NodeViewModel
-                {
-                    Title = $"{item.Name} ({item.Wavelength:F2} nm)",
-                    Location = new System.Windows.Point(startX, startY)
-                };
-
-                spectralNode.OutputPins.Add(new PinViewModel(spectralNode, "Intensity"));
-
-                ConstructorContext.Nodes.Add(spectralNode);
-
-                startY += 120;
-                if (startY > 500)
-                {
-                    startY = 100;
-                    startX += 250;
-                }
-            }
-        }
         private void SetupWavelengthItemsListener()
         {
             WavelengthItems.CollectionChanged += (_, _) => UpdateModesAfterWavelengthChange();
@@ -180,6 +146,19 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                 return;
             }
 
+            SelectedRecipe.AutoConfigureMode();
+
+            UpdateAvailableModes();
+
+            if (!AvailableProcessingModes.Contains(ProcessingMode))
+            {
+                ProcessingMode = AvailableProcessingModes.FirstOrDefault(ProcessingMode.SingleChannel);
+            }
+
+            SelectedRecipe.ProcessingMode = ProcessingMode;
+            SelectedRecipe.DualSubMode = DualSubMode;
+
+            UpdateModeVisibility();
             UpdateAvailableChannelNames();
         }
 
@@ -193,6 +172,37 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                     AvailableChannelNames.Add(name);
                 }
             }
+        }
+
+        private void UpdateAvailableModes()
+        {
+            AvailableProcessingModes.Clear();
+
+            if (SelectedRecipe == null)
+            {
+                return;
+            }
+
+            int count = SelectedRecipe.Wavelengths.Count;
+
+            if (count <= 1)
+            {
+                AvailableProcessingModes.Add(ProcessingMode.SingleChannel);
+                ProcessingMode = ProcessingMode.SingleChannel;
+            }
+            else if (count >= 2)
+            {
+                AvailableProcessingModes.Add(ProcessingMode.DualChannel);
+                if (ProcessingMode != ProcessingMode.DualChannel)
+                {
+                    ProcessingMode = ProcessingMode.DualChannel;
+                }
+            }
+        }
+
+        private void UpdateModeVisibility()
+        {
+            IsDualChannelMode = ProcessingMode == ProcessingMode.DualChannel;
         }
 
         [RelayCommand(CanExecute = nameof(HasSelectedRecipe))]
@@ -295,14 +305,12 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             newItem.PropertyChanged += OnItemPropertyChanged;
 
             WavelengthItems.Add(newItem);
-            UpdateModesAfterWavelengthChange();
         }
 
         [RelayCommand]
         private void RemoveWavelength(WavelengthMonitorItem item)
         {
             WavelengthItems.Remove(item);
-            UpdateModesAfterWavelengthChange();
         }
 
         [RelayCommand(CanExecute = nameof(HasSelectedRecipe))]
@@ -312,6 +320,9 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
             try
             {
+                SelectedRecipe.ProcessingMode = ProcessingMode;
+                SelectedRecipe.DualSubMode = DualSubMode;
+
                 await _recipeRepository.UpdateRecipeAsync(SelectedRecipe);
                 await _recipeRepository.SaveChangesAsync();
 
@@ -338,8 +349,6 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             SelectedRecipe.WavelengthColors = WavelengthItems.Select(x => x.Color).ToList();
             SelectedRecipe.WavelengthNames = WavelengthItems.Select(x => x.Name).ToList();
             SelectedRecipe.DetectionWindowHighs = WavelengthItems.Select(x => x.SignalHigh).ToList();
-
-            SelectedRecipe.GraphJson = ConstructorContext.GetGraphJson();
         }
 
         private void LoadWavelengthsToUI()
@@ -381,6 +390,8 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             finally
             {
                 _isSuppressingSync = false;
+
+                UpdateModesAfterWavelengthChange();
             }
         }
 
@@ -421,50 +432,58 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             SyncToModel();
         }
 
+        partial void OnProcessingModeChanged(ProcessingMode value)
+        {
+            UpdateModeVisibility();
+            UpdateWindowMode();
+        }
+
+        partial void OnDualSubModeChanged(DualChannelSubMode value)
+        {
+            UpdateModeVisibility();
+            UpdateWindowMode();
+        }
+
+        private void UpdateWindowMode()
+        {
+            bool isCombinedOrRatio = ProcessingMode == ProcessingMode.DualChannel && DualSubMode == DualChannelSubMode.Ratio;
+
+            IsSingleWindowMode = isCombinedOrRatio;
+
+            if (isCombinedOrRatio && SelectedRecipe?.DetectionWindowHighs.Count > 0)
+            {
+                CommonSignalHigh = SelectedRecipe.DetectionWindowHighs.FirstOrDefault();
+            }
+        }
 
         partial void OnSelectedRecipeChanged(Recipe? value)
         {
             if (value != null)
             {
-                _isSuppressingSync = true;
-                try
-                {
-                    SelectedWavelengthIndex = 0;
+                SelectedWavelengthIndex = 0;
+                LoadWavelengthsToUI();
 
-                    LoadWavelengthsToUI();
-                    UpdateAvailableChannelNames();
+                value.AutoConfigureMode();
 
-                    SelectedOverEtchText = value.OverEtchEnabled ? "Yes" : "No";
-                    SelectedAutocalibrationText = value.AutocalibrationEnabled ? "Yes" : "No";
-                    SelectedPcaText = value.PcaEnabled ? "Yes" : "No";
+                ProcessingMode = value.ProcessingMode;
+                DualSubMode = value.DualSubMode;
 
-                    ConstructorContext.Nodes.Clear();
-                    ConstructorContext.Connections.Clear();
+                UpdateAvailableChannelNames();
+                UpdateAvailableModes();
+                UpdateModeVisibility();
 
-                    if (!string.IsNullOrWhiteSpace(value.GraphJson) && value.GraphJson != "{}")
-                    {
-                        ConstructorContext.LoadGraphFromJson(value.GraphJson);
-                    }
-                    else
-                    {
-                        _isSuppressingSync = false;
-                        SynchronizeNodesWithWavelengths(null, null);
-                        _isSuppressingSync = true;
-                    }
-                }
-                finally
-                {
-                    _isSuppressingSync = false;
-                }
+                SelectedOverEtchText = value.OverEtchEnabled ? "Yes" : "No";
+                SelectedAutocalibrationText = value.AutocalibrationEnabled ? "Yes" : "No";
+                SelectedPcaText = value.PcaEnabled ? "Yes" : "No";
+                SelectedDerivativeText = value.DerivativeEnabled ? "Yes" : "No";
+            }
+        }
 
-                if (!string.IsNullOrWhiteSpace(value.GraphJson) && value.GraphJson != "{}")
-                {
-                    ConstructorContext.LoadGraphFromJson(value.GraphJson);
-                }
-                else
-                {
-                    SynchronizeNodesWithWavelengths(null, null);
-                }
+        partial void OnSelectedDerivativeTextChanged(string value)
+        {
+            if (SelectedRecipe != null)
+            {
+                SelectedRecipe.DerivativeEnabled = (value == "Yes");
             }
         }
 

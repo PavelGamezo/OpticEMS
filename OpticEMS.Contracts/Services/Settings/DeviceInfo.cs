@@ -105,6 +105,12 @@ namespace OpticEMS.Contracts.Services.Settings
 
         public string Port { get; set; } = "502";
 
+        public float ExposureTime { get; set; }
+
+        public int ScansNum { get; set; }
+
+        public float Equalizer { get; set; }
+
         [XmlIgnore]
         public double[] Wavelengths { get; set; }
 

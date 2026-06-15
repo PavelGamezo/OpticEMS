@@ -29,7 +29,8 @@
                 <Button Command="{Binding StartProcessCommand}"
                         Style="{StaticResource ActionButtonStyle}"
                         Background="#222120"
-                        HorizontalAlignment="Stretch">
+                        HorizontalAlignment="Stretch"
+                        Width="70">
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <Grid Width="10" Height="10" Margin="0,0,10,0">

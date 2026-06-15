@@ -50,12 +50,14 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 StringFormat = "mm:ss",
                 Title = "Time",
                 IntervalType = DateTimeIntervalType.Seconds,
-                TitleColor = OxyColors.White,
-                TextColor = OxyColors.White,
+                TitleColor = OxyColors.LightGray,
+                TextColor = OxyColors.LightGray,
                 AxislineColor = OxyColor.FromRgb(50, 51, 56),
                 MajorGridlineColor = OxyColor.FromRgb(50, 51, 56),
                 MajorGridlineStyle = LineStyle.Solid,
-                Minimum = DateTimeAxis.ToDouble(_epoch)
+                Minimum = DateTimeAxis.ToDouble(_epoch),
+                MinorGridlineColor = OxyColor.Parse("#323539"),
+                TicklineColor = OxyColor.Parse("#323539")
             });
 
             model.Axes.Add(new LinearAxis

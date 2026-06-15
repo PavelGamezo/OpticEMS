@@ -27,10 +27,8 @@ namespace OpticEMS.Factories.Channels
             IRecipeRepository recipeRepository = _serviceProvider.GetRequiredService<IRecipeRepository>();
             IEtchingProcessService endpointService = _serviceProvider.GetRequiredService<IEtchingProcessService>();
             ISettingsProvider configProvider = _serviceProvider.GetRequiredService<ISettingsProvider>();
-            IExportManager exportManager = _serviceProvider.GetRequiredService<IExportManager>();
             ICalibrationService calibrationService = _serviceProvider.GetRequiredService<ICalibrationService>();
             ISpectralLineRepository spectralLineRepository = _serviceProvider.GetRequiredService<ISpectralLineRepository>();
-            IGraphCompiler graphCompiler = _serviceProvider.GetRequiredService<IGraphCompiler>();
 
             var id = configuration.ChannelId;
 
@@ -40,10 +38,8 @@ namespace OpticEMS.Factories.Channels
                 dialogService,
                 endpointService,
                 configProvider,
-                exportManager,
                 calibrationService,
-                spectralLineRepository,
-                graphCompiler);
+                spectralLineRepository);
         }
 
         public ChannelViewModel CreateDefault() => new ChannelViewModel();

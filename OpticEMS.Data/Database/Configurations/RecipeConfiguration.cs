@@ -18,6 +18,12 @@ namespace OpticEMS.Data.Database.Configurations
 
             builder.HasIndex(r => r.RecipeId);
 
+            builder.Property(r => r.ProcessingMode)
+                   .HasConversion<int>();
+
+            builder.Property(r => r.DualSubMode)
+                   .HasConversion<int>();
+
             builder.Property(r => r.Wavelengths)
                    .HasConversion(
                        value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),

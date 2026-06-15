@@ -108,7 +108,7 @@ namespace OpticEMS.Devices.Devices.Avantes
             return false;
         }
 
-        public override void SetParameters(int id, float exposureMs, int scansNum, int mode)
+        public override void SetParameters(int id, float exposureMs, int scansNum, float equalizer, int mode)
         {
             Log.Information($"[D:Avantes]: Setting parameters for {DeviceInfo.Name}: ExposureTime = {exposureMs}, ScansNum = {scansNum}, Mode = {mode}");
             var trigger = Convert.ToBoolean(mode);
@@ -125,6 +125,10 @@ namespace OpticEMS.Devices.Devices.Avantes
                 m_StopPixel = (ushort)(_numPixels - 1),
                 m_IntegrationTime = exposureMs,
                 m_NrAverages = (uint)scansNum,
+                m_Smoothing = new AvantesCCD.SmoothingType
+                {
+                    m_SmoothPix = (ushort)equalizer
+                },
                 m_Trigger = new AvantesCCD.TriggerType
                 {
                     m_Mode = AvantesCCD.SW_TRIGGER_MODE,
@@ -143,7 +147,10 @@ namespace OpticEMS.Devices.Devices.Avantes
 
             int result = AvantesCCD.AVS_PrepareMeasure(_devHandle, ref config);
             if (result != AvantesCCD.ERR_SUCCESS) throw new Exception($"PrepareMeasure failed: {result}");
-            
+
+            result = AvantesCCD.AVS_UseHighResAdc(_devHandle, true);
+            if (result != AvantesCCD.ERR_SUCCESS) throw new Exception($"PrepareMeasure failed: {result}");
+
             AvantesCCD.AVS_Measure(_devHandle, IntPtr.Zero, _measuring);
         }
 

@@ -27,7 +27,7 @@ namespace OpticEMS.Services.Spectrometers
         {
             var proc = new DeviceProcessing(cameraId, _configProvider);
 
-            Task.Run(() => proc.StartSingleScan(cameraId, 5f, 1, CancellationToken.None));
+            Task.Run(() => proc.StartSingleScan(cameraId, 5f, 1, 1, CancellationToken.None));
         }
 
         private void InitializeLibrary()

@@ -25,8 +25,6 @@ using OpticEMS.MVVM.ViewModels.ProcessViewModels;
 using OpticEMS.MVVM.ViewModels.RecipeViewModels;
 using OpticEMS.MVVM.ViewModels.SettingsViewModels;
 using OpticEMS.Notifications.Messages;
-using OpticEMS.Preprocessing.Factories;
-using OpticEMS.Preprocessing.Graph;
 using OpticEMS.Services.Calibration;
 using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Etching;
@@ -73,7 +71,6 @@ namespace OpticEMS
             services.AddScoped<IExportManager, ExportManager>();
             services.AddTransient<IEtchingProcessService, EtchingProcessService>();
             services.AddTransient<IExpressionValidator, ExpressionValidator>();
-            services.AddTransient<IGraphCompiler, GraphCompiler>();
 
             // Repositories
             services.AddScoped<ISpectralLineRepository, SpectralLineRepository>();
@@ -84,7 +81,6 @@ namespace OpticEMS
 
             // Factories
             services.AddScoped<IChannelViewModelFactory, ChannelViewModelFactory>();
-            services.AddScoped<INodeProcessorFactory, NodeProcessorFactory>();
 
             services.AddTransient<Func<int, SpectralLinesCatalogViewModel>>(provider =>
             {

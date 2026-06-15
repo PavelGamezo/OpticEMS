@@ -1,8 +1,6 @@
-﻿using OpticEMS.Contracts.Preprocessing;
-
-namespace OpticEMS.Preprocessing.Operations.Derivation
+﻿namespace OpticEMS.Preprocessing.Operations.Derivation
 {
-    public class DerivativeCalculator : INodeProcessor
+    public class DerivativeCalculator
     {
         private readonly int _derivationTime;
         private readonly Queue<double> _buffer = new();
@@ -85,11 +83,11 @@ namespace OpticEMS.Preprocessing.Operations.Derivation
             _isInitialized = false;
         }
 
-        public double Process(double[] inputs, double currentTimeMs)
+        public double[] Process(double[] inputs, double currentTimeMs)
         {
-            var currentValues = inputs[0];
+            var currentValues = ComputeDer(inputs);
 
-            return ComputeDer(currentValues);
+            return currentValues;
         }
     }
 }
