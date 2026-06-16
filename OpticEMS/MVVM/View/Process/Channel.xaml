@@ -83,22 +83,8 @@
                 <Button Style="{StaticResource ActionButtonStyle}"
                         Background="#222120"
                         HorizontalAlignment="Stretch"
-                        Width="40">
-
-                    <Button.ContextMenu>
-                        <ContextMenu Style="{StaticResource ModernContextMenu}">
-
-                            <MenuItem Header="CSV (.csv)" 
-                                      Command="{Binding ExportDataCommand}"/>
-
-                            <MenuItem Header="Excel (.xlsx)" 
-                                      Command="{Binding ExportDataCommand}"/>
-
-                            <MenuItem Header="Text (.txt)" 
-                                      Command="{Binding ExportDataCommand}"/>
-
-                        </ContextMenu>
-                    </Button.ContextMenu>
+                        Width="40"
+                        Command="{Binding ExportDataCommand}">
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <Viewbox Width="14" Height="14">

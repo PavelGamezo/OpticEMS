@@ -252,11 +252,10 @@
                     <StackPanel Grid.Column="2" 
                         Orientation="Horizontal">
 
-                        <Button Background="#1a1a1a"
-                                Foreground="White"
+                        <Button Foreground="White"
                                 VerticalAlignment="Center"
                                 HorizontalAlignment="Center"
-                                Style="{StaticResource ActionButtonStyle}"
+                                Style="{StaticResource ButtonStyle}"
                                 Command="{Binding ShowSettingsCommand}"
                                 Tag="Settings"
                                 Width="40"

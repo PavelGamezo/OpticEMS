@@ -30,7 +30,7 @@
                       Height="32"
                       ItemsSource="{Binding AvailableProcessingModes}"
                       SelectedItem="{Binding ProcessingMode}"
-                      Style="{StaticResource ComboBoxStyle}"/>
+                      Style="{StaticResource MaterialDarkComboBoxStyle}"/>
 
             <StackPanel Margin="0,10,0,0" 
                         Visibility="{Binding IsDualChannelMode, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -47,7 +47,7 @@
                           Height="32"
                           ItemsSource="{Binding DualSubModes}"
                           SelectedItem="{Binding DualSubMode}"
-                          Style="{StaticResource ComboBoxStyle}"/>
+                          Style="{StaticResource MaterialDarkComboBoxStyle}"/>
             </StackPanel>
 
         </StackPanel>

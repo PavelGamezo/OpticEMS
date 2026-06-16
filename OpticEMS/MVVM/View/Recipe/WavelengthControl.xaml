@@ -7,10 +7,12 @@
              xmlns:converters="clr-namespace:OpticEMS.Common.Helpers"
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:materialDesign="clr-namespace:MaterialDesignThemes.Wpf;assembly=MaterialDesignThemes.Wpf"
              mc:Ignorable="d" 
              d:DesignWidth="800">
 
     <UserControl.Resources>
+        <converters:DoubleToStringConverter x:Key="DoubleToStringConverter"/>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
     </UserControl.Resources>
@@ -140,12 +142,40 @@
                                             CommandParameter="{Binding}"/>
                                 </Grid>
 
-                                <TextBox Text="{Binding Wavelength}" 
-                                         Background="#3E3E40" 
-                                         Foreground="White" 
-                                         BorderThickness="0" 
-                                         Padding="8" 
-                                         Margin="0,5"/>
+                                <ComboBox Style="{StaticResource MaterialDarkComboBoxStyle}"
+                                          Margin="0,5,0,5"
+                                          ItemsSource="{Binding DataContext.SpectralLines, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          SelectedItem="{Binding SelectedLine, Mode=TwoWay}"
+                                          Text="{Binding Wavelength, Mode=TwoWay, UpdateSourceTrigger=LostFocus, TargetNullValue=''}"
+                                          IsEditable="True"
+                                          IsTextSearchEnabled="True"
+                                          TextSearch.TextPath="Wavelength"
+                                          SelectedValuePath="Wavelength">
+
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="4,6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto" SharedSizeGroup="WavelengthGroup"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Grid.Column="0" 
+                                                           Text="{Binding Element}" 
+                                                           FontWeight="Medium"
+                                                           VerticalAlignment="Center"/>
+
+                                                <TextBlock Grid.Column="1" 
+                                                           Text="{Binding Wavelength, TargetNullValue='', StringFormat={}{0:F2}}"
+                                                           Language="en-US"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                                           VerticalAlignment="Center"
+                                                           Margin="20,0,0,0"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
 
                                 <StackPanel Orientation="Horizontal">
 
@@ -895,14 +925,14 @@
 
             </StackPanel>
 
-            <ComboBox Background="#3E3E40"
+            <ComboBox 
+                      Background="#3E3E40"
                       BorderThickness="0"
                       Foreground="White"
                       Padding="8"
                       Margin="0,10,0,0"
                       ItemsSource="{Binding YesNoOptions}"
                       SelectedItem="{Binding SelectedAutocalibrationText}"
-                      Style="{StaticResource ComboBoxStyle}"
                       Height="32"/>
 
         </StackPanel>

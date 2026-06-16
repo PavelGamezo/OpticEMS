@@ -167,7 +167,7 @@
                         </Border>
                     </StackPanel>
 
-                    <TextBox Text="{Binding SelectedRecipe.WindowOutCount}" 
+                    <TextBox Text="{Binding SelectedRecipe.WindowOutCount}"
                              Background="#3E3E40"
                              BorderThickness="0"
                              Foreground="White"

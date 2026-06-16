@@ -33,6 +33,7 @@ using OpticEMS.Services.Validators;
 using OpticEMS.Services.Windows;
 using OpticEMS.ViewModels;
 using Serilog;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -48,6 +49,9 @@ namespace OpticEMS
 
         public App()
         {
+            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+            CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+
             Host = Microsoft.Extensions.Hosting.Host
                 .CreateDefaultBuilder()
                 .ConfigureServices(ConfigureServices)

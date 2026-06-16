@@ -17,6 +17,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
     public partial class RecipeViewModel : ObservableObject
     {
         private readonly IRecipeRepository _recipeRepository;
+        private readonly ISpectralLineRepository _spectralLineRepository;
         private readonly IDialogService _dialogService;
 
         [ObservableProperty]
@@ -51,13 +52,10 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         private string _selectedDerivativeText = "No";
 
         [ObservableProperty]
-        private string _combinedExpression = string.Empty;
-
-        [ObservableProperty]
         private bool _isSingleWindowMode;
 
         [ObservableProperty]
-        private string _combinedExpressionValidationMessage;
+        private ObservableCollection<SpectralLine> _spectralLines = new();
 
         [ObservableProperty]
         private ObservableCollection<WavelengthMonitorItem> _wavelengthItems = new();
@@ -151,17 +149,19 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
         public RecipeViewModel(
             IRecipeRepository recipeRepository,
+            ISpectralLineRepository spectralLineRepository,
             IDialogService dialogService,
             IExpressionValidator validator)
         {
             try
             {
                 _recipeRepository = recipeRepository;
+                _spectralLineRepository = spectralLineRepository;
                 _dialogService = dialogService;
 
                 SetupWavelengthItemsListener();
 
-                _ = LoadFilesAsync();
+                _ = InitializeDataAsync();
             }
             catch (Exception exception)
             {
@@ -437,6 +437,14 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
                     var newItem = new WavelengthMonitorItem(SelectedRecipe.Wavelengths[i], color, high, windowTime, windowIn, windowOut);
 
+                    var matchedLine = SpectralLines
+                        .FirstOrDefault(line => Math.Abs(line.Wavelength - SelectedRecipe.Wavelengths[i]) < 2);
+
+                    if (matchedLine != null)
+                    {
+                        newItem.SelectedLine = matchedLine;
+                    }
+
                     newItem.PropertyChanged += OnItemPropertyChanged;
                     WavelengthItems.Add(newItem);
                 }
@@ -444,39 +452,77 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             finally
             {
                 _isSuppressingSync = false;
-
                 UpdateModesAfterWavelengthChange();
+            }
+        }
+
+        private async Task InitializeDataAsync()
+        {
+            await LoadSpectralLinesAsync();
+            await LoadFilesAsync();
+        }
+
+        private async Task LoadSpectralLinesAsync()
+        {
+            try
+            {
+                Log.Information("[RecipeViewModel]: Async loading of spectral lines started.");
+
+                var lines = await _spectralLineRepository.GetLinesAsync();
+
+                SpectralLines = new ObservableCollection<SpectralLine>(
+                    lines.OrderBy(line => line.Element)
+                         .ThenBy(line => line.Wavelength));
+
+                Log.Information("[RecipeViewModel]: Async loading of spectral lines cancelled successfully.");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[RecipeViewModel]: Failed to load spectral lines from DB.");
             }
         }
 
         private async Task LoadFilesAsync(string? nameToSelect = null)
         {
-            var recipes = await _recipeRepository.GetRecipesAsync();
-
-            var selectedName = nameToSelect ?? SelectedRecipe?.Name;
-
-            RecipeFiles = new ObservableCollection<Recipe>(recipes);
-
-            RecipesView = CollectionViewSource.GetDefaultView(RecipeFiles);
-            RecipesView.Filter = obj =>
+            try
             {
-                if (string.IsNullOrWhiteSpace(SearchText))
+                Log.Information("[RecipeViewModel]: Async loading of recipes started.");
+
+                var recipes = await _recipeRepository.GetRecipesAsync();
+                var selectedName = nameToSelect ?? SelectedRecipe?.Name;
+
+                Log.Information("[RecipeViewModel]: Recipes getted from database successfully. Started fill out recipe models");
+
+                RecipeFiles = new ObservableCollection<Recipe>(recipes);
+                RecipesView = CollectionViewSource.GetDefaultView(RecipeFiles);
+                RecipesView.Filter = obj =>
                 {
-                    return true;
-                }
+                    if (string.IsNullOrWhiteSpace(SearchText))
+                    {
+                        return true;
+                    }
 
-                if (obj is Recipe recipe)
-                {
-                    return recipe.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
-                }
+                    if (obj is Recipe recipe)
+                    {
+                        return recipe.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+                    }
 
-                return false;
-            };
+                    return false;
+                };
 
-            SelectedRecipe = RecipeFiles.FirstOrDefault(recipe => recipe.Name == selectedName)
-                ?? RecipeFiles.FirstOrDefault();
+                SelectedRecipe = RecipeFiles.FirstOrDefault(recipe => recipe.Name == selectedName)
+                    ?? RecipeFiles.FirstOrDefault();
 
-            RecipeCount = RecipesView.Cast<Recipe>().Count();
+                Log.Information("[RecipeViewModel]: Recipe collection successfully filled out. Get recipes count.");
+
+                RecipeCount = RecipesView.Cast<Recipe>().Count();
+
+                Log.Information("[RecipeViewModel]: Async loading of recipes cancelled successfully.");
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception, "[RecipeViewModel]: Failed to load recipes from DB.");
+            }
 
             OnPropertyChanged(nameof(RecipesView));
         }
