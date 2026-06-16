@@ -28,8 +28,7 @@ namespace OpticEMS.Data.Services
                     {
                         Element = parts[0].Trim(),
                         Wavelength = double.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture),
-                        Ionization = parts[2],
-                        ColorHex = parts[3]
+                        ColorHex = parts[2]
                     };
                 })
                 .ToList();

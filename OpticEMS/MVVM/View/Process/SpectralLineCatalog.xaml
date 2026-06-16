@@ -4,10 +4,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:wpf="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="350">
+             d:DesignHeight="650" d:DesignWidth="350">
 
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
         <SolidColorBrush x:Key="PrimaryAccent" Color="#007ACC"/>
         <SolidColorBrush x:Key="BgDark" Color="#1f1f1f"/>
         <SolidColorBrush x:Key="BgLighter" Color="#272727"/>
@@ -42,6 +45,9 @@
         </Style>
 
         <Style x:Key="MaterialDarkComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignFilledComboBox}">
+            <Style.Resources>
+                <CornerRadius x:Key="MaterialDesignFilledCornerRadius">0</CornerRadius>
+            </Style.Resources>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#ECF0F1"/>
             <Setter Property="Height" Value="25"/>
@@ -76,10 +82,6 @@
                     </Style>
                 </Setter.Value>
             </Setter>
-            <Style.Resources>
-                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#37373D"/>
-                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#37373D"/>
-            </Style.Resources>
         </Style>
     </UserControl.Resources>
 
@@ -89,11 +91,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" 
-                Background="{StaticResource BgLighter}" 
-                Margin="12" 
-                Padding="16" 
-                CornerRadius="0">
+        <Border Grid.Row="0" Background="{StaticResource BgLighter}" Margin="12" Padding="16">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
             </Border.Effect>
@@ -103,99 +101,132 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="15"/>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Text="Element" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextMuted}"/>
-                    
-                    <ComboBox Grid.Column="1" 
-                              ItemsSource="{Binding AvailableElements}"
-                              SelectedItem="{Binding SelectedElement}"
-                              Style="{StaticResource MaterialDarkComboBoxStyle}"
-                              Width="80"/>
+                    <StackPanel Orientation="Horizontal" Grid.Column="0">
+                        <TextBlock Text="Element" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextMuted}"/>
+                        <ComboBox ItemsSource="{Binding AvailableElements}"
+                                  SelectedItem="{Binding SelectedElement}"
+                                  Style="{StaticResource MaterialDarkComboBoxStyle}"
+                                  Width="80"/>
+                    </StackPanel>
 
-                    <TextBlock Text="Ion" Grid.Column="3" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextMuted}"/>
-                    <ComboBox Grid.Column="4" 
-                              ItemsSource="{Binding AvailableIonizations}" 
-                              SelectedItem="{Binding SelectedIonization}"
-                              Style="{StaticResource MaterialDarkComboBoxStyle}"
-                              Width="80"/>
+                    <Button Grid.Column="2"
+                            Style="{StaticResource ActionButtonStyle}"
+                            Command="{Binding OpenAddFormCommand}"
+                            Height="24" 
+                            Padding="8,0" 
+                            FontSize="11" 
+                            Content="New Line">
+                        
+                    </Button>
                 </Grid>
 
-                <StackPanel>
+                <StackPanel Margin="0,0,0,5">
                     <DockPanel LastChildFill="True">
                         <TextBlock Text="Wavelength Range" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Border Background="{StaticResource PrimaryAccent}" CornerRadius="0" Padding="5,1">
+                            <Border Padding="5,1">
                                 <TextBlock Text="{Binding MinWavelength, StringFormat={}{0:F0}}" FontSize="11" FontWeight="Bold" Foreground="White"/>
                             </Border>
                             <TextBlock Text="-" VerticalAlignment="Center" Margin="4,0"/>
-                            <Border Background="{StaticResource PrimaryAccent}" CornerRadius="0" Padding="5,1">
+                            <Border Padding="5,1">
                                 <TextBlock Text="{Binding MaxWavelength, StringFormat={}{0:F0}}" FontSize="11" FontWeight="Bold" Foreground="White"/>
                             </Border>
-                            <TextBlock Text=" nm" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" Margin="4,0,0,0"/>
+                            <TextBlock Text=" nm" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
                         </StackPanel>
                     </DockPanel>
 
-                    <Slider Minimum="200" Maximum="800" 
-                            Value="{Binding MinWavelength}" 
-                            Style="{StaticResource MaterialDarkSliderStyle}"
-                            Margin="0,12,0,0"
-                            TickPlacement="None"/>
+                    <Slider Minimum="200" Maximum="800" Value="{Binding MinWavelength}" Style="{StaticResource MaterialDarkSliderStyle}" Margin="0,10,0,0"/>
+                </StackPanel>
+
+                <StackPanel Visibility="{Binding IsAddFormVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Separator Background="#3F3F46" Margin="0,12"/>
+                    <TextBlock Text="Create new Spectral Line" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMuted}" Margin="0,0,0,10"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="2.5*"/>
+                            <ColumnDefinition Width="1.2*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                            <TextBlock Text="Element" FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding NewElement, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignTextBox}"
+                                     Foreground="White" CaretBrush="{StaticResource PrimaryAccent}"
+                                     Margin="0,10,0,0"
+                                     Height="25" VerticalContentAlignment="Center" Padding="4,0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="0,0,6,0">
+                            <TextBlock Text="λ (nm)" FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding NewWavelengthText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignTextBox}"
+                                     Foreground="White" CaretBrush="{StaticResource PrimaryAccent}"
+                                     Height="25" VerticalContentAlignment="Center" 
+                                     Margin="0,10,0,0" Padding="4,0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                            <TextBlock Text="Color" FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,0,0,4" HorizontalAlignment="Center"/>
+                            <xctk:ColorPicker SelectedColor="{Binding NewLineColor, UpdateSourceTrigger=PropertyChanged}" 
+                                              Height="30" Margin="0,5,0,0"
+                                              Background="Transparent"
+                                              BorderBrush="Transparent"
+                                              Foreground="White"
+                                              Style="{StaticResource DarkColorPicker}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                        <Button Command="{Binding CloseAddFormCommand}" 
+                                Content="Cancel" Style="{StaticResource MaterialDesignFlatButton}" 
+                                Foreground="{StaticResource TextMuted}" Height="26" Padding="8,0" Margin="0,0,8,0"/>
+
+                        <Button Command="{Binding SaveNewLineCommand}" 
+                                Content="Save Line" Style="{StaticResource ActionButtonStyle}" 
+                                Background="{StaticResource PrimaryAccent}" Foreground="White" Height="26" Padding="12,0"/>
+                    </StackPanel>
                 </StackPanel>
             </StackPanel>
         </Border>
 
-        <DataGrid Grid.Row="1" 
-                  Margin="12,0,12,12"
-                  Style="{StaticResource ModernDataGrid}"
-                  ItemsSource="{Binding SpectralLines}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  SelectionMode="Single">
-
-            <DataGrid.Resources>
-                <Style TargetType="ScrollBar" BasedOn="{StaticResource ModernScrollBarStyle}"/>
-            </DataGrid.Resources>
-
+        <DataGrid Grid.Row="1" Margin="12,0,12,12" Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding SpectralLines}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
             <DataGrid.Columns>
-                <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="40"/>
-
-                <DataGridTemplateColumn Width="50" Header="Type">
+                <DataGridCheckBoxColumn Header="Selected" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="1.5*" ElementStyle="{StaticResource MaterialDarkCheckBoxStyle}" EditingElementStyle="{StaticResource MaterialDarkCheckBoxStyle}"/>
+                <DataGridTemplateColumn Header="Type" Width="1.5*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid Margin="2">
-                                <Ellipse Width="18" Height="18" Fill="{Binding LineBrush}">
-                                    <Ellipse.Effect>
-                                        <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.4"/>
-                                    </Ellipse.Effect>
-                                </Ellipse>
-                                <TextBlock Text="{Binding Element}" 
-                                           Foreground="White" 
-                                           FontSize="9" 
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" 
-                                           FontWeight="Bold"/>
+                                <Ellipse Width="18" Height="18" Fill="{Binding LineBrush}"/>
+                                <TextBlock Text="{Binding Element}" Foreground="White" FontSize="9" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
                             </Grid>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-
-                <DataGridTextColumn Header="Element" 
-                                    Binding="{Binding Element}" 
-                                    Width="*" 
-                                    ElementStyle="{StaticResource CenterElementStyle}"/>
-
-                <DataGridTextColumn Header="λ (nm)" 
-                                    Binding="{Binding Wavelength, StringFormat={}{0:F2}}" 
-                                    Width="100" 
-                                    ElementStyle="{StaticResource CenterElementStyle}"/>
-
-                <DataGridTextColumn Header="Ionization" 
-                                    Binding="{Binding Ionization}" 
-                                    Width="80" 
-                                    ElementStyle="{StaticResource CenterElementStyle}"/>
+                <DataGridTextColumn Header="λ (nm)" Width="2*" Binding="{Binding Wavelength, StringFormat={}{0:F2}}"/>
+                <DataGridTemplateColumn Width="1.5*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="✕"
+                                    Style="{StaticResource ActionButtonStyle}"
+                                    Foreground="White"
+                                    Background="Transparent"
+                                    Height="22"
+                                    Width="22"
+                                    Padding="0"
+                                    FontSize="12"
+                                    FontWeight="Bold"
+                                    VerticalAlignment="Center" 
+                                    HorizontalAlignment="Center"
+                                    Command="{Binding DataContext.DeleteLineCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

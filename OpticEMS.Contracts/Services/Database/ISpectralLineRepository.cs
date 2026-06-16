@@ -12,7 +12,9 @@
 
         Task AddLineAsync(SpectralLine line, CancellationToken cancellationToken);
 
-        void RemoveLine(SpectralLine line);
+        bool ExecuteUpdateLine(SpectralLine line);
+
+        bool ExecuteDeleteLine(int id);
 
         Task SaveChangesAsync(CancellationToken cancellationToken);
     }

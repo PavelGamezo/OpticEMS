@@ -20,14 +20,18 @@ namespace OpticEMS.Data.Repositories
 
         public async Task<SpectralLine?> GetLineByIdAsync(int id, CancellationToken cancellationToken)
         {
-            var spectralLine = await _context.SpectralLines.FirstOrDefaultAsync(line => line.Id == id);
+            var spectralLine = await _context.SpectralLines
+                .AsNoTracking()
+                .FirstOrDefaultAsync(line => line.Id == id);
 
             return spectralLine;
         }
 
         public async Task<List<SpectralLine>> GetLinesAsync()
         {
-            var spectralLines = await _context.SpectralLines.ToListAsync();
+            var spectralLines = await _context.SpectralLines
+                .AsNoTracking()
+                .ToListAsync();
 
             return spectralLines;
         }
@@ -51,14 +55,30 @@ namespace OpticEMS.Data.Repositories
             return spectralLines;
         }
 
-        public void RemoveLine(SpectralLine line)
+        public bool ExecuteDeleteLine(int id)
         {
-            _context.Remove(line);
+            var result = _context.SpectralLines
+                .Where(line => line.Id == id)
+                .ExecuteDelete();
+
+            return result > 0;
         }
 
         public async Task SaveChangesAsync(CancellationToken cancellationToken)
         {
             await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        public bool ExecuteUpdateLine(SpectralLine line)
+        {
+            var result = _context.SpectralLines
+                .Where(l => l.Id == line.Id)
+                .ExecuteUpdate(s => s
+                    .SetProperty(l => l.Element, line.Element)
+                    .SetProperty(l => l.Wavelength, line.Wavelength)
+                    .SetProperty(l => l.ColorHex, line.ColorHex));
+
+            return result > 0;
         }
     }
 }

@@ -75,11 +75,11 @@ namespace OpticEMS
             services.AddTransient<IExpressionValidator, ExpressionValidator>();
 
             // Repositories
-            services.AddScoped<ISpectralLineRepository, SpectralLineRepository>();
+            services.AddTransient<ISpectralLineRepository, SpectralLineRepository>();
             services.AddScoped<IRecipeRepository, RecipeRepository>();
 
             // Databases
-            services.AddScoped<AppDbContext>();
+            services.AddTransient<AppDbContext>();
             services.AddScoped<RecipeDbContext>();
 
             // Factories

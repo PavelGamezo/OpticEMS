@@ -1,14 +1,17 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.Contracts.Services.ProcessingModes;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.MVVM.Models;
+using OpticEMS.Notifications.Messages;
 using OpticEMS.Services.Validators;
 using Serilog;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
@@ -160,6 +163,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                 _dialogService = dialogService;
 
                 SetupWavelengthItemsListener();
+                RegisterMessages();
 
                 _ = InitializeDataAsync();
             }
@@ -378,6 +382,14 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                 Log.Information(exception, "RecipeViewModel: Fatal error during recipe saving");
                 _dialogService.ShowError(exception.Message);
             }
+        }
+
+        private void RegisterMessages()
+        {
+            WeakReferenceMessenger.Default.Register<LinesChangedMessage>(this, (recipient, message) =>
+            {
+                _ = InitializeDataAsync();
+            });
         }
 
         private void SyncToModel()
