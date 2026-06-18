@@ -4,85 +4,76 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:OpticEMS.MVVM.View.Settings"
+      xmlns:viewmodels="clr-namespace:OpticEMS.MVVM.ViewModels.SettingsViewModels"
+      xmlns:views="clr-namespace:OpticEMS.MVVM.View.Settings"
+      xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
       mc:Ignorable="d"
-      xmlns:oxy="http://oxyplot.org/wpf"
       Title="Program Settings"
       Background="#1e1d1d"
-      Foreground="White">
+      Foreground="White"
+      FontFamily="{materialDesign:MaterialDesignFont}">
 
     <Page.Resources>
-
-        <Style TargetType="Button">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="5"/>
-        </Style>
-
-        <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#E0E0E0"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-        </Style>
-
-        <Style TargetType="TextBox">
+        <Style TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
             <Setter Property="Background" Value="#1f1f1f"/>
             <Setter Property="Foreground" Value="#ECF0F1"/>
-            <Setter Property="BorderBrush" Value="#1f1f1f"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#2c2c2c"/>
             <Setter Property="Padding" Value="5"/>
             <Setter Property="FontSize" Value="12"/>
         </Style>
+
+        <DataTemplate DataType="{x:Type viewmodels:ChamberSettingsViewModel}">
+            <views:ChamberSettings />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewmodels:CalibrationSettingsViewModel}">
+            <views:CalibrationSettings />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewmodels:LicenseSettingsViewModel}">
+            <views:AboutTab />
+        </DataTemplate>
     </Page.Resources>
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        
-        <StackPanel Grid.Column="0" 
-                    Background="#1e1d1d">
-            
-            <Button Content="Chambers" 
-                    Command="{Binding ShowChamberSettingsCommand}"
-                    Style="{StaticResource ActionButtonStyle}"
-                    Height="40"
-                    Width="200"
-                    Background="#1e1d1d" 
-                    Foreground="White"
-                    FontWeight="Bold"
-                    Margin="0"/>
+        <TabControl Style="{StaticResource MaterialDesignNavigationRailTabControl}"
+                    materialDesign:ColorZoneAssist.Mode="Standard"
+                    Background="#1a1919"
+                    TabStripPlacement="Left">
 
-            <Button Content="Calibration" 
-                    Command="{Binding ShowCalibrationSettingsCommand}"
-                    Style="{StaticResource ActionButtonStyle}"
-                    Height="40"
-                    Width="200"
-                    Background="#1e1d1d" 
-                    Foreground="White"
-                    FontWeight="Bold"
-                    Margin="0"/>
+            <TabItem Width="200" Height="50" HorizontalAlignment="Stretch">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Margin="10,0">
+                        <materialDesign:PackIcon Kind="ViewDashboard" Width="20" Height="20" VerticalAlignment="Center"/>
+                        <TextBlock Text="Chambers" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </TabItem.Header>
 
-            <Button Content="License" 
-                    Command="{Binding ShowLicenseCommand}"
-                    Style="{StaticResource ActionButtonStyle}"
-                    Height="40"
-                    Width="200"
-                    Background="#1e1d1d" 
-                    Foreground="White"
-                    FontWeight="Bold"
-                    Margin="0"/>
+                <ContentControl Content="{Binding ChamberSettingsViewModel}" Margin="16"/>
+            </TabItem>
 
-        </StackPanel>
+            <TabItem Width="200" Height="50" HorizontalAlignment="Stretch">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Margin="10,0">
+                        <materialDesign:PackIcon Kind="SineWave" Width="20" Height="20" VerticalAlignment="Center"/>
+                        <TextBlock Text="Calibration" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </TabItem.Header>
 
-        <Grid Grid.Column="1">
-            
-            <Frame x:Name="SettingsPrame" 
-               NavigationUIVisibility="Hidden"
-               Content="{Binding CurrentViewModel}"/>
-            
-        </Grid>
+                <ContentControl Content="{Binding CalibrationSettingsViewModel}" Margin="16"/>
+            </TabItem>
+
+            <TabItem Width="200" Height="50" HorizontalAlignment="Stretch">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Margin="10,0">
+                        <materialDesign:PackIcon Kind="About" Width="20" Height="20" VerticalAlignment="Center"/>
+                        <TextBlock Text="About" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </TabItem.Header>
+
+                <ContentControl Content="{Binding LicenseSettingsViewModel}" Margin="16"/>
+            </TabItem>
+
+        </TabControl>
     </Grid>
 </Page>

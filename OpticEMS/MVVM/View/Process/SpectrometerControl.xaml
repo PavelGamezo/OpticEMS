@@ -280,8 +280,7 @@
                     Foreground="White"
                     Background="#222120"
                     Style="{StaticResource ActionButtonStyle}"
-                    Command="{Binding StopSpectrometerScanCommand}"
-                    IsEnabled="{Binding IsScanning}"/>
+                    Command="{Binding StopSpectrometerScanCommand}"/>
 
         </Grid>
     </Grid>

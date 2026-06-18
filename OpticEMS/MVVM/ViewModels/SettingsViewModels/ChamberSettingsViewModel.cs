@@ -102,7 +102,10 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                             _ => SpectrometerType.VirtualSpec
                         },
 
-                        CalibrationCoefficientsString = $"{dev.CoefA}, {dev.CoefB}, {dev.CoefC}, {dev.CoefD}",
+                        CoefficientA = $"{dev.CoefA}",
+                        CoefficientB = $"{dev.CoefB}",
+                        CoefficientC = $"{dev.CoefC}",
+                        CoefficientD = $"{dev.CoefD}",
 
                         TrimLeft = dev.TrimLeft,
                         TrimRight = dev.TrimRight

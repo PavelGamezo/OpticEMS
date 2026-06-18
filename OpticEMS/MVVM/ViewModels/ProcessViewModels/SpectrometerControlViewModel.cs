@@ -77,7 +77,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         {
             _orchestrator = orchestrator;
             _settingsProvider = settingsProvider;
-            _isScanning = _orchestrator.IsRunning;
 
             LoadSpectrometerParams();
         }

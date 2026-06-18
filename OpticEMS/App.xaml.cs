@@ -99,6 +99,7 @@ namespace OpticEMS
             services.AddSingleton<SettingsViewModel>();
             services.AddSingleton<ChamberSettingsViewModel>();
             services.AddSingleton<CalibrationSettingsViewModel>();
+            services.AddSingleton<LicenseSettingsViewModel>();
             services.AddSingleton<RecipeViewModel>();
             services.AddSingleton<RenameDialogViewModel>();
             services.AddSingleton<MainViewModel>();

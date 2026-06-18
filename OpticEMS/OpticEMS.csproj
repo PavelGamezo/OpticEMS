@@ -8,6 +8,10 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Common\Images\splash.ico</ApplicationIcon>
     <UserSecretsId>e6ef761e-37c7-46dc-8d58-6331ed4188b8</UserSecretsId>
+    <Title>OpticEMS</Title>
+    <Company>Izovac LLC</Company>
+    <Copyright>Copyring ©  2026</Copyright>
+    <Description>Optical emission monitoring system</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,6 +36,7 @@
     <PackageReference Include="EPPlus" Version="4.5.3.3" />
     <PackageReference Include="Extended.Wpf.Toolkit" Version="5.1.1" />
     <PackageReference Include="MahApps.Metro" Version="3.0.0-rc0529" />
+    <PackageReference Include="MaterialDesignColors" Version="5.3.3-ci1394" />
     <PackageReference Include="MaterialDesignThemes" Version="5.3.3-ci1391" />
     <PackageReference Include="MaterialDesignThemes.MahApps" Version="5.3.3-ci1391" />
     <PackageReference Include="MathNet.Numerics" Version="6.0.0-beta2" />

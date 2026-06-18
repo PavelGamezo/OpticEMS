@@ -9,43 +9,43 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
         [ObservableProperty] 
         private object _currentViewModel;
 
-        private readonly ChamberSettingsViewModel _chamberSettingsViewModel;
-        private readonly CalibrationSettingsViewModel _calibrationSettingsViewModel;
-        private readonly ActivationViewModel _activationViewModel;
+        public ChamberSettingsViewModel ChamberSettingsViewModel { get; }
+        public CalibrationSettingsViewModel CalibrationSettingsViewModel { get; }
+        public LicenseSettingsViewModel LicenseSettingsViewModel { get; }
 
         [RelayCommand]
         private void ShowCalibrationSettings()
         {
             Serilog.Log.Warning("SettingsViewModel: User requested to show calibration settings");
-            CurrentViewModel = _calibrationSettingsViewModel;
+            CurrentViewModel = CalibrationSettingsViewModel;
         }
 
         [RelayCommand]
         private void ShowChamberSettings()
         {
             Serilog.Log.Warning("SettingsViewModel: User requested to show chamber settings");
-            CurrentViewModel = _chamberSettingsViewModel;
+            CurrentViewModel = ChamberSettingsViewModel;
         }
 
         [RelayCommand]
         private void ShowLicense()
         {
             Serilog.Log.Warning("SettingsViewModel: User requested to show license");
-            CurrentViewModel = _activationViewModel;
+            CurrentViewModel = LicenseSettingsViewModel;
         }
 
         public SettingsViewModel(
             ChamberSettingsViewModel chamberSettingsViewModel,
             CalibrationSettingsViewModel calibrationSettingsViewModel,
-            ActivationViewModel activationViewModel)
+            LicenseSettingsViewModel licenseSettingsViewModel)
         {
             try
             {
-                _calibrationSettingsViewModel = calibrationSettingsViewModel;
-                _chamberSettingsViewModel = chamberSettingsViewModel;
-                _activationViewModel = activationViewModel;
+                CalibrationSettingsViewModel = calibrationSettingsViewModel;
+                ChamberSettingsViewModel = chamberSettingsViewModel;
+                LicenseSettingsViewModel = licenseSettingsViewModel;
 
-                CurrentViewModel = _calibrationSettingsViewModel;
+                CurrentViewModel = CalibrationSettingsViewModel;
             }
             catch (Exception exception)
             {

@@ -14,11 +14,11 @@ using System.Windows.Shapes;
 namespace OpticEMS.MVVM.View.Settings
 {
     /// <summary>
-    /// Interaction logic for ChamberSettings.xaml
+    /// Interaction logic for AboutTab.xaml
     /// </summary>
-    public partial class ChamberSettings : UserControl
+    public partial class AboutTab : UserControl
     {
-        public ChamberSettings()
+        public AboutTab()
         {
             InitializeComponent();
         }

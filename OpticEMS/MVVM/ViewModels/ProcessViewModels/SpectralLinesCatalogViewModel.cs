@@ -97,12 +97,13 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         private void OpenAddForm()
         {
             PureElementsList.Clear();
+
             foreach (var el in AvailableElements.Where(e => e != ELEMENTS_OPTION))
             {
                 PureElementsList.Add(el);
             }
 
-            if (SelectedElement != ELEMENTS_OPTION && !string.IsNullOrEmpty(SelectedElement))
+            if (!string.IsNullOrEmpty(SelectedElement) && SelectedElement != ELEMENTS_OPTION)
             {
                 NewElement = SelectedElement;
             }
@@ -321,6 +322,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 Log.Information("[SpectralLineCatalogViewModel]: Finding independent available elements.");
                 AvailableElements.Clear();
 
+                AvailableElements.Add(ELEMENTS_OPTION);
+
                 foreach (var el in _allLines
                     .Select(l => l.Element)
                     .Distinct()
@@ -331,9 +334,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 Log.Information($"[SpectralLineCatalogViewModel]: Found {AvailableElements.Count} available elements.");
 
-                if (!AvailableElements.Contains(SelectedElement))
+                if (string.IsNullOrEmpty(SelectedElement) || !AvailableElements.Contains(SelectedElement))
                 {
-                    SelectedElement = AvailableElements.FirstOrDefault();
+                    SelectedElement = ELEMENTS_OPTION;
                 }
             }
             catch (Exception exception)

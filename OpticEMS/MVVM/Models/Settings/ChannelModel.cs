@@ -17,7 +17,16 @@ namespace OpticEMS.MVVM.Models
         private SpectrometerType selectedSpectrometerType;
 
         [ObservableProperty]
-        private string calibrationCoefficientsString;
+        private string _coefficientA;
+
+        [ObservableProperty]
+        private string _coefficientB;
+
+        [ObservableProperty]
+        private string _coefficientC;
+
+        [ObservableProperty]
+        private string _coefficientD;
 
         [ObservableProperty]
         private double _trimLeft;

@@ -207,8 +207,8 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="λ (nm)" Width="2*" Binding="{Binding Wavelength, StringFormat={}{0:F2}}"/>
-                <DataGridTemplateColumn Width="1.5*">
+                <DataGridTextColumn Header="λ (nm)" Width="2*" Binding="{Binding Wavelength, StringFormat={}{0:F2}}" ElementStyle="{StaticResource MaterialDesignTextBlock}"/>
+                <DataGridTemplateColumn Header="Action"  Width="1.5*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Button Content="✕"

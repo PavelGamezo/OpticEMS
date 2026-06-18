@@ -16,7 +16,7 @@ namespace OpticEMS.MVVM.View.Settings
     /// <summary>
     /// Interaction logic for CalibrationSettings.xaml
     /// </summary>
-    public partial class CalibrationSettings : Page
+    public partial class CalibrationSettings : UserControl
     {
         public CalibrationSettings()
         {
