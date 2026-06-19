@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using OpticEMS.Notifications.Messages;
+using OpticEMS.Notifications.Messages.SpectralLines;
 using System.Windows.Media;
 
 namespace OpticEMS.MVVM.Models.Process

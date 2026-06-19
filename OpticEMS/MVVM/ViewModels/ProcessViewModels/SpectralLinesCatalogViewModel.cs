@@ -5,6 +5,7 @@ using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.MVVM.Models.Process;
 using OpticEMS.Notifications.Messages;
+using OpticEMS.Notifications.Messages.SpectralLines;
 using Serilog;
 using System.Collections.ObjectModel;
 using System.Windows.Media;
@@ -40,6 +41,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             _channelId = channelId;
             _spectralLineRepository = spectralLineRepository;
             _dialogService = dialogService;
+
+            RegisterMessages();
 
             SelectedElement = ELEMENTS_OPTION;
             MinWavelength = 200;
@@ -223,6 +226,14 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         #endregion
 
         #region Methods
+
+        private void RegisterMessages()
+        {
+            WeakReferenceMessenger.Default.Register<LinesChangedMessage>(this, (recipient, message) =>
+            {
+                _ = Initialize();
+            });
+        }
 
         private async Task Initialize()
         {

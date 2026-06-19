@@ -7,6 +7,7 @@ using OpticEMS.Contracts.Services.ProcessingModes;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.MVVM.Models;
 using OpticEMS.Notifications.Messages;
+using OpticEMS.Notifications.Messages.SpectralLines;
 using OpticEMS.Services.Validators;
 using Serilog;
 using System.Collections.ObjectModel;
@@ -170,6 +171,60 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             catch (Exception exception)
             {
                 Log.Fatal(exception, "RecipeViewModel: Critical failure during startup.");
+            }
+        }
+
+        private void RegisterMessages()
+        {
+            WeakReferenceMessenger.Default.Register<SaveSpectralLineMessage>(this, async (r, m) =>
+            {
+                await SaveNewSpectralLineAsync(m.Element, m.WavelengthText, m.HexColor);
+            });
+
+
+            WeakReferenceMessenger.Default.Register<LinesChangedMessage>(this, (recipient, message) =>
+            {
+                _ = InitializeDataAsync();
+            });
+        }
+
+        private async Task SaveNewSpectralLineAsync(string element, string wavelengthText, string hexColor)
+        {
+            if (string.IsNullOrWhiteSpace(element))
+            {
+                _dialogService.ShowError("Please enter an element name.");
+                return;
+            }
+
+            try
+            {
+                string cleanedWavelength = wavelengthText.Replace(',', '.').Trim();
+                if (!double.TryParse(cleanedWavelength, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double wavelength) || wavelength <= 0)
+                {
+                    _dialogService.ShowError("Please enter a valid positive wavelength (λ).");
+                    return;
+                }
+
+                var newLine = new SpectralLine
+                {
+                    Element = element.Trim(),
+                    Wavelength = wavelength,
+                    ColorHex = hexColor
+                };
+
+                Log.Information("[RecipeViewModel]: Adding new spectral line {Element} ({Wavelength} nm) to database.", newLine.Element, newLine.Wavelength);
+
+                await _spectralLineRepository.AddLineAsync(newLine, CancellationToken.None);
+                await _spectralLineRepository.SaveChangesAsync(CancellationToken.None);
+
+                WeakReferenceMessenger.Default.Send(new LinesChangedMessage());
+
+                Log.Information("[RecipeViewModel]: New spectral line saved successfully.");
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception, "[RecipeViewModel]: Failed to save new spectral line.");
+                _dialogService.ShowError($"Error saving spectral line: {exception.Message}");
             }
         }
 
@@ -382,14 +437,6 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                 Log.Information(exception, "RecipeViewModel: Fatal error during recipe saving");
                 _dialogService.ShowError(exception.Message);
             }
-        }
-
-        private void RegisterMessages()
-        {
-            WeakReferenceMessenger.Default.Register<LinesChangedMessage>(this, (recipient, message) =>
-            {
-                _ = InitializeDataAsync();
-            });
         }
 
         private void SyncToModel()

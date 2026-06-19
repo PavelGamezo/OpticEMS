@@ -1,13 +1,28 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using OpticEMS.Contracts.Services.Database;
+using OpticEMS.Notifications.Messages.SpectralLines;
 using System.Windows.Media;
 
-namespace OpticEMS.MVVM.Models
+namespace OpticEMS.Contracts.Services.Recipe
 {
     public partial class WavelengthMonitorItem : ObservableObject
     {
         [ObservableProperty]
         private double _wavelength;
+
+        [ObservableProperty]
+        private bool _isAddFormVisible = false;
+
+        [ObservableProperty]
+        private string _newElement = string.Empty;
+
+        [ObservableProperty]
+        private string _newWavelengthText = string.Empty;
+
+        [ObservableProperty]
+        private Color _newLineColor = Colors.Cyan;
 
         [ObservableProperty]
         private SpectralLine? _selectedLine;
@@ -43,6 +58,34 @@ namespace OpticEMS.MVVM.Models
             DetectionWindowTime = windowTime;
             WindowInCount = windowInCount;
             WindowOutCount = windowOutCount;
+        }
+
+
+        [RelayCommand]
+        private void ShowAddSpectralLinePanel()
+        {
+            NewElement = string.Empty;
+            NewWavelengthText = string.Empty;
+            NewLineColor = Colors.Cyan;
+            IsAddFormVisible = true;
+        }
+
+        [RelayCommand]
+        private void CloseAddForm()
+        {
+            IsAddFormVisible = false;
+        }
+
+        [RelayCommand]
+        private void SaveNewLine()
+        {
+            string hexColor = $"#{NewLineColor.R:X2}{NewLineColor.G:X2}{NewLineColor.B:X2}";
+            WeakReferenceMessenger.Default.Send(new SaveSpectralLineMessage(NewElement, NewWavelengthText, hexColor));
+
+            NewElement = string.Empty;
+            NewWavelengthText = string.Empty;
+            NewLineColor = Colors.Cyan;
+            IsAddFormVisible = false;
         }
 
         partial void OnSelectedLineChanged(SpectralLine? value)

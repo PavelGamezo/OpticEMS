@@ -15,6 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Common\Images\endpoint_logo.png" />
     <None Remove="Common\Images\folder.jpg" />
     <None Remove="Common\Images\folder.png" />
     <None Remove="Common\Images\folder_icon.png" />
@@ -28,6 +29,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Common\Images\endpoint_logo.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Common\Images\splash.png" />
   </ItemGroup>
 

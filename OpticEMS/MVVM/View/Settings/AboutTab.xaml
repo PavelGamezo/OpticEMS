@@ -87,7 +87,7 @@
     <StackPanel Orientation="Vertical" Margin="20,0,10,10" HorizontalAlignment="Left" Width="350">
 
         <DockPanel>
-            <Image Source="/Common/Images/endpoint_logo.png" HorizontalAlignment="Left" Width="152" Height="182" />
+            <Image Source="/Common/Images/endpoint_logo.png" HorizontalAlignment="Center" Width="76" Height="91" />
             <StackPanel Margin="5,5" HorizontalAlignment="Stretch">
                 <TextBlock Text="{Binding Title}" FontSize="22" 
                            HorizontalAlignment="Center" VerticalAlignment="Top" />

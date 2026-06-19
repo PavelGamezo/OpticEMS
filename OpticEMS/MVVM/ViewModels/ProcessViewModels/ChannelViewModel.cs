@@ -10,6 +10,7 @@ using OpticEMS.Contracts.Services.Mapper;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Notifications.Messages;
+using OpticEMS.Notifications.Messages.SpectralLines;
 using OpticEMS.Orchestrator;
 using Serilog;
 using System.Windows;
