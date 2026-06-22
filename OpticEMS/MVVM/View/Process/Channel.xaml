@@ -4,8 +4,14 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:OpticEMS.MVVM.View.Process"
+             xmlns:converters="clr-namespace:OpticEMS.Common.Helpers"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="1080" d:DesignWidth="1920">
+
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+    </UserControl.Resources>
 
     <Grid Grid.Column="0">
         <Grid.RowDefinitions>
@@ -88,7 +94,14 @@
             </StackPanel>
 
             <ContentControl Grid.Row="1" 
-                Content="{Binding ProcessChartViewModel}" />
+                            Content="{Binding ProcessChartViewModel}"
+                            Visibility="{Binding IsNoiseFloorMode,
+                                        Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+
+            <ContentControl Grid.Row="1" 
+                            Content="{Binding SpectrumScanChartViewModel}"
+                            Visibility="{Binding IsNoiseFloorMode,
+                                        Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
         </Grid>
 
@@ -99,15 +112,18 @@
                       Background="#2d2d30"
                       ResizeBehavior="PreviousAndNext"/>
 
-        <Border Grid.Row="2" 
-                Background="#1f1f1f" 
-                CornerRadius="3" 
-                Padding="10"
-                Margin="0,0,0,0">
+        <Grid Grid.Row="2" Background="#1f1f1f">
 
-            <ContentControl Grid.Row="2" 
-                            Content="{Binding SpectrumChartViewModel}" />
+            <Border Grid.Row="2" 
+                    Background="#1f1f1f" 
+                    CornerRadius="3" 
+                    Padding="10"
+                    Margin="0,0,0,0">
 
-        </Border>
+                <ContentControl Grid.Row="2" 
+                    Content="{Binding SpectrumChartViewModel}" />
+
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

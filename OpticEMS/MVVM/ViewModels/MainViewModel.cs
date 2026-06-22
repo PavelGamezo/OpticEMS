@@ -52,47 +52,47 @@ namespace OpticEMS.ViewModels
 
                 CurrentViewModel = _processViewModel;
 
-                Serilog.Log.Information("MainViewModel: Successfully initialized and started.");
+                Serilog.Log.Information("[MainViewModel]: Successfully initialized and started.");
             }
             catch (Exception ex)
             {
-                Serilog.Log.Fatal(ex, "MainViewModel: Critical failure during startup");
+                Serilog.Log.Fatal(ex, "[MainViewModel]: Critical failure during startup");
             }
         }
 
         [RelayCommand]
         private void ShowSygnal()
         {
-            Serilog.Log.Debug("MainViewModel: Switching to Process View");
+            Serilog.Log.Debug("[MainViewModel]: Switching to Process View");
             CurrentViewModel = _processViewModel;
         }
 
         [RelayCommand]
         private void ShowSettings()
         {
-            Serilog.Log.Information("MainViewModel: Requesting access to Settings (Password required)");
+            Serilog.Log.Information("[MainViewModel]: Requesting access to Settings (Password required)");
             if (_dialogService.AskPassword())
             {
-                Serilog.Log.Information("MainViewModel: Password accepted. Accessing Settings View");
+                Serilog.Log.Information("[MainViewModel]: Password accepted. Accessing Settings View");
                 CurrentViewModel = _settingsViewModel;
             }
             else
             {
-                Serilog.Log.Warning("MainViewModel: Access to Settings denied (Incorrect password or cancelled)");
+                Serilog.Log.Warning("[MainViewModel]: Access to Settings denied (Incorrect password or cancelled)");
             }
         }
 
         [RelayCommand]
         private void ShowChamberSettings()
         {
-            Serilog.Log.Information("MainViewModel: Switching to ChamberSettingsView");
+            Serilog.Log.Information("[MainViewModel]: Switching to ChamberSettingsView");
             CurrentViewModel = _chamberSettingsViewModel;
         }
 
         [RelayCommand]
         private void ShowRecipe()
         {
-            Serilog.Log.Information("MainViewModel: Switching to RecipeView");
+            Serilog.Log.Information("[MainViewModel]: Switching to RecipeView");
             CurrentViewModel = _recipeViewModel;
         }
 
@@ -102,7 +102,7 @@ namespace OpticEMS.ViewModels
         [RelayCommand]
         private void CloseWindow()
         {
-            Serilog.Log.Information("User requested to close the application window");
+            Serilog.Log.Information("[MainViewModel]: User requested to close the application window");
             _windowService.Close();
         }
 
@@ -119,7 +119,7 @@ namespace OpticEMS.ViewModels
 
         partial void OnCurrentViewModelChanged(object value)
         {
-            Serilog.Log.Debug("MainViewModel: Current View changed to {ViewModelType}", value?.GetType().Name);
+            Serilog.Log.Debug("[MainViewModel]: Current View changed to {ViewModelType}", value?.GetType().Name);
             OnPropertyChanged(nameof(IsProcessSelected));
             OnPropertyChanged(nameof(IsRecipeSelected));
             OnPropertyChanged(nameof(IsSettingsSelected));

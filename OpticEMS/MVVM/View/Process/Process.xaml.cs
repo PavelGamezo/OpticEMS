@@ -36,7 +36,6 @@ namespace OpticEMS.MVVM.View.Process
             }
             catch (Exception ex)
             {
-                // Логирование
                 System.Diagnostics.Debug.WriteLine("AvalonDock init error: " + ex);
             }
         }

@@ -3,27 +3,36 @@
     public class MagneticFieldSmoother
     {
         private readonly double _targetIntervalMs;
-        private readonly Queue<(double Signal, double Timestamp)> _buffer = new();
+        private readonly int _periodsToAverage;
+
+        private Queue<(double Signal, double Timestamp)>[] _channelBuffers = Array.Empty<Queue<(double, double)>>();
 
         public MagneticFieldSmoother(double magneticFieldPeriodMs, int periodsToAverage = 5)
         {
             _targetIntervalMs = magneticFieldPeriodMs * periodsToAverage;
+            _periodsToAverage = periodsToAverage;
         }
 
         public double ComputeAvg(double inputSignal, double elapsedMs)
-        {
-            _buffer.Enqueue((inputSignal, elapsedMs));
+            => ComputeAvg(inputSignal, elapsedMs, channelIndex: 0);
 
-            while (_buffer.Count > 0 && (elapsedMs - _buffer.Peek().Timestamp > _targetIntervalMs))
+        public double ComputeAvg(double inputSignal, double elapsedMs, int channelIndex)
+        {
+            EnsureChannelCapacity(channelIndex + 1);
+
+            var buffer = _channelBuffers[channelIndex];
+            buffer.Enqueue((inputSignal, elapsedMs));
+
+            while (buffer.Count > 0 && (elapsedMs - buffer.Peek().Timestamp > _targetIntervalMs))
             {
-                _buffer.Dequeue();
+                buffer.Dequeue();
             }
 
             double accumulatedValue = 0;
             double totalWeight = 0;
             int i = 0;
 
-            foreach (var frame in _buffer)
+            foreach (var frame in buffer)
             {
                 i++;
                 double weight = i;
@@ -41,23 +50,46 @@
                 return Array.Empty<double>();
             }
 
+            EnsureChannelCapacity(inputSignals.Length);
+
             var smoothed = new double[inputSignals.Length];
 
             for (int i = 0; i < inputSignals.Length; i++)
             {
-                smoothed[i] = ComputeAvg(inputSignals[i], elapsedMs);
+                smoothed[i] = ComputeAvg(inputSignals[i], elapsedMs, channelIndex: i);
             }
 
             return smoothed;
         }
 
         public double[] Process(double[] inputs, double currentTimeMs)
-        {
-            var smoothedValues = ComputeAvg(inputs, currentTimeMs);
+            => ComputeAvg(inputs, currentTimeMs);
 
-            return smoothedValues;
+        public void Reset()
+        {
+            foreach (var buffer in _channelBuffers)
+            {
+                buffer.Clear();
+            }
         }
 
-        public void Reset() => _buffer.Clear();
+        private void EnsureChannelCapacity(int requiredChannels)
+        {
+            if (_channelBuffers.Length >= requiredChannels)
+            {
+                return;
+            }
+
+            var newBuffers = new Queue<(double, double)>[requiredChannels];
+
+            Array.Copy(_channelBuffers, newBuffers, _channelBuffers.Length);
+
+            for (int i = _channelBuffers.Length; i < requiredChannels; i++)
+            {
+                newBuffers[i] = new Queue<(double, double)>();
+            }
+
+            _channelBuffers = newBuffers;
+        }
     }
 }

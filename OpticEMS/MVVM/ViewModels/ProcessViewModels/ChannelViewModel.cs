@@ -12,6 +12,7 @@ using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Notifications.Messages.SpectralLines;
 using OpticEMS.Orchestrator;
+using OpticEMS.Processing.SpectrumScanner;
 using Serilog;
 using System.Windows;
 using System.Windows.Media;
@@ -27,6 +28,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         private readonly IDialogService _dialogService;
         private readonly EtchingOrchestrator _orchestrator;
+        private readonly SpectrumScanner _spectrumScanner;
 
         #endregion
 
@@ -41,6 +43,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         [ObservableProperty]
         private bool _canExport;
 
+        [ObservableProperty]
+        private bool _isNoiseFloorMode;
+
         #endregion
 
         #region viewModels
@@ -54,6 +59,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         public ChannelDetailsViewModel ChannelDetailsViewModel { get; }
 
         public SpectrometerControlViewModel SpectrometerControlViewModel { get; }
+
+        public SpectrumScanChartViewModel SpectrumScanChartViewModel { get; }
 
         #endregion
 
@@ -84,6 +91,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 calibrationService,
                 wavelengthMapper,
                 configureProvider);
+            _spectrumScanner = new SpectrumScanner(); 
+            _spectrumScanner.ResultReady += OnNoiseFloorResult;
 
             ChannelId = id;
             ChannelName = $"Chamber {id + 1}";
@@ -97,6 +106,9 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             ChannelDetailsViewModel = new ChannelDetailsViewModel(this);
             SpectrometerControlViewModel = new SpectrometerControlViewModel(
                 ChannelId, _orchestrator, configureProvider);
+            SpectrumScanChartViewModel = new SpectrumScanChartViewModel(
+                _orchestrator.Device.Device.DeviceInfo.TrimLeft,
+                _orchestrator.Device.Device.DeviceInfo.TrimRight);
 
             RegisterMessages();
 
@@ -309,7 +321,21 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         {
             try
             {
-                _orchestrator.StartProcess();
+                if (Recipe != null)
+                {
+                    if (_spectrumScanner.IsScanning)
+                    {
+                        _spectrumScanner.Stop();
+                    }
+
+                    IsNoiseFloorMode = false;
+                    _orchestrator.StartProcess();
+                }
+                else
+                {
+                    IsNoiseFloorMode = true;
+                    _spectrumScanner.Start(ChannelId, sigmaMultiplier: 3.0);
+                }
             }
             catch (Exception exception)
             {
@@ -317,24 +343,18 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
-        //[RelayCommand]
-        //private void PauseProcess()
-        //{
-        //    try
-        //    {
-        //        _orchestrator.PauseProcess();
-        //    }
-        //    catch (Exception exception)
-        //    {
-        //        _dialogService.ShowError(exception.Message);
-        //    }
-        //}
-
         [RelayCommand]
         public async Task StopProcessAsync()
         {
             try
             {
+                if (_spectrumScanner.IsScanning)
+                {
+                    _spectrumScanner.Stop();
+                    IsNoiseFloorMode = false;
+                    return;
+                }
+
                 await _orchestrator.StopProcessAsync();
             }
             catch (Exception exception)
@@ -391,20 +411,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
-        /*
-        [RelayCommand]
-        private async Task ExecuteAnalizingTrain()
-        {
-            try
-            {
-                await _orchestrator.ExecuteAnalyzingTrainingAsync();
-            }
-            catch (Exception exception)
-            {
-                _dialogService.ShowError(exception.Message);
-            }
-        }*/
-
         #endregion
 
         #region methods
@@ -459,6 +465,19 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }, DispatcherPriority.Render);
         }
 
+        private void OnNoiseFloorResult(SpectrumScannerResult result)
+        {
+            if (Application.Current?.Dispatcher.HasShutdownStarted == true || _isDisposed)
+            {
+                return;
+            }
+
+            Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                SpectrumScanChartViewModel.Update(result);
+            }, DispatcherPriority.Render);
+        }
+
         #endregion
 
         #region disposing
@@ -479,13 +498,15 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 SpectrumChartViewModel is not null &&
                 SpectrometerControlViewModel is not null)
             {
+                SpectrumScanChartViewModel.Dispose();
                 SpectrumChartViewModel.Dispose();
                 ProcessChartViewModel.Dispose();
                 SpectrumChartViewModel.OnWavelengthMoved -= (index, newWavelength) =>
                 {
                     _orchestrator?.UpdateWavelengthManually(index, newWavelength);
                 };
-
+                _spectrumScanner.ResultReady -= OnNoiseFloorResult;
+                _spectrumScanner.Dispose();
                 _orchestrator?.Dispose();
             }
         }

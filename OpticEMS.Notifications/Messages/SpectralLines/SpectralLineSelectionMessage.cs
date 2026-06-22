@@ -1,4 +1,4 @@
-﻿namespace OpticEMS.Notifications.Messages
+﻿namespace OpticEMS.Notifications.Messages.SpectralLines
 {
     public class SpectralLineSelectionMessage
     {

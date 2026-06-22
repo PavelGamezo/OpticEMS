@@ -7,7 +7,7 @@
       xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
       xmlns:converters="clr-namespace:OpticEMS.Common.Helpers"
       mc:Ignorable="d" 
-      d:DesignHeight="1080" d:DesignWidth="1920"
+       d:DesignWidth="1920"
       Title="Recipe">
 
     <Page.Resources>
