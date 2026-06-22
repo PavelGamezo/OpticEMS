@@ -68,11 +68,12 @@ namespace OpticEMS.Orchestrator
             _cancellationToken = new CancellationTokenSource();
             _cancellationTokenStart = new CancellationTokenSource();
 
-            var ip = configureProvider?.GetByChannelId(ChannelId)?.Ip;
-            var port = int.Parse(configureProvider?.GetByChannelId(ChannelId).Port);
-
             _deviceProcessing = new DeviceProcessing(ChannelId, configureProvider);
-            //_connectionHandler = new ModuleHandler(ip, port);
+            _connectionHandler = new ModuleHandler(
+                ip: configureProvider?.GetByChannelId(ChannelId)?.Ip,
+                port: int.Parse(configureProvider?.GetByChannelId(ChannelId).Port));
+
+            _connectionHandler.ProcessStartRequested += OnModuleProcessStartRequested;
 
             _endpointService = endpointService;
             _recipeRepository = recipeRepository;
@@ -543,7 +544,8 @@ namespace OpticEMS.Orchestrator
 
             ProcessStatus = "Endpoint detected";
 
-            await StopProcessAsync();
+            await StopProcessAsync(); 
+            _connectionHandler?.SendEndEtch();
 
             WeakReferenceMessenger.Default.Send(new ProcessFinishedMessage(ChannelId, report, forced));
         }
@@ -762,6 +764,23 @@ namespace OpticEMS.Orchestrator
             }
         }
 
+        private void OnModuleProcessStartRequested(int algorithmCode)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await ApplyRecipe(algorithmCode);
+                    StartProcess();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "[ORCHESTRATOR]: Failed to start process from Centura, code={Code}",
+                        algorithmCode);
+                }
+            });
+        }
+
         #region disposing
 
         private bool _disposed = false;
@@ -793,6 +812,8 @@ namespace OpticEMS.Orchestrator
 
                     _frameAverager?.Reset();
                     _pcaHandler = null;
+                    _connectionHandler.ProcessStartRequested -= OnModuleProcessStartRequested;
+                    _connectionHandler.Dispose();
 
                     WeakReferenceMessenger.Default.UnregisterAll(this);
 
