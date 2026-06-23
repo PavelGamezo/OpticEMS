@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Win32;
 using OpticEMS.Common.Helpers.OxyPlot;
 using OpticEMS.Contracts.Services.Calibration;
 using OpticEMS.Contracts.Services.Database;
@@ -13,6 +14,7 @@ using OpticEMS.Notifications.Messages;
 using OpticEMS.Notifications.Messages.SpectralLines;
 using OpticEMS.Orchestrator;
 using OpticEMS.Processing.SpectrumScanner;
+using OpticEMS.Services.Import;
 using Serilog;
 using System.Windows;
 using System.Windows.Media;
@@ -28,6 +30,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
         private readonly IDialogService _dialogService;
         private readonly EtchingOrchestrator _orchestrator;
+        private readonly ReprocessOrchestrator _reprocessOrchestrator;
         private readonly SpectrumScanner _spectrumScanner;
 
         #endregion
@@ -83,14 +86,14 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             ICalibrationService calibrationService,
             ISpectralLineRepository spectralLineRepository)
         {
+            Log.Information("[ChannelViewModel #{Id}]: Creating channel '{Name}'", id, $"Chamber {id + 1}");
+
             _dialogService = dialogService;
             _orchestrator = new EtchingOrchestrator(
-                id,
-                endpointService,
-                recipeRepository,
-                calibrationService,
-                wavelengthMapper,
-                configureProvider);
+                id, endpointService, recipeRepository,
+                calibrationService, wavelengthMapper, configureProvider);
+            _reprocessOrchestrator = new ReprocessOrchestrator(id, endpointService);
+
             _spectrumScanner = new SpectrumScanner(); 
             _spectrumScanner.ResultReady += OnNoiseFloorResult;
 
@@ -109,13 +112,15 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             SpectrumScanChartViewModel = new SpectrumScanChartViewModel(
                 _orchestrator.Device.Device.DeviceInfo.TrimLeft,
                 _orchestrator.Device.Device.DeviceInfo.TrimRight);
-
+            
             RegisterMessages();
 
             SpectrumChartViewModel.OnWavelengthMoved += (index, wavelength) =>
             {
                 _orchestrator.UpdateWavelengthManually(index, wavelength);
             };
+
+            Log.Information("[ChannelViewModel #{Id}]: Channel created successfully", id);
         }
 
         public ChannelViewModel()
@@ -325,20 +330,29 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 {
                     if (_spectrumScanner.IsScanning)
                     {
+                        Log.Debug("[ChannelViewModel #{Id}]: Stopping spectrum scanner before process start", ChannelId);
                         _spectrumScanner.Stop();
                     }
 
                     IsNoiseFloorMode = false;
+
+                    Log.Information("[ChannelViewModel #{Id}]: Starting etching process. Recipe='{Recipe}'",
+                        ChannelId, Recipe.Name);
+
                     _orchestrator.StartProcess();
                 }
                 else
                 {
+                    Log.Information("[ChannelViewModel #{Id}]: No recipe applied — starting scanning mode",
+                        ChannelId);
+
                     IsNoiseFloorMode = true;
                     _spectrumScanner.Start(ChannelId, sigmaMultiplier: 3.0);
                 }
             }
             catch (Exception exception)
             {
+                Log.Error(exception, "[ChannelViewModel #{Id}]: Failed to start process", ChannelId);
                 _dialogService.ShowError(exception.Message);
             }
         }
@@ -350,15 +364,18 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 if (_spectrumScanner.IsScanning)
                 {
+                    Log.Information("[ChannelViewModel #{Id}]: Stopping noise floor scan", ChannelId);
                     _spectrumScanner.Stop();
                     IsNoiseFloorMode = false;
                     return;
                 }
 
+                Log.Information("[ChannelViewModel #{Id}]: Stopping etching process", ChannelId);
                 await _orchestrator.StopProcessAsync();
             }
             catch (Exception exception)
             {
+                Log.Error(exception, "[ChannelViewModel #{Id}]: Failed to stop process", ChannelId);
                 _dialogService.ShowError(exception.Message);
             }
         }
@@ -402,13 +419,58 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     path: dialog.FileName
                 );
 
+                Log.Information("[ChannelViewModel #{Id}]: Data exported to '{Path}'", ChannelId, dialog.FileName);
+
                 _dialogService.ShowInformation("Data exported successfully.");
             }
             catch (Exception exception)
             {
-                Log.Error(exception, "[VM_EXPORT]: Failed to export OES data");
+                Log.Error(exception, "[ChannelViewModel #{Id}]: Export failed", ChannelId);
                 _dialogService.ShowError($"Export failed: {exception.Message}");
             }
+        }
+
+        [RelayCommand]
+        private async Task StartReprocessAsync()
+        {
+            try
+            {
+                var dialog = new OpenFileDialog
+                {
+                    Title = "Select trace file for reprocess",
+                    Filter = "Trace files (*.csv;*.txt)|*.csv;*.txt|All files (*.*)|*.*"
+                };
+
+                if (dialog.ShowDialog() != true)
+                {
+                    return;
+                }
+
+                Log.Information("[ChannelViewModel #{Id}]: Starting reprocess from '{File}'",
+                    ChannelId, dialog.FileName);
+
+                var importData = TraceCsvParser.Parse(dialog.FileName);
+
+                Log.Information("[ChannelViewModel #{Id}]: Trace parsed. Duration={Dur}s, Series={Count}",
+                    ChannelId, importData.DurationSeconds, importData.Series.Count);
+
+                _reprocessOrchestrator.Stop();
+                _reprocessOrchestrator.Start(importData, Recipe);
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception, "[ChannelViewModel #{Id}]: Reprocess failed", ChannelId);
+                _dialogService.ShowError(exception.Message);
+            }
+        }
+
+        [RelayCommand]
+        private void StopReprocess()
+        {
+            _reprocessOrchestrator.Stop();
+
+            StartReprocessCommand.NotifyCanExecuteChanged();
+            StopReprocessCommand.NotifyCanExecuteChanged();
         }
 
         #endregion
@@ -420,10 +482,15 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             try
             {
                 _orchestrator.ApplyRecipe(recipe);
+                
+                Log.Information("[ChannelViewModel #{Id}]: Recipe '{Name}' applied successfully",
+                    ChannelId, recipe.Name);
                 _dialogService.ShowInformation($"Recipe '{recipe.Name}' with ID {recipe.DatabaseId} applied successfully for channel {ChannelName}");
             }
             catch (Exception exception)
             {
+                Log.Error(exception, "[ChannelViewModel #{Id}]: Failed to apply recipe '{Name}'",
+                    ChannelId, recipe.Name);
                 _dialogService.ShowError($"Failed to apply recipe: {exception.Message}");
             }
         }
@@ -491,6 +558,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             
             _isDisposed = true;
 
+            Log.Debug("[ChannelViewModel #{Id}]: Disposing", ChannelId);
+
             WeakReferenceMessenger.Default.UnregisterAll(this);
 
             if (_orchestrator is not null &&
@@ -509,6 +578,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 _spectrumScanner.Dispose();
                 _orchestrator?.Dispose();
             }
+
+            Log.Debug("[ChannelViewModel #{Id}]: Disposed", ChannelId);
         }
 
         #endregion

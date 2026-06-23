@@ -170,7 +170,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             }
             catch (Exception exception)
             {
-                Log.Fatal(exception, "RecipeViewModel: Critical failure during startup.");
+                Log.Fatal(exception, "[RecipeViewModel]: Critical failure during startup.");
             }
         }
 
@@ -309,7 +309,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
         [RelayCommand(CanExecute = nameof(HasSelectedRecipe))]
         private void ApplySelectedRecipe()
         {
-            Log.Information("RecipeViewMode: Applying selected recipe requested.");
+            Log.Information("[RecipeViewMode]: Applying selected recipe requested.");
             ApplyRecipeRequested?.Invoke(SelectedRecipe);
         }
 
@@ -335,7 +335,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                     DetectionWindowHighs = new List<double>()
                 };
 
-                Log.Information("RecipeViewModel: Creating and saving new recipe: {Name}", name);
+                Log.Information("[RecipeViewModel]: Creating and saving new recipe: {Name}", name);
 
                 await _recipeRepository.AddRecipeAsync(newRecipe);
                 await _recipeRepository.SaveChangesAsync();
@@ -344,7 +344,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             }
             catch (Exception exception)
             {
-                Log.Fatal("RecipeViewModel: Critical failure during recipe saving.");
+                Log.Fatal("[RecipeViewModel]: Critical failure during recipe saving.");
             }
         }
 
@@ -360,14 +360,14 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                     _recipeRepository.RemoveRecipe(SelectedRecipe);
                     await _recipeRepository.SaveChangesAsync();
 
-                    Log.Information("RecipeViewModel: Recipe deleted successfully.");
+                    Log.Information("[RecipeViewModel]: Recipe deleted successfully.");
 
                     await LoadFilesAsync();
                 }
             }
             catch (Exception exception)
             {
-                Log.Fatal(exception, "RecipeViewModel: Error during recipe deleting.");
+                Log.Error(exception, "[RecipeViewModel]: Failed to delete recipe '{Name}'", SelectedRecipe?.Name);
                 _dialogService.ShowError(exception.Message);
             }
         }
@@ -385,7 +385,7 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                     SelectedRecipe.Name = newName;
                     SelectedRecipe.LastModifiedAt = DateTime.Now;
 
-                    Log.Information("RecipeViewModel: Recipe renamed successfully.");
+                    Log.Information("[RecipeViewModel]: Recipe renamed successfully.");
                     await _recipeRepository.UpdateRecipeAsync(SelectedRecipe);
                     await _recipeRepository.SaveChangesAsync();
 
@@ -394,7 +394,8 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
             }
             catch (Exception exception)
             {
-                Log.Fatal(exception, "RecipeViewModel: Fatal error during recipe renaming");
+                Log.Error(exception, "[RecipeViewModel]: Failed to rename recipe '{Old}'",
+                    SelectedRecipe?.Name);
                 _dialogService.ShowError(exception.Message);
             }
         }
@@ -426,15 +427,16 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
 
                 await _recipeRepository.UpdateRecipeAsync(SelectedRecipe);
                 await _recipeRepository.SaveChangesAsync();
-
-                Log.Information("RecipeViewModel: Recipe saved successfully.");
+                
+                Log.Information("[RecipeViewModel]: Recipe '{Name}' saved. Wavelengths={Count}",
+                    SelectedRecipe.Name, SelectedRecipe.Wavelengths.Count);
                 _dialogService.ShowInformation("Recipe saved successfully.");
 
                 await LoadFilesAsync();
             }
             catch (Exception exception)
             {
-                Log.Information(exception, "RecipeViewModel: Fatal error during recipe saving");
+                Log.Error(exception, "[RecipeViewModel]: Failed to save recipe '{Name}'", SelectedRecipe?.Name);
                 _dialogService.ShowError(exception.Message);
             }
         }

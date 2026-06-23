@@ -20,7 +20,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
             }
             catch (Exception exception)
             {
-                Log.Fatal(exception, "Fatal error during calibration chart initialization...");
+                Log.Fatal(exception, "[CalibrationSettingsChartViewModel]: Fatal error during calibration chart initialization...");
             }
         }
 
@@ -136,7 +136,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
             }
             catch (Exception exception)
             {
-                Log.Fatal(exception, "Fatal error while ResetPlotSeries requested...");
+                Log.Fatal(exception, "[CalibrationSettingsChartViewModel]: Fatal error while ResetPlotSeries requested...");
             }
         }
 
@@ -146,7 +146,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
         {
             if (data == null)
             {
-                Log.Information("CalibrationSettingsChartViewModel: Received null data.");
+                Log.Information("[CalibrationSettingsChartViewModel]: Received null data.");
                 return;
             }
 
@@ -176,7 +176,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
             }
             catch (Exception exception)
             {
-                Log.Fatal(exception, "Unexpected error during calibration chart updating...");
+                Log.Fatal(exception, "[CalibrationSettingsChartViewModel]: Unexpected error during calibration chart updating...");
             }
         }
 
@@ -205,7 +205,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
             }
             catch (Exception exception)
             {
-                Log.Fatal(exception, "Unexpected error during interpolation chart updating...");
+                Log.Fatal(exception, "[CalibrationSettingsChartViewModel]: Unexpected error during interpolation chart updating...");
             }
         }
     }

@@ -41,7 +41,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
             }
             catch (Exception exception)
             {
-                Log.Fatal(exception, "ChamberSettingsViewModel: Fatal error during initialization...");
+                Log.Fatal(exception, "[ChamberSettingsViewModel]: Fatal error during initialization.");
             }
         }
 
@@ -56,7 +56,7 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 
             int count = _spectrometerService.GetConnectedSpectrometersCount();
 
-            Log.Information("Spectrometer service reported {count} connected devices.", count);
+            Log.Information("[ChamberSettingsViewModel]: Spectrometer service reported {count} connected devices.", count);
 
             for (int i = 0; i < count; i++)
             {
@@ -219,12 +219,12 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 
                 WeakReferenceMessenger.Default.Send(new ChannelsUpdatedMessage());
 
-                Log.Warning("AppSettings for {count} channels saved successfully.", channelId + 1);
+                Log.Information("[ChamberSettingsViewModel]: Settings saved. Channels={Count}", channelId + 1);
                 _dialogService.ShowInformation("Settings saved successfully.");
             }
             catch (Exception exception)
             {
-                Log.Fatal(exception, "Unexpected error during settings saving...");
+                Log.Error(exception, "[ChamberSettingsViewModel]: Failed to save settings");
                 _dialogService.ShowError($"Failed to save settings: {exception.Message}");
             }
         }

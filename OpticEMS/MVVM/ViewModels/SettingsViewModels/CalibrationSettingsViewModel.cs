@@ -223,11 +223,6 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 
                 HandleIncomingSpectrum(message.Intensities);
             });
-
-            //WeakReferenceMessenger.Default.Register<LiveSpectrumDataMessage>(this, (recipient, message) =>
-            //{
-            //    RefreshChannels();
-            //});
         }
 
         private void HandleIncomingSpectrum(double[] intensities)

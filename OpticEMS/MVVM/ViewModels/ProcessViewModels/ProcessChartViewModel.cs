@@ -356,49 +356,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
         }
 
-        /*
-        public void DrawWindowBounds(List<WindowBounds> windowBounds)
-        {
-            if (PlotModel == null)
-            {
-                return;
-            }
-
-            lock (PlotModel.SyncRoot)
-            {
-                var oldWindows = PlotModel.Annotations
-                    .Where(a => a.Tag?.ToString() == "DynamicWindow")
-                    .ToList();
-
-                foreach (var old in oldWindows)
-                {
-                    PlotModel.Annotations.Remove(old);
-                }
-
-                foreach (var b in windowBounds)
-                {
-                    double startX = DateTimeAxis.ToDouble(_epoch.AddSeconds(b.StartTime));
-                    double endX = DateTimeAxis.ToDouble(_epoch.AddSeconds(b.EndTime));
-
-                    var rect = new RectangleAnnotation
-                    {
-                        Tag = "DynamicWindow",
-                        MinimumX = startX,
-                        MaximumX = endX,
-                        MinimumY = b.Bottom,
-                        MaximumY = b.Top,
-                        Fill = OxyColor.FromAColor(40, OxyColors.White),
-                        Stroke = OxyColor.FromAColor(120, OxyColors.Gray),
-                        StrokeThickness = 1,
-                        Layer = AnnotationLayer.AboveSeries
-                    };
-                    PlotModel.Annotations.Add(rect);
-                }
-            }
-
-            PlotModel.InvalidatePlot(false);
-        }*/
-
         private void UpdateRectMaximumX(ref RectangleAnnotation? area, TimeSpan currentTime)
         {
             if (area == null || PlotModel == null)

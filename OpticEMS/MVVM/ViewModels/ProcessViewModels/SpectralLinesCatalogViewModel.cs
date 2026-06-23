@@ -315,7 +315,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             catch (Exception exception)
             {
                 _dialogService.ShowError("Unexpected error during spectral line filters applying");
-                Log.Error(exception, "Unexpected error during spectral line filters applying.");
+                Log.Error(exception, "[SpectralLineCatalogViewModel]: Unexpected error during spectral line filters applying.");
             }
         }
 
