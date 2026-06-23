@@ -13,5 +13,8 @@
         public int WindowInCount { get; set; }
         public int WindowOutCount { get; set; }
         public bool HasReachedWindowIn { get; set; }
+        public bool HasReachedWindowOut { get; set; }
+        public bool WindowOutDisabled { get; set; }
+        public bool WindowInDisabled { get; set; }
     }
 }

@@ -421,7 +421,6 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 OnPropertyChanged(nameof(SelectedSpectralLines));
                 
-                WeakReferenceMessenger.Default.Send(new LinesChangedMessage());
                 WeakReferenceMessenger.Default.Send(
                     new SpectralLineSelectionMessage(_channelId, editedLine.Wavelength, editedLine.ColorHex));
             }

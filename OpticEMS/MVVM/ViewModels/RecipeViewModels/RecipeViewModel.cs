@@ -359,8 +359,8 @@ namespace OpticEMS.MVVM.ViewModels.RecipeViewModels
                 {
                     _recipeRepository.RemoveRecipe(SelectedRecipe);
                     await _recipeRepository.SaveChangesAsync();
-
-                    Log.Information("[RecipeViewModel]: Recipe deleted successfully.");
+                    
+                    Log.Information("[RecipeViewModel]: Recipe '{Name}' deleted", SelectedRecipe.Name);
 
                     await LoadFilesAsync();
                 }

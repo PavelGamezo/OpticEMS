@@ -90,6 +90,11 @@ namespace OpticEMS.Services.Etching
             {
                 foreach (var state in WavelengthStates)
                 {
+                    if (!state.WindowInDisabled)
+                    {
+                        state.HasReachedWindowIn = false;
+                    }
+
                     state.HasReachedWindowIn = false;
                 }
 
@@ -139,6 +144,11 @@ namespace OpticEMS.Services.Etching
 
         private void ProcessWindowOutState(State state, double signal, double elapsedMs)
         {
+            if (state.WindowOutDisabled)
+            {
+                return;
+            }
+
             bool hasJustViolated = IsOutsideDetectionWindow(state, signal, elapsedMs);
 
             if (hasJustViolated)
@@ -148,8 +158,18 @@ namespace OpticEMS.Services.Etching
 
                 if (state.ConsecutiveOut >= state.WindowOutCount)
                 {
-                    Log.Information("[PROCESS]: \"WindowOut\" -> \"WindowIn\" at {ElapsedMs}", elapsedMs);
-                    state.ProcessState = ProcessState.WindowIn;
+                    Log.Information("[PROCESS]: Channel {Index} WindowOut → WindowIn at {Elapsed}ms",
+                        state.Index, elapsedMs);
+
+                    if (state.WindowInDisabled)
+                    {
+                        state.HasReachedWindowIn = true;
+                    }
+                    else
+                    {
+                        state.ProcessState = ProcessState.WindowIn;
+                    }
+
                     state.ConsecutiveIn = 0;
                     state.ConsecutiveOut = 0;
                 }
@@ -175,6 +195,11 @@ namespace OpticEMS.Services.Etching
 
         private void ProcessWindowInState(State state, double signal, double elapsedMs)
         {
+            if (state.WindowInDisabled)
+            {
+                return;
+            }
+
             if (IsInsideDetectionLimits(state, signal))
             {
                 if (CheckIfWindowShouldBeRecorded(state, elapsedMs))
@@ -337,20 +362,56 @@ namespace OpticEMS.Services.Etching
             WavelengthStates = new List<State>();
             for (int i = 0; i < startIntensities.Length; i++)
             {
-                var isMonitoringDisabled = _recipe.DetectionWindowHighs[i] == 0;
-                var state = new State()
+                bool isMonitoringDisabled = _recipe.DetectionWindowHighs[i] == 0;
+                bool windowOutDisabled = _recipe.WindowOutCounts[i] == 0;
+                bool windowInDisabled = _recipe.WindowInCounts[i] == 0;
+
+                ProcessState initialState;
+                bool hasReachedWindowIn;
+
+                if (isMonitoringDisabled)
+                {
+                    initialState = ProcessState.Overetch;
+                    hasReachedWindowIn = true;
+                }
+                else if (windowOutDisabled && windowInDisabled)
+                {
+                    initialState = ProcessState.WindowOut;
+                    hasReachedWindowIn = false;
+                }
+                else if (windowOutDisabled)
+                {
+                    initialState = ProcessState.WindowIn;
+                    hasReachedWindowIn = false;
+                }
+                else
+                {
+                    initialState = ProcessState.WindowOut;
+                    hasReachedWindowIn = false;
+                }
+
+                var state = new State
                 {
                     Index = i,
-                    ProcessState = isMonitoringDisabled ? ProcessState.Overetch : ProcessState.WindowOut,
+                    ProcessState = initialState,
                     Reference = startIntensities[i],
-                    HasReachedWindowIn = isMonitoringDisabled,
+                    HasReachedWindowIn = hasReachedWindowIn,
 
                     DetectionWindowTime = _recipe.DetectionWindowTimes[i],
                     WindowInCount = _recipe.WindowInCounts[i],
-                    WindowOutCount = _recipe.WindowOutCounts[i]
+                    WindowOutCount = _recipe.WindowOutCounts[i],
+
+                    WindowOutDisabled = windowOutDisabled,
+                    WindowInDisabled = windowInDisabled,
                 };
 
                 WavelengthStates.Add(state);
+
+                Log.Debug("[PROCESS]: Channel {Index} — WindowOut={Out}, WindowIn={In}, " +
+                          "OutDisabled={OutDis}, InDisabled={InDis}, MonDisabled={MonDis}",
+                    i,
+                    _recipe.WindowOutCounts[i], _recipe.WindowInCounts[i],
+                    windowOutDisabled, windowInDisabled, isMonitoringDisabled);
             }
 
             ClearConfirmedWindowsIn();
@@ -360,7 +421,8 @@ namespace OpticEMS.Services.Etching
             _finishedAtMs = 0;
             _overEtchStartTime = 0;
 
-            Log.Information("[PROCESS]: Process started");
+            Log.Information("[PROCESS]: Started. Recipe='{Name}', Channels={Count}, MaxTime={Max}s",
+                recipe.Name, startIntensities.Length, recipe.MaxEndpointTime / 1000.0);
         }
 
         public void Stop()
