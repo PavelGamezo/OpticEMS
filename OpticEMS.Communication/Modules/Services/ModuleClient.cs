@@ -12,7 +12,7 @@ namespace OpticEMS.Communication.Modules.Services
 
         private string _ip;
         private int _port;
-        private byte _unitId;
+        private byte _unitId = 1;
 
         private TcpClient _client;
         private ModbusIpMaster _master;

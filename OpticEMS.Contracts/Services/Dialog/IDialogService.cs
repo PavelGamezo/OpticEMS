@@ -8,6 +8,8 @@
 
         bool AskPassword();
 
+        bool AskUpdate();
+
         void ShowInformation(string message);
 
         string? ShowRenameQuestion(string currentName);

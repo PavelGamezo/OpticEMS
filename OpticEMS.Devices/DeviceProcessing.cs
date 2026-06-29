@@ -3,6 +3,7 @@ using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices.Devices.Avantes;
 using OpticEMS.Devices.Devices.Solar;
 using OpticEMS.Devices.Devices.VirtualSpec;
+using OpticEMS.Devices.Devices.Yixis;
 using OpticEMS.Notifications.Messages;
 using Serilog;
 
@@ -42,6 +43,9 @@ namespace OpticEMS.Devices
                     break;
                 case DeviceType.Avantes:
                     _device = new Avantes();
+                    break;
+                case DeviceType.Yixist:
+                    _device = new Yixist(saved.DeviceIp);
                     break;
                 case DeviceType.VirtualSpec:
                     _device = new VirtualSpec(realDeviceId);
@@ -137,8 +141,8 @@ namespace OpticEMS.Devices
             ScansNum = scanNum;
             Equalizer = Equalizer;
 
-            SetParameters(id, ExposureTime, ScansNum, Equalizer, 0);
             InitWavelengths();
+            SetParameters(id, ExposureTime, ScansNum, Equalizer, 1);
 
             try
             {

@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using OpticEMS.Contracts.Services.Settings;
+using OpticEMS.Notifications.Messages;
 using OpticEMS.Orchestrator;
 using Serilog;
 
@@ -16,57 +18,10 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(StopSpectrometerScanCommand))]
         private bool _isScanning = true;
-
-        private float _exposureMs = 1;
-
-        private int _scansNum = 1;
-
-        private float _equalizer = 1;
-
-        public float ExposureMs
-        {
-            get => _exposureMs;
-            set
-            {
-                if (SetProperty(ref _exposureMs, value))
-                {
-                    if (value > 0)
-                    {
-                        SaveSpectrometerParams();
-                    }
-                }
-            }
-        }
-
-        public int ScansNum
-        {
-            get => _scansNum;
-            set
-            {
-                if (SetProperty(ref _scansNum, value))
-                {
-                    if (value > 0)
-                    {
-                        SaveSpectrometerParams();
-                    }
-                }
-            }
-        }
-
-        public float Equalizer
-        {
-            get => _equalizer;
-            set
-            {
-                if (SetProperty(ref _equalizer, value))
-                {
-                    if (value > 0)
-                    {
-                        SaveSpectrometerParams();
-                    }
-                }
-            }
-        }
+        [ObservableProperty] private float _exposureMs = 1;
+        [ObservableProperty] private int _scansNum = 1;
+        [ObservableProperty] private float _equalizer = 1;
+        [ObservableProperty] private bool _isPeakModeEnabled;
 
         private bool CanStopScan => IsScanning;
 
@@ -125,13 +80,15 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 
                 if (device != null)
                 {
-                    var exposureMs = device.ExposureTime;
-                    var scansNum = device.ScansNum;
-                    var equalizer = device.Equalizer;
+                    _exposureMs = device.ExposureTime;
+                    _scansNum = device.ScansNum;
+                    _equalizer = device.Equalizer;
+                    _isPeakModeEnabled = device.PeakModeEnabled;
 
-                    ExposureMs = exposureMs;
-                    ScansNum = scansNum;
-                    Equalizer = equalizer;
+                    OnPropertyChanged(nameof(ExposureMs));
+                    OnPropertyChanged(nameof(ScansNum));
+                    OnPropertyChanged(nameof(Equalizer));
+                    OnPropertyChanged(nameof(IsPeakModeEnabled));
 
                     Log.Information("[SPECTROMETER_CONTROL]: Spectrometer params loaded from device settings.");
                 }
@@ -159,6 +116,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                     device.ExposureTime = ExposureMs;
                     device.ScansNum = ScansNum;
                     device.Equalizer = Equalizer;
+                    device.PeakModeEnabled = IsPeakModeEnabled;
 
                     _settingsProvider.Upsert(device);
                     _settingsProvider.Save();
@@ -172,6 +130,28 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             {
                 Log.Error(exception, "[SPECTROMETER_CONTROL]: Error during spectrometer params saving.");
             }
+        }
+
+        partial void OnIsPeakModeEnabledChanged(bool value)
+        {
+            Log.Information("[SPECTROMETER_CONTROL]: Peak mode {State}.", value ? "enabled" : "disabled");
+            WeakReferenceMessenger.Default.Send(new PeakModeChangedMessage(_channelId, value));
+            SaveSpectrometerParams();
+        }
+
+        partial void OnExposureMsChanged(float value)
+        {
+            if (value > 0) SaveSpectrometerParams();
+        }
+
+        partial void OnScansNumChanged(int value)
+        {
+            if (value > 0) SaveSpectrometerParams();
+        }
+
+        partial void OnEqualizerChanged(float value)
+        {
+            if (value > 0) SaveSpectrometerParams();
         }
     }
 }

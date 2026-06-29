@@ -14,6 +14,7 @@
         <Grid.RowDefinitions>
             <RowDefinition/>
             <RowDefinition/>
+            <RowDefinition/>
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0">
@@ -282,6 +283,22 @@
                     Style="{StaticResource ActionButtonStyle}"
                     Command="{Binding StopSpectrometerScanCommand}"/>
 
+        </Grid>
+        <Grid Grid.Row="2" Margin="0,10,0,0">
+            <StackPanel Orientation="Horizontal">
+
+                <CheckBox Grid.Column="0"
+                          IsChecked="{Binding IsPeakModeEnabled}"
+                          VerticalAlignment="Center"
+                          Cursor="Hand"/>
+
+                <TextBlock Text="Peak Mode"
+                           FontSize="11"
+                           Foreground="#999999"
+                           VerticalAlignment="Center"
+                           Margin="8,0,0,0"/>
+
+            </StackPanel>
         </Grid>
     </Grid>
 </UserControl>

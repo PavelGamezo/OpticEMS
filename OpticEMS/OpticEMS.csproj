@@ -9,10 +9,15 @@
     <ApplicationIcon>Common\Images\splash.ico</ApplicationIcon>
     <UserSecretsId>e6ef761e-37c7-46dc-8d58-6331ed4188b8</UserSecretsId>
     <Title>OpticEMS</Title>
-    <Company>Izovac LLC</Company>
+    <Company>Added Vision</Company>
     <Copyright>Copyring ©  2026</Copyright>
     <Description>Optical emission monitoring system</Description>
   </PropertyGroup>
+
+	<Target Name="CopyUpdater" AfterTargets="Build">
+		<Exec Command="dotnet publish ..\OpticEMS.Updater\OpticEMS.Updater.csproj -c $(Configuration) -r win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=none --nologo -o ..\OpticEMS.Updater\bin\publish" />
+		<Copy SourceFiles="..\OpticEMS.Updater\bin\publish\OpticEMS.Updater.exe" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+	</Target>
 
   <ItemGroup>
     <None Remove="Common\Images\endpoint_logo.png" />
@@ -38,7 +43,7 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="EPPlus" Version="4.5.3.3" />
-    <PackageReference Include="Extended.Wpf.Toolkit" Version="5.1.1" />
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="3.8.2" />
     <PackageReference Include="MahApps.Metro" Version="3.0.0-rc0529" />
     <PackageReference Include="MaterialDesignColors" Version="5.3.3-ci1394" />
     <PackageReference Include="MaterialDesignThemes" Version="5.3.3-ci1391" />

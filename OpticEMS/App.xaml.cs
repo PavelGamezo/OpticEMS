@@ -7,6 +7,7 @@ using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.Contracts.Services.Etching;
 using OpticEMS.Contracts.Services.Export;
 using OpticEMS.Contracts.Services.Mapper;
+using OpticEMS.Contracts.Services.PeakDetector;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Data.Database.Context;
@@ -27,6 +28,7 @@ using OpticEMS.Services.Calibration;
 using OpticEMS.Services.Dialogs;
 using OpticEMS.Services.Etching;
 using OpticEMS.Services.Export;
+using OpticEMS.Services.PeakDetector;
 using OpticEMS.Services.Spectrometers;
 using OpticEMS.Services.Times;
 using OpticEMS.Services.Validators;
@@ -73,6 +75,7 @@ namespace OpticEMS
             services.AddScoped<IExportManager, ExportManager>();
             services.AddTransient<IEtchingProcessService, EtchingProcessService>();
             services.AddTransient<IExpressionValidator, ExpressionValidator>();
+            services.AddScoped<IPeakDetector, PeakDetector>();
 
             // Repositories
             services.AddTransient<ISpectralLineRepository, SpectralLineRepository>();
@@ -107,10 +110,12 @@ namespace OpticEMS
             services.AddSingleton<ProcessChartViewModel>();
             services.AddSingleton<ActivationViewModel>();
             services.AddSingleton<PasswordDialogViewModel>();
+            services.AddTransient<UpdateViewModel>();
 
             // Windows
             services.AddTransient<MainWindow>();
             services.AddTransient<PasswordWindow>();
+            services.AddTransient<UpdateDialogWindow>();
         }
 
         protected override async void OnStartup(StartupEventArgs e)

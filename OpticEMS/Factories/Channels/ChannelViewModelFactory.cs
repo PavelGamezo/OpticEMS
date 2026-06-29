@@ -4,6 +4,7 @@ using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.Contracts.Services.Etching;
 using OpticEMS.Contracts.Services.Mapper;
+using OpticEMS.Contracts.Services.PeakDetector;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.MVVM.ViewModels.ProcessViewModels;
 
@@ -27,17 +28,12 @@ namespace OpticEMS.Factories.Channels
             ISettingsProvider configProvider = _serviceProvider.GetRequiredService<ISettingsProvider>();
             ICalibrationService calibrationService = _serviceProvider.GetRequiredService<ICalibrationService>();
             ISpectralLineRepository spectralLineRepository = _serviceProvider.GetRequiredService<ISpectralLineRepository>();
+            IPeakDetector peakDetector = _serviceProvider.GetRequiredService<IPeakDetector>();
 
             var id = configuration.ChannelId;
 
-            return new ChannelViewModel(id,
-                wavelengthMapper,
-                recipeRepository,
-                dialogService,
-                endpointService,
-                configProvider,
-                calibrationService,
-                spectralLineRepository);
+            return new ChannelViewModel(id, wavelengthMapper, recipeRepository, dialogService,
+                endpointService, configProvider, calibrationService, spectralLineRepository, peakDetector);
         }
 
         public ChannelViewModel CreateDefault() => new ChannelViewModel();

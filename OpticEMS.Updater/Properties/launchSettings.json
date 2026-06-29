@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "OpticEMS.Updater": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Temp\\Source\" \"C:\\Temp\\Target\" \"OpticEMS.exe\""
+    }
+  }
+}

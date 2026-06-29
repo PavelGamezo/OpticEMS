@@ -68,11 +68,6 @@ namespace OpticEMS.Services.Spectrometers
                     total += avantesCount;
                 }
 
-                UInt32[] port = new UInt32[36];
-                YixistCCD.SPGetAllDevices(port, out UInt32 yixistCount);
-
-                total += (int)yixistCount;
-
                 return total;
             }
             catch (Exception exception)

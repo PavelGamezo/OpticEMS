@@ -345,11 +345,9 @@ namespace OpticEMS.Services.Etching
                 WavelengthStates[i].WindowStartTime = elapsedMs;
                 WavelengthStates[i].Reference = signal[i];
 
-                double percent = Math.Abs(_recipe!.DetectionWindowHighs[i]);
+                double threshold = Math.Abs(_recipe!.DetectionWindowHighs[i]);
 
-                double computedThreshold = Math.Abs(signal[i]) * percent / 100.0;
-
-                WavelengthStates[i].Threshold = computedThreshold > 0 ? computedThreshold : 0.001;
+                WavelengthStates[i].Threshold = threshold > 0 ? threshold : 0.001;
             }
         }
 

@@ -8,6 +8,7 @@ using OpticEMS.Contracts.Services.Database;
 using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.Contracts.Services.Etching;
 using OpticEMS.Contracts.Services.Mapper;
+using OpticEMS.Contracts.Services.PeakDetector;
 using OpticEMS.Contracts.Services.Recipe;
 using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Notifications.Messages;
@@ -84,7 +85,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             IEtchingProcessService endpointService,
             ISettingsProvider configureProvider,
             ICalibrationService calibrationService,
-            ISpectralLineRepository spectralLineRepository)
+            ISpectralLineRepository spectralLineRepository,
+            IPeakDetector peakDetector)
         {
             Log.Information("[ChannelViewModel #{Id}]: Creating channel '{Name}'", id, $"Chamber {id + 1}");
 
@@ -101,7 +103,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             ChannelName = $"Chamber {id + 1}";
 
             SpectrumChartViewModel = new SpectrumChartViewModel(
-                _orchestrator.Device.Device.DeviceInfo.TrimLeft,
+                id, peakDetector, _orchestrator.Device.Device.DeviceInfo.TrimLeft,
                 _orchestrator.Device.Device.DeviceInfo.TrimRight);
             ProcessChartViewModel = new ProcessChartViewModel();
             SpectralLinesCatalogViewModel = new SpectralLinesCatalogViewModel(

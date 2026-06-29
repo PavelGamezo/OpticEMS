@@ -1,5 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 using OpticEMS.Common.Helpers;
+using OpticEMS.Contracts.Services.PeakDetector;
+using OpticEMS.Notifications.Messages;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
@@ -8,23 +11,35 @@ using System.Windows.Media;
 
 namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
 {
+    // REMAKE
     public partial class SpectrumChartViewModel : ObservableObject
     {
         [ObservableProperty]
         private ViewResolvingPlotModel _plotModel;
 
+        private int _channelId;
         private RectangleAnnotation _anomalyRegion;
         private IReadOnlyList<double> _lastX;
+        private IReadOnlyList<double> _lastY;
+        private bool _isPeakModeEnabled;
+        private readonly List<TextAnnotation> _peakAnnotations = new();
+
+        private readonly IPeakDetector _peakDetector;
 
         public event Action<int, double> OnWavelengthMoved;
 
-        public SpectrumChartViewModel(int trimLeft, int trimRight)
+        public SpectrumChartViewModel(int channelId, IPeakDetector peakDetector, int trimLeft, int trimRight)
         {
+            _channelId = channelId;
+            _peakDetector = peakDetector;
+
             PlotModel = SetUpModel(trimLeft, trimRight);
 
             _anomalyRegion = PlotModel.Annotations
                 .OfType<RectangleAnnotation>()
                 .First(a => a.Tag?.ToString() == "AnomalyRegion");
+
+            RegisterMessages();
         }
 
         public static ViewResolvingPlotModel SetUpModel(int trimLeft, int trimRight)
@@ -64,8 +79,8 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
                 TickStyle = TickStyle.None,
                 MajorGridlineColor = OxyColor.FromRgb(50, 51, 56),
                 MajorGridlineStyle = LineStyle.Solid,
-                MaximumPadding = 0.3,
-                Minimum = 0
+                MaximumPadding = 0,
+                MinimumPadding = 0,
             });
 
             var line = new LineSeries
@@ -107,6 +122,7 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             }
 
             _lastX = x;
+            _lastY = y;
 
             if (PlotModel.Series[0] is not LineSeries line)
             {
@@ -116,7 +132,30 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             line.Points.Clear();
 
             for (var i = 0; i < x.Count; i++)
+            {
                 line.Points.Add(new DataPoint(x[i], y[i]));
+            }
+
+            if (y.Count > 0)
+            {
+                var yAxis = PlotModel.Axes[1];
+                double dataMax = y.Max();
+                double dataMin = y.Min();
+
+                double padding = 800;
+                double minRange = 1000;
+
+                double axisMax = dataMax + padding;
+                double axisMin = Math.Min(dataMin, axisMax - minRange);
+
+                yAxis.Maximum = axisMax;
+                yAxis.Minimum = axisMin;
+            }
+
+            if (_isPeakModeEnabled)
+            {
+                UpdatePeakAnnotations(x, y);
+            }
 
             PlotModel.InvalidatePlot(true);
         }
@@ -265,8 +304,70 @@ namespace OpticEMS.MVVM.ViewModels.ProcessViewModels
             PlotModel.InvalidatePlot(false);
         }
 
+        private void UpdatePeakAnnotations(IReadOnlyList<double> wavelengths, IReadOnlyList<double> intensities)
+        {
+            var peaks = _peakDetector.Detect(
+                intensities as double[] ?? intensities.ToArray(),
+                wavelengths as double[] ?? wavelengths.ToArray(),
+                threshold: 300,
+                minDistancePixels: 10);
+
+            ClearPeakAnnotations();
+
+            foreach (var peak in peaks)
+            {
+                var annotation = new TextAnnotation
+                {
+                    Text = $"{peak.Wavelength:F1} nm",
+                    TextPosition = new DataPoint(peak.Wavelength, peak.Intensity),
+                    StrokeThickness = 0,
+                    Background = OxyColors.Transparent,
+                    TextColor = OxyColors.White,
+                    FontSize = 10,
+                    Padding = new OxyThickness(0),
+                    Offset = new ScreenVector(0, -14),
+                    Tag = "PeakLabel"
+                };
+
+                PlotModel.Annotations.Add(annotation);
+                _peakAnnotations.Add(annotation);
+            }
+        }
+
+        private void ClearPeakAnnotations()
+        {
+            foreach (var annotation in _peakAnnotations)
+            {
+                PlotModel.Annotations.Remove(annotation);
+            }
+
+            _peakAnnotations.Clear();
+        }
+
+        private void RegisterMessages()
+        {
+            WeakReferenceMessenger.Default.Register<PeakModeChangedMessage>(this, (r, m) =>
+            {
+                if (m.ChannelId != _channelId) return;
+
+                _isPeakModeEnabled = m.IsEnabled;
+
+                if (!m.IsEnabled)
+                {
+                    ClearPeakAnnotations();
+                }
+                else if (_lastX != null && _lastY != null)
+                {
+                    UpdatePeakAnnotations(_lastX, _lastY);
+                    PlotModel.InvalidatePlot(false);
+                }
+            });
+        }
+
         public void Dispose()
         {
+            WeakReferenceMessenger.Default.UnregisterAll(this);
+
             if (PlotModel != null)
             {
                 PlotModel.Series.Clear();

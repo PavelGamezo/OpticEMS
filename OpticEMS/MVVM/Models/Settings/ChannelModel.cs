@@ -8,7 +8,8 @@ namespace OpticEMS.MVVM.Models
     {
         public int ChannelId { get; set; }
 
-        public List<string> AvailableSpectrometers { get; set; }
+        [ObservableProperty]
+        public List<string> availableSpectrometers;
 
         [ObservableProperty]
         private string selectedSpectrometer;
@@ -36,6 +37,38 @@ namespace OpticEMS.MVVM.Models
 
         [ObservableProperty]
         private DeviceType deviceType = DeviceType.Unknown;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsYixistIpVisible))]
+        private SpectrometerType _spectrometerTypeForVisibility;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsConnectEnabled))]
+        private string _deviceIpAddress = string.Empty;
+
+        [ObservableProperty] private string _yixistConnectionStatus = string.Empty;
+
+        [ObservableProperty] private bool _isYixistConnecting;
+
+        public bool IsYixistIpVisible => SelectedSpectrometerType == SpectrometerType.Yixist;
+
+        public bool IsConnectEnabled =>
+            SelectedSpectrometerType == SpectrometerType.Yixist &&
+            !string.IsNullOrWhiteSpace(DeviceIpAddress) &&
+            !IsYixistConnecting;
+
+        partial void OnSelectedSpectrometerTypeChanged(SpectrometerType value)
+        {
+            OnPropertyChanged(nameof(IsYixistIpVisible));
+            OnPropertyChanged(nameof(IsConnectEnabled));
+
+            YixistConnectionStatus = string.Empty;
+        }
+
+        partial void OnDeviceIpAddressChanged(string value)
+        {
+            YixistConnectionStatus = string.Empty;
+        }
 
         [ObservableProperty]
         private string _ip = "192.168.1.10";

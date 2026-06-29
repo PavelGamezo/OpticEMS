@@ -79,7 +79,7 @@ namespace OpticEMS.Devices.Devices.Yixis
             public double fCTA; //Color tolerance
         };
 
-        private const string CCD_DLL = "Libraries\\SpectroMeter.dll";
+        private const string CCD_DLL = "Libraries\\spectrometer.dll";
 
         #region importDll
 
@@ -88,6 +88,9 @@ namespace OpticEMS.Devices.Devices.Yixis
 
         [DllImport(CCD_DLL, EntryPoint = "SPConnect", CharSet = CharSet.Auto)]
         public static extern UInt32 SPConnect(UInt32 port);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPConnectTCP", CharSet = CharSet.Ansi)]
+        public static extern UInt32 SPConnectTCP(string ip, int tcp_port);
 
         [DllImport(CCD_DLL, EntryPoint = "SPConfig", CharSet = CharSet.Auto)]
         public static extern bool SPConfig(UInt32 DevID, UInt64 dwIntegrateTime, int BoxCar, int TriggerMode);
@@ -98,6 +101,8 @@ namespace OpticEMS.Devices.Devices.Yixis
         [DllImport(CCD_DLL, EntryPoint = "SPReadDoubleCCDAvg", CharSet = CharSet.Auto)]
         public static extern int SPReadDoubleCCDAvg(UInt32 DevID, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] double[] data, int avgTimes);
 
+        [DllImport(CCD_DLL, EntryPoint = "SPGetCalData", CharSet = CharSet.Auto)]
+        public static extern bool SPGetCalData(UInt32 DevID, [MarshalAs(UnmanagedType.LPArray, SizeConst = 4)] double[] C);
 
         [DllImport(CCD_DLL, EntryPoint = "SPWaveLengthToPixel", CharSet = CharSet.Auto)]
         public static extern int SPWaveLengthToPixel(UInt32 DevID, double fWaveLen);
@@ -107,6 +112,9 @@ namespace OpticEMS.Devices.Devices.Yixis
 
         [DllImport(CCD_DLL, EntryPoint = "SPClose", CharSet = CharSet.Auto)]
         public static extern bool SPClose(UInt32 DevID);
+
+        [DllImport(CCD_DLL, EntryPoint = "SPStopACQ", CharSet = CharSet.Auto)]
+        public static extern bool SPStopACQ(UInt32 DevID);
 
         [DllImport(CCD_DLL, EntryPoint = "GetDllVer", CharSet = CharSet.Auto)]
         public static extern bool GetDllVer(UInt32 DevID, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] data);
@@ -153,6 +161,8 @@ namespace OpticEMS.Devices.Devices.Yixis
         [DllImport(CCD_DLL, EntryPoint = "SPProcessSpectrum", CharSet = CharSet.Auto)]
         public static extern Color_Result SPProcessSpectrum(UInt32 DevID, double[] wave, double[] pow, int cnt);
 
+        [DllImport(CCD_DLL, EntryPoint = "SPSetConversionEfficiency", CharSet = CharSet.Auto)]
+        public static extern bool SPSetConversionEfficiency(UInt32 DevID, byte stat);
 
         [DllImport(CCD_DLL, EntryPoint = "SPSetTecEnable", CharSet = CharSet.Auto)]
         public static extern bool SPSetTecEnable(UInt32 DevID, bool enable);

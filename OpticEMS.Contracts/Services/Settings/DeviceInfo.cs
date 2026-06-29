@@ -39,6 +39,8 @@ namespace OpticEMS.Contracts.Services.Settings
 
         public int ChannelId { get; set; }
 
+        public string DeviceIp { get; set; }
+
         public DeviceType DeviceType { get; set; }
 
         [XmlIgnore]
@@ -110,6 +112,8 @@ namespace OpticEMS.Contracts.Services.Settings
         public int ScansNum { get; set; }
 
         public float Equalizer { get; set; }
+
+        public bool PeakModeEnabled { get; set; }
 
         [XmlIgnore]
         public double[] Wavelengths { get; set; }

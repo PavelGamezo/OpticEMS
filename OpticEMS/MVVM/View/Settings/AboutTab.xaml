@@ -132,13 +132,20 @@
 
         <TextBlock Text="Update" Margin="5,15,5,15" FontSize="18" />
 
-        <Button Content="Update Software"
-                Style="{StaticResource ActionButtonStyle}"
-                Foreground="#10505b"
-                Background="Transparent"
-                FontSize="14"
-                Command="{Binding OpenUploadWindowCommand}" 
-                HorizontalAlignment="Left"
-                Margin="5" HorizontalContentAlignment="Right" />
+        <materialDesign:DialogHost Identifier="RootDialog">
+
+            <Grid>
+                <Button Content="Update Software"
+                        Style="{StaticResource ActionButtonStyle}"
+                        Foreground="#10505b"
+                        Background="Transparent"
+                        FontSize="14"
+                        Command="{Binding OpenUpdateDialogCommand}" 
+                        HorizontalAlignment="Left"
+                        Margin="5" HorizontalContentAlignment="Right" />
+            </Grid>
+
+        </materialDesign:DialogHost>
+
     </StackPanel>
 </UserControl>

@@ -13,5 +13,6 @@
   <Project Path="OpticEMS.Orchestrator/OpticEMS.Orchestrator.csproj" Id="417c2568-281e-4d84-b778-81f0a8a2befd" />
   <Project Path="OpticEMS.Preprocessing/OpticEMS.Preprocessing.csproj" Id="440f4891-9d6e-4b0d-b803-a336bb1467ee" />
   <Project Path="OpticEMS.Processing/OpticEMS.Processing.csproj" Id="1c4150d6-9e7d-47a9-8ea0-56249ef83ba6" />
+  <Project Path="OpticEMS.Updater/OpticEMS.Updater.csproj" Id="803b3aba-fe15-4c07-9ede-5c55ba394b6e" />
   <Project Path="OpticEMS/OpticEMS.csproj" Id="162e9700-f815-4a6f-beb7-e50dc3d4d941" />
 </Solution>

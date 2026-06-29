@@ -3,6 +3,7 @@ using OpticEMS.Common.Enums;
 using OpticEMS.Contracts.Services.Dialog;
 using OpticEMS.MVVM.View.Windows;
 using OpticEMS.MVVM.ViewModels;
+using OpticEMS.MVVM.ViewModels.SettingsViewModels;
 using System.Windows;
 
 namespace OpticEMS.Services.Dialogs
@@ -58,6 +59,19 @@ namespace OpticEMS.Services.Dialogs
             var viewModel = _serviceProvider.GetRequiredService<PasswordDialogViewModel>();
 
             var window = new PasswordWindow(viewModel)
+            {
+                Owner = Application.Current.MainWindow,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+
+            return window.ShowDialog() ?? false;
+        }
+
+        public bool AskUpdate()
+        {
+            var viewModel = _serviceProvider.GetRequiredService<UpdateViewModel>();
+
+            var window = new UpdateDialogWindow(viewModel)
             {
                 Owner = Application.Current.MainWindow,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner

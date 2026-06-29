@@ -162,8 +162,8 @@ namespace OpticEMS.Orchestrator
                 double overEtch = _endpointService.OverEtchDurationSeconds;
 
                 report = forced
-                    ? $"[REPRC] Max time reached at {totalSeconds:F2}s — endpoint not found."
-                    : $"[REPRC] Endpoint found at {endpointSec:F2}s\n" +
+                    ? $"Max time reached at {totalSeconds:F2}s — endpoint not found."
+                    : $"Endpoint found at {endpointSec:F2}s\n" +
                       $"Over-etch: {overEtch:F2}s\n" +
                       $"Total: {totalSeconds:F2}s";
 
@@ -171,7 +171,7 @@ namespace OpticEMS.Orchestrator
             }
             else
             {
-                report = $"[REPRC] Reprocess complete — endpoint NOT detected in {totalSeconds:F2}s of data.";
+                report = $"Reprocess complete — endpoint NOT detected in {totalSeconds:F2}s of data.";
                 Status = "No endpoint detected";
             }
 

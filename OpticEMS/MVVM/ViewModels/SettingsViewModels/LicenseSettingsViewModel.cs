@@ -1,10 +1,18 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MaterialDesignThemes.Wpf;
+using Microsoft.Extensions.DependencyInjection;
+using OpticEMS.Contracts.Services.Dialog;
+using OpticEMS.MVVM.View.Settings;
+using Serilog;
 using System.Reflection;
 
 namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
 {
     public partial class LicenseSettingsViewModel : ObservableObject
     {
+        private readonly IDialogService _dialogService;
+
         [ObservableProperty]
         private string _title;
 
@@ -26,8 +34,10 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
         [ObservableProperty]
         private string _edition = "System configuration: Commercial";
 
-        public LicenseSettingsViewModel()
+        public LicenseSettingsViewModel(IDialogService dialogService)
         {
+            _dialogService = dialogService;
+
             var attributes = Assembly.GetExecutingAssembly()
                 .GetCustomAttributes();
 
@@ -57,6 +67,19 @@ namespace OpticEMS.MVVM.ViewModels.SettingsViewModels
                 {
                     Description = (attribute as AssemblyDescriptionAttribute).Description;
                 }
+            }
+        }
+
+        [RelayCommand]
+        private async Task OpenUpdateDialog()
+        {
+            if (_dialogService.AskUpdate())
+            {
+                Log.Information("[UpdateViewModel]: Update accepted.");
+            }
+            else
+            {
+                Log.Information("[UpdateViewModel]: Update denied.");
             }
         }
     }

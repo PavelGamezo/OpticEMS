@@ -10,6 +10,7 @@ using OpticEMS.Contracts.Services.Settings;
 using OpticEMS.Devices;
 using OpticEMS.Notifications.Messages;
 using OpticEMS.Preprocessing;
+using OpticEMS.Preprocessing.Operations.Arithmetic;
 using OpticEMS.Preprocessing.Operations.Averaging;
 using OpticEMS.Processing;
 using OpticEMS.Processing.PCA;
@@ -54,6 +55,7 @@ namespace OpticEMS.Orchestrator
         private FrameAverager _frameAverager;
         private PipelineExecutor _pipelineExecutor;
         private ModePreprocessingHandler _modeHandler;
+        private DarkCurrentSubtractor _darkCurrentHandler;
 
         public EtchingOrchestrator(
             int channelId,
@@ -72,6 +74,7 @@ namespace OpticEMS.Orchestrator
             _connectionHandler = new ModuleHandler(
                 ip: configureProvider?.GetByChannelId(ChannelId)?.Ip,
                 port: int.Parse(configureProvider?.GetByChannelId(ChannelId).Port));
+            _darkCurrentHandler = new DarkCurrentSubtractor();
 
             _connectionHandler.ProcessStartRequested += OnModuleProcessStartRequested;
 
@@ -88,8 +91,6 @@ namespace OpticEMS.Orchestrator
             {
                 _deviceProcessing.StartContinueScan(ExposureMs, ScansNum, Equalizer, _cancellationToken.Token);
             });
-
-            //_connectionHandler.OnInputChanged += HandleModuleInputs;
         }
 
         public int ChannelId { get; private set; }
@@ -276,7 +277,7 @@ namespace OpticEMS.Orchestrator
                 throw new Exception("Process is not running.");
             }
 
-            //_connectionHandler.SetOutputs((false, false, true, false));
+            _connectionHandler.SendEndEtch();
 
             _isRunning = false;
             _stopwatch.Stop();
@@ -550,17 +551,6 @@ namespace OpticEMS.Orchestrator
             WeakReferenceMessenger.Default.Send(new ProcessFinishedMessage(ChannelId, report, forced));
         }
 
-        private void HandleModuleInputs((int, bool) state)
-        {
-            var (recipeId, isStarted) = state;
-
-            if (isStarted)
-            {
-                ApplyRecipe(recipeId);
-                StartProcess();
-            }
-        }
-
         public ExportData GetExportData()
         {
             double endpointTime = _endpointService.DetectedAtSeconds;
@@ -583,19 +573,19 @@ namespace OpticEMS.Orchestrator
                     return;
                 }
 
-                HandleIncomingSpectrum(message.Intensities, message.Wavelengths);
+                var correctedIntensities = _darkCurrentHandler.Process(message.Intensities);
+                if (correctedIntensities == null || correctedIntensities.Length == 0)
+                {
+                    return;
+                }
 
-                UpdateInternalIntensities(message.Intensities, message.Wavelengths);
+                HandleIncomingSpectrum(correctedIntensities, message.Wavelengths);
+                UpdateInternalIntensities(correctedIntensities, message.Wavelengths);
             });
         }
 
         private void HandleIncomingSpectrum(double[] intensities, double[] wavelengths)
         {
-            if (intensities == null || intensities.Length == 0)
-            {
-                return;
-            }
-
             CreateSpectrumSnapshot(intensities);
             UpdateSpectrumChart(intensities, wavelengths);
         }
@@ -629,7 +619,7 @@ namespace OpticEMS.Orchestrator
 
         private void UpdateInternalIntensities(double[] intensities, double[] wavelengths)
         {
-            if (_isRunning && intensities.Length > 0 && Recipe.AutocalibrationEnabled)
+            if (_isRunning && Recipe.AutocalibrationEnabled)
             {
                 var elapsed = (DateTime.Now - _lastAutocalibrationTime).TotalMilliseconds;
                 if (elapsed >= CALIBRATION_INTERVAL_MS)
@@ -811,6 +801,7 @@ namespace OpticEMS.Orchestrator
                     _deviceProcessing?.Dispose();
 
                     _frameAverager?.Reset();
+                    _darkCurrentHandler?.Reset();
                     _pcaHandler = null;
                     _connectionHandler.ProcessStartRequested -= OnModuleProcessStartRequested;
                     _connectionHandler.Dispose();
